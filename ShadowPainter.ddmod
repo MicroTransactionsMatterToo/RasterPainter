@@ -1,0 +1,8 @@
+{
+    "name": "ShadowPainter",
+    "unique_id": "MBMM.shadow_painter",
+    "version": "0.0.1",
+    "author": "MBMM",
+    "description": "Allows painting of shadows",
+    "dd_version": "1.1.0.0",
+}
