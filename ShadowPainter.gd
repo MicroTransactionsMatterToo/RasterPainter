@@ -53,6 +53,7 @@ func start() -> void:
         nslayer.set_texture(nslayer_tex)
         nslayer.mouse_filter = Control.MOUSE_FILTER_IGNORE
         nslayer.material.blend_mode = CanvasItem.BLEND_MODE_DISABLED
+        nslayer.rect_scale = Vector2(2, 2)
         VisualServer.canvas_item_set_clip(nslayer.get_canvas_item(), false)
         shadow_layers[slayer_id(level)] = nslayer
         
@@ -201,10 +202,14 @@ class ShadowCanvasPainter extends Control:
         self.render_layer = TextureRect.new()
         self.render_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
         self.render_layer.material.blend_mode = CanvasItem.BLEND_MODE_DISABLED
+        self.render_layer.set_size(Global.World.WorldRect.size, false)
+        self.render_layer.rect_scale = Vector2(2, 2)
 
         canvas = Viewport.new()
 
-        canvas.size = Global.World.WorldRect.size
+        canvas.size = Global.World.WorldRect.size / 2
+        canvas.set_size_override(true, Vector2(8960, 10240))
+        canvas.size_override_stretch = true
         canvas.usage = Viewport.USAGE_2D
         canvas.transparent_bg = true
         canvas.gui_disable_input = true
