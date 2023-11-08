@@ -1,0 +1,18 @@
+@startsalt
+{
+{T
++ World
+++ Editor
+++ Levels: Dict<string, Level>
++++ [Level]
+++++ Layers: Dict<int, string>
++++++ Default Layers
++++++ Custom Layers
+++++++ **-50: Shadows**
+++ EmbeddedTextures
+++ **ShadowCanvasPainter**
++++ canvas: Viewport
++++ _pen: Node2D
+}
+}
+@endsalt
