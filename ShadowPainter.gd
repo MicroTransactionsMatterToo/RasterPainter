@@ -1,391 +1,157 @@
 class_name ShadowPainter
 var script_class = "tool"
 
-
-
-var shadow_layers: Dictionary = {}
-var shadow_control
-var root_canvas: CanvasLayer
-var control: ShadowCanvasPainter
-var ui_skeleton
-var ui_instance
-
+var BrushManagerC
+var BrushManager
+var ShadowLayerC
+var ShadowLayer
+var ShadowControlC
+var ShadowControl
+var LayerManagerC
+var LayerManager
 
 var _enabled = false
 var _tool_panel
 
-var _ui_root
 var _size_slider
 var _strength_slider
 var _colorbox
 var _brushbox
 
-var _brush_color: Color
-var _brush_size: float
-var _brush_strength: float
-var _brush_selected: String
-var _brushes = {
-    "Pencil": Pencil.new()
-}
+var layers: Array = []
+var layer_num: int = -50
+
+var brush_manager
+var layer_manager
+var control
 
 
-const DEBUG = true
+const LOG_LEVEL = 4
 
-func debugp(msg):
-    if DEBUG:
-        printraw("SPD: ")
-        print(msg)
-    else:
-        pass
+func logv(msg):
+	if LOG_LEVEL > 3:
+		printraw("[V] SP: ")
+		print(msg)
+	else:
+		pass
+
+func logi(msg):
+	if LOG_LEVEL >= 1:
+		printraw("[I] SP: ")
+		print(msg)
+	else:
+		pass
+
+# ModScript funcs
 
 func start() -> void:
-    debugp("ShadowPainter loaded")
-    debugp("Getting root canvas")
-    root_canvas = Global.Editor
-    debugp(root_canvas)
-    debugp("Creating Shadow layers")
-    ui_skeleton = ResourceLoader.load(Global.Root + "shadowpainter_toolpanel.tscn", "", true)
-
-    for level in Global.World.AllLevels:
-        create_shadow_level(level)
-        var nslayer = TextureRect.new()
-        var nslayer_tex = Global.World.EmbeddedTextures.get(slayer_id(level))
-        nslayer.set_texture(nslayer_tex)
-        nslayer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-        nslayer.material.blend_mode = CanvasItem.BLEND_MODE_DISABLED
-        nslayer.rect_scale = Vector2(2, 2)
-        VisualServer.canvas_item_set_clip(nslayer.get_canvas_item(), false)
-        shadow_layers[slayer_id(level)] = nslayer
-        
-    debupg("Setting up brushes")
-    for brush in self._brushes.values():
-        brush.Global = Global
-    
-    self._brush_selected = self._brushes.keys()[0]
-
-    debugp("Creating ShadowCanvas")
-    control = ShadowCanvasPainter.new()
-    control.Global = Global
-    control.current_shadow_layer = get_current_slayer()
-    control.set_brush(self._brushes[self._brush_selected])
-    Global.World.add_child(control)
+	logi("ShadowPainter loaded")
+	# This is required due to a bug when accessing subclasses. None of this 
+	# would be necessary if Dungeondraft didn't append shit to mod scripts
+	# that means you can't extend anything without using a subclass
+	BrushManagerC 	= ResourceLoader.load(Global.Root + "BrushManagerC.gd", "GDScript", true)
+	BrushManager 	= load(Global.Root + "BrushManagerC.gd").BrushManager
+	ShadowLayerC 	= ResourceLoader.load(Global.Root + "ShadowLayerC.gd", "GDScript", true)
+	ShadowLayer 	= load(Global.Root + "ShadowLayerC.gd").ShadowLayer
+	ShadowControlC 	= ResourceLoader.load(Global.Root + "ShadowControlC.gd", "GDScript", true)
+	ShadowControl 	= load(Global.Root + "ShadowControlC.gd").ShadowControl
+	LayerManagerC 	= ResourceLoader.load(Global.Root + "LayerManagerC.gd", "GDScript", true)
+	LayerManager	= load(Global.Root + "LayerManagerC.gd").LayerManager
 
 
-    self.ui()
+	self.name = "ShadowPainter"
 
+	
+	self.layer_manager = LayerManager.new(Global)
+	
+	self.brush_manager = BrushManager.new()
+	self.brush_manager.Global = Global
+	
+	self.control = ShadowControl.new(Global, self.brush_manager, self.layer_manager)
+	# self.layer_manager.get_level_ids()
 
+	logv("Managers Created")
+	logv(Global.World.EmbeddedTextures)
+	logv(ResourceLoader.get_recognized_extensions_for_type("Shader"))
+	logv("FUCK")
+	logv(ResourceFormatLoader.get_resource_type(Global.Root + "ShadowLayer.shader"))
 
-# Creates the shadow layer at -50 for given level
-func create_shadow_layer(level) -> void:
-    debugp("Fetching layers for level {label}".format({
-        "label": level.Label
-    }))
-    # Fetch JSON of layers, can't use .Layers cause it's a SortedDict
-    var layers: Dictionary = level.SaveLayers()
-    var newlayers: Dictionary = {
-        -50: "Shadow Layer"
-    }
-    debugp("Creating shadow layer -50")
-    if layers.get(-50) != null:
-        debugp("ShadowLayer already present")
-    else:
-        layers[-50] = "Shadow Layer"
-        debugp("Loading altered layers")
-        level.LoadLayers(newlayers)
+	self.ui()
 
-# Returns the shadow layer ID for the current level
-func slayer_id(level) -> String:
-    return "{levelID}-S_LAYER".format({"levelID": level.ID})
+	self.control.add_child(self.brush_manager)
+	Global.World.add_child(self.control)
 
-func get_current_slayer() -> TextureRect:
-    var cur_level = Global.World.GetLevelByID(Global.World.CurrentLevelId)
-    return self.shadow_layers.get(slayer_id(cur_level))
-
-
-### Tool Functions ###
-
-func ui() -> void:
-    debugp("Init SPT")
-    debugp(self.ui_skeleton)
-    self._tool_panel = Global.Editor.Toolset.CreateModTool(
-        self,
-        "Effects",
-        "ShadowPainter",
-        "Shadow Painter",
-        "res://ui/icons/buttons/color_wheel.png"
-    )
-    self._tool_panel.UsesObjectLibrary = false
-    # self.ui_instance = self.ui_skeleton.instance()
-    # self._tool_panel.add_child(self.ui_instance)
-    self._tool_panel.print_tree_pretty()
-
-    # self._ui_root = $"VBoxContainer/MarginBox/"
-    # self._brushbox = $"BrushBox"
-    # self._colorbox = $"ColorBox"
-    # self._strength_slider = $"Strength"
-    # self._size_slider = $"BrushSize"
-
-    self._tool_panel.BeginNamedSection("SizeBox")
-    self._tool_panel.CreateLabel("Brush Size")
-    self._tool_panel.CreateSlider("_brush_size", 20.0, 1.0, 400.0, 1.0, false)
-    self._tool_panel.EndSection()
-
-    self._tool_panel.CreateLabel("Brush Strength")
-    self._tool_panel.CreateSlider("_brush_strength", 75.0, 0.0, 100.0, 1.0, false)
-
-    self._tool_panel.CreateLabel("Brush Color")
-    self._colorbox = self._tool_panel.CreateColorPalette("brush_color", false, "#ff0000", ["#ff0000"], false, true)
-    self._colorbox.connect("color_changed", self, "on_change_brush_color")
-
-func ChangeColors(colors: Array, name: String) -> void:
-    debugp("Colors changed")
-
-func on_change_brush_color(color) -> void:
-    debugp("Color Set")
-    self._brush_color = color
-    self._brushes[self._brush_selected].set_color(color)
-
-    
+	logv("Finished start-up")
 
 
 func on_tool_enable(tool_id) -> void:
-    debugp("SPT enabled")
-    self._enabled = true
+	logv("Tool Enabled")
+	self._enabled = true
 
 func on_tool_disable(tool_id) -> void:
-    debugp("SPT disabled")
-    self._enabled = false
+	logv("Tool Disabled")
+	self._enabled = false
 
-func on_content_input(input: InputEvent) -> void:
-    if self._enabled:
-        self.control._on_tool_input(input)
+func on_level_change() -> void:
+	pass
+	# logv("Level Changed, from {old} to {new}".format({
+	# 	"old": self._prev_frame_level.ID,
+	# 	"new": Global.World.Level.ID
+	# }))
+	# var level_layers = self.get_current_level_layers()
+	# logv("New level layers: " + str(level_layers))
 
-# Main class that handles actually rendering the brush strokes
-class ShadowCanvasPainter extends Control:
-    var Global
+	# if len(level_layers) == 1:
+	# 	logv("Only one layer exists on new level, setting it as current layer")
+	# 	self.layer_num = level_layers[0].layer_num
+	# if len(level_layers) == 0:
+	# 	logv("No layers on new level, setting layer_num to default (-50)")
+	# 	self.layer_num = -50
+	
+	# self.control.current_layer = self.get_current_layer()
+	# self.control.set_level(Global.World.Level.ID, level_layers)
+	
 
-    var canvas: Viewport
-    var current_shadow_layer: TextureRect
-    var current_shadow_image: ImageTexture = ImageTexture.new()
-    var render_layer: TextureRect
-    var canvas_texture: ViewportTexture
+func on_content_input(input):
+	if self._enabled:
+		self.control._on_tool_input(input)
 
-    var _prev_mouse_pos
-    var _is_painting: bool = false
-    var _stroke_finished: bool = false
-    var _should_paint = false
+func _on_change_brush_color(color) -> void:
+	# print(Global.World.EmbeddedTextures.keys())
+	# print(World.EmbeddedTextures.values())
+	self.brush_manager.color = color
+	# self.control._viewport_mod.modulate.a = color.a
+	# self.control._pen.self_modulate.a = color.a
 
-    var _pen: Node2D
-    var brush: ShadowBrush = ShadowBrush.new()
-    var texture_done = false
-    const DEBUG = true
-
-    signal stroke_finished(position)
-    signal stroke_started(position)
-
-    func debugp(msg):
-        if DEBUG:
-            printraw("SCP: ")
-            print(msg)
-        else:
-            pass
-
-    func _ready() -> void:
-        debugp("Creating painter Viewport")
-
-
-        self.mouse_filter = Control.MOUSE_FILTER_PASS
-
-        self.size_flags_horizontal = SIZE_EXPAND
-        self.size_flags_vertical = SIZE_EXPAND
-
-        self.render_layer = TextureRect.new()
-        self.render_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-        self.render_layer.material.blend_mode = CanvasItem.BLEND_MODE_DISABLED
-        self.render_layer.set_size(Global.World.WorldRect.size, false)
-        self.render_layer.rect_scale = Vector2(2, 2)
-
-        canvas = Viewport.new()
-
-        canvas.size = Global.World.WorldRect.size / 2
-        canvas.set_size_override(true, Vector2(8960, 10240))
-        canvas.size_override_stretch = true
-        canvas.usage = Viewport.USAGE_2D
-        canvas.transparent_bg = true
-        canvas.gui_disable_input = true
-
-        # canvas.render_target_clear_mode = Viewport.CLEAR_MODE_ONLY_NEXT_FRAME
-        canvas.render_target_v_flip = true
-        self.canvas_texture = canvas.get_texture()
-
-        _pen = Node2D.new()
-        canvas.add_child(_pen)
-        _pen.connect("draw", self, "_on_draw")
-
-        add_child(canvas)
-
-        var rt = canvas.get_texture()
-        render_layer.set_texture(rt)
-        
-        current_shadow_image.create_from_image(canvas_texture.get_data())
-
-        add_child(current_shadow_layer)
-        add_child(render_layer)
-        
-
-
-        Global.World.connect("mouse_entered", self, "_on_mouse_entered")
-
-    func _process(delta: float) -> void:
-        current_shadow_layer.update()
-
-    func _enter_tree() -> void:
-        debugp("SCP entered")
-
-    func _on_mouse_entered() -> void:
-        debugp("MOUSE ENTERED")
-
-    func _on_tool_input(event: InputEvent) -> void:
-        if event is InputEventMouseButton:
-            if event.button_index == BUTTON_LEFT and event.pressed:
-                self._should_paint = true
-                self._pen.update()
-            elif event.button_index == BUTTON_LEFT and !event.pressed:
-                self._should_paint = false
-                self._prev_mouse_pos = null
-                self._pen.update()
-            else:
-                self._should_paint = false
-                self._prev_mouse_pos = null
-                self._pen.update()
-        if self._should_paint:
-            self._pen.update()
-
-    func set_brush(nbrush: ShadowBrush) -> void:
-        nbrush.set_size(self.brush.brush_radius)
-        nbrush.set_color(self.brush.color)
-        self.brush = nbrush
-
-    func _on_draw() -> void:
-        var mouse_pos = get_local_mouse_position()
-        # Brush selected, and we've been told to paint
-        if self.brush != null and self._should_paint:
-            # If this is the first call, reset mouse pos to ensure separation of strokes
-            if !self._is_painting:
-                debugp("Stroke Started")
-                self.emit_signal("stroke_started", mouse_pos)
-                self._prev_mouse_pos = mouse_pos
-            self._is_painting = true
-            self.brush.paint(_pen, mouse_pos, self._prev_mouse_pos)
-        # Otherwise, we shouldn't be painting
-        else:
-            # If we were painting, we need to finish our stroke
-            if self._is_painting:
-                debugp("Stroke Finished")
-                self.emit_signal("stroke_finished", mouse_pos)
-                self._on_stroke_finish()
-                self._stroke_finished = true
-                self._is_painting = false
-        
-        self._prev_mouse_pos = mouse_pos
-    
-    func _on_stroke_finish() -> void:
-        var timer = OS.get_ticks_msec()
-        var viewport_render: Image = self.canvas_texture.get_data()
-        debugp("Retrieved viewport render took " + str(OS.get_ticks_msec() - timer))
-        timer = OS.get_ticks_msec()
-        var main_render: Image = self.current_shadow_image.get_data()
-        debugp("Retrieved existing render took " + str(OS.get_ticks_msec() - timer))
-        timer = OS.get_ticks_msec()
-        var viewport_updated_region: Rect2 = viewport_render.get_used_rect()
-        main_render.blend_rect(
-            viewport_render, 
-            viewport_updated_region, 
-            viewport_updated_region.position
-        )
-        debugp("Completed blending took " + str(OS.get_ticks_msec() - timer))
-        debugp("Image Size: {x}, {y}".format({
-            "x": main_render.get_width(),
-            "y": main_render.get_height()
-        }))
-        self.current_shadow_image.set_data(main_render)
-        self.current_shadow_layer.texture = self.current_shadow_image
-        self.brush.on_stroke_end()
+func _on_change_brush_size(nsize) -> void:
+	self.brush_manager.size = nsize
 
 
 
+#### UI ####
 
-class ShadowBrush extends Object:
-    var Global
+func ui() -> void:
+	logv("Set up UI")
+	self._tool_panel = Global.Editor.Toolset.CreateModTool(
+		self,
+		"Effects",
+		"ShadowPainter",
+		"Shadow Painter",
+		"res://ui/icons/buttons/color_wheel.png"
+	)
+	self._tool_panel.UsesObjectLibrary = false
 
-    var brush_radius = 40
-    var color: Color = Color.red
-    var brush_icon: Texture
-    var brush_name: String
+	self._tool_panel.BeginNamedSection("SizeBox")
+	self._tool_panel.CreateLabel("Brush Size")
+	self._size_slider = self._tool_panel.CreateSlider("_brush_size", 20.0, 1.0, 400.0, 1.0, false)
+	self._size_slider.connect("value_changed", self, "_on_change_brush_size")
+	self._tool_panel.EndSection()
 
-    func debugp(msg):
-        if DEBUG:
-            printraw("BRS: ")
-            print(msg)
-        else:
-            pass
-
-    func paint(pen: Node2D, mouse_pos: Vector2, prev_mouse_pos: Vector2) -> void:
-        print("Raw Brush Called")
-    
-    func set_size(size: float) -> void:
-        print("Raw brush called")
-
-    func set_color(color: Color) -> void:
-        self.color = color
-
-    func on_select() -> void:
-        Global.WorldUI.CursorMode = 5
-
-    func on_stroke_end() -> void:
-        pass
+	self._tool_panel.CreateLabel("Brush Strength")
+	self._tool_panel.CreateSlider("_brush_strength", 75.0, 0.0, 100.0, 1.0, false)
 
 
-class Pencil extends ShadowBrush:
-    var stroke_points = []
-    var temp_line = Line2D.new()
-    var fuck = false
-    func _init() -> void:
-        self.brush_icon = load("res://ui/icons/tools/cave_brush.png")
-        self.brush_name = "Pencil"
-        self.temp_line.texture_mode = Line2D.LINE_TEXTURE_STRETCH
-        self.temp_line.antialiased = false
-
-        
-
-    func paint(pen: Node2D, mouse_pos: Vector2, prev_mouse_pos: Vector2) -> void:
-        if !fuck:
-            pen.add_child(temp_line)
-            self.fuck = true
-        if mouse_pos == prev_mouse_pos and len(temp_line.points) == 0:
-            temp_line.add_point(mouse_pos)
-        else:
-            temp_line.add_point(mouse_pos)
-            # # pen.draw_circle(mouse_pos, self.brush_radius, self.color)
-            # pen.draw_line(prev_mouse_pos, mouse_pos, self.color, self.brush_radius * 2)
-            # # pen.draw_circle(prev_mouse_pos, self.brush_radius, self.color)
-    
-    func set_size(size: float) -> void:
-        if size < 1:
-            debugp("Ignoring attempt to set size to less than 1")
-            return
-        
-        self.brush_radius = size
-        self.temp_line.width = size * 2
-        Global.WorldUI.CursorRadius = self.brush_radius
-
-    func set_color(color) -> void:
-        self.color = color
-        self.temp_line.default_color = color
-
-    func on_stroke_end() -> void:
-        self.temp_line.clear_points()
-
-    func on_select() -> void:
-        debugp("Set Cursor")
-        Global.WorldUI.CursorMode = 5
+	self._tool_panel.CreateLabel("Brush Color")
+	self._colorbox = self._tool_panel.CreateColorPalette("brush_color", false, "#ff0000", ["#ff0000"], false, true)
+	self._colorbox.connect("color_changed", self, "_on_change_brush_color")
+	
