@@ -12,7 +12,7 @@ class ShadowLayer extends TextureRect:
 
 
 
-    const LAYER_SCALE = 4
+    const LAYER_SCALE = 2
 
     func _init(world) -> void:
         self.World = world
@@ -22,7 +22,8 @@ class ShadowLayer extends TextureRect:
         self.set_size(World.WorldRect.size, false)
         self.rect_scale = Vector2(LAYER_SCALE, LAYER_SCALE)
 
-        self.texture.storage = ImageTexture.STORAGE_COMPRESS_LOSSLESS
+        # self.texture.storage = ImageTexture.STORAGE_COMPRESS_LOSSLESS
+        # self.texture.flags = ImageTexture.FLAGA
 
 
         
@@ -126,7 +127,7 @@ class ShadowLayer extends TextureRect:
             )
             print(texture_size)
             var ntexture = ImageTexture.new()
-            ntexture.storage = ImageTexture.STORAGE_COMPRESS_LOSSLESS
+            # ntexture.storage = ImageTexture.STORAGE_COMPRESS_LOSSLESS
             var nimage = Image.new()
             nimage.create(
                 texture_size.x,

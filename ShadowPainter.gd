@@ -61,10 +61,11 @@ func start() -> void:
 
 	self.name = "ShadowPainter"
 
+	self.ui()
 	
 	self.layer_manager = LayerManager.new(Global)
 	
-	self.brush_manager = BrushManager.new()
+	self.brush_manager = BrushManager.new(self._tool_panel)
 	self.brush_manager.Global = Global
 	
 	self.control = ShadowControl.new(Global, self.brush_manager, self.layer_manager)
@@ -76,11 +77,11 @@ func start() -> void:
 	logv("FUCK")
 	logv(ResourceFormatLoader.get_resource_type(Global.Root + "ShadowLayer.shader"))
 
-	self.ui()
-
+	
 	self.control.add_child(self.brush_manager)
 	Global.World.add_child(self.control)
-
+	
+	self.brush_manager.set_toolpanel(self._tool_panel)
 	logv("Finished start-up")
 
 
@@ -140,18 +141,32 @@ func ui() -> void:
 		"res://ui/icons/buttons/color_wheel.png"
 	)
 	self._tool_panel.UsesObjectLibrary = false
-
-	self._tool_panel.BeginNamedSection("SizeBox")
-	self._tool_panel.CreateLabel("Brush Size")
-	self._size_slider = self._tool_panel.CreateSlider("_brush_size", 20.0, 1.0, 400.0, 1.0, false)
-	self._size_slider.connect("value_changed", self, "_on_change_brush_size")
-	self._tool_panel.EndSection()
-
-	self._tool_panel.CreateLabel("Brush Strength")
-	self._tool_panel.CreateSlider("_brush_strength", 75.0, 0.0, 100.0, 1.0, false)
+	var toolpanel_scene = ResourceLoader.load(Global.Root + "ui/toolpanel.tscn")
+	var ColorPalette = load("res://scripts/ui/elements/ColorPalette.cs")
+	var _toolpanel_inst = toolpanel_scene.instance()
 
 
-	self._tool_panel.CreateLabel("Brush Color")
-	self._colorbox = self._tool_panel.CreateColorPalette("brush_color", false, "#ff0000", ["#ff0000"], false, true)
-	self._colorbox.connect("color_changed", self, "_on_change_brush_color")
+	self._tool_panel.add_child(_toolpanel_inst)
+	logv(self._tool_panel.get_path())
+
+	var col_pal = ColorPalette.new(false)
+	var cols = [Color.red.to_html(), Color.green.to_html()]
+	col_pal.name = "BrushPalette"
+
+	self._tool_panel.get_node("PanelRoot/BrushControls/BrushSettings/BColorC").add_child(col_pal)
+	col_pal.AddPresets(cols)
+
+	# self._tool_panel.BeginNamedSection("SizeBox")
+	# self._tool_panel.CreateLabel("Brush Size")
+	# self._size_slider = self._tool_panel.CreateSlider("_brush_size", 20.0, 1.0, 400.0, 1.0, false)
+	# self._size_slider.connect("value_changed", self, "_on_change_brush_size")
+	# self._tool_panel.EndSection()
+
+	# self._tool_panel.CreateLabel("Brush Strength")
+	# self._tool_panel.CreateSlider("_brush_strength", 75.0, 0.0, 100.0, 1.0, false)
+
+
+	# self._tool_panel.CreateLabel("Brush Color")
+	# self._colorbox = self._tool_panel.CreateColorPalette("brush_color", false, "#ff0000", ["#ff0000"], false, true)
+	# self._colorbox.connect("color_changed", self, "_on_change_brush_color")
 	

@@ -36,7 +36,7 @@ class ShadowControl extends Control:
     signal stroke_started(position)
 
     const LOG_LEVEL = 4
-    const RENDER_SCALE = 4
+    const RENDER_SCALE = 2
 
     func logv(msg):
         if LOG_LEVEL > 3:
@@ -80,8 +80,12 @@ class ShadowControl extends Control:
             Global.World.WorldRect.size
         )
         self._viewport.size_override_stretch = true
+        # VisualServer.set_default_clear_color(Color(1, 0, 1, 0))
 
         self._viewport.usage = Viewport.USAGE_2D
+        self._viewport.hdr = true
+        self._viewport.use_32_bpc_depth = true
+        # self._viewport.render_target_clear_mode = Viewport.CLEAR_MODE_ONLY_NEXT_FRAME
         self._viewport.transparent_bg = true
 
         self._viewport.gui_disable_input = true
@@ -92,7 +96,7 @@ class ShadowControl extends Control:
         logv("Creating viewport TextureRect")
         self._viewport_rend = TextureRect.new()
         self._viewport_rend.mouse_filter = Control.MOUSE_FILTER_IGNORE
-        self._viewport_rend.material.blend_mode = CanvasItem.BLEND_MODE_DISABLED
+        self._viewport_rend.material.blend_mode = CanvasItem.BLEND_MODE_PREMULT_ALPHA
         self._viewport_rend.set_size(Global.World.WorldRect.size, false)
         self._viewport_rend.rect_scale = Vector2(RENDER_SCALE, RENDER_SCALE)
         self._viewport_rend.name = "ViewportRender"
@@ -103,13 +107,14 @@ class ShadowControl extends Control:
         
         self._viewport_mod = Node2D.new()
         self._viewport_mod.name = "ViewportMod"
+        self._viewport_mod.material.blend_mode = CanvasItem.BLEND_MODE_PREMULT_ALPHA
         
         
         
         logv("Creating pen")
         self._pen = Node2D.new()
         self._pen.name = "Pen"
-        self._pen.material.blend_mode = CanvasItem.BLEND_MODE_DISABLED
+        # self._pen.material.blend_mode = CanvasItem.BLEND_MODE_DISABLED
         self._pen.connect("draw", self, "_on_draw")
         self._viewport.add_child(self._pen)
         self._current_level = self._layerm.get_level_id(Global.World.Level)
@@ -127,7 +132,7 @@ class ShadowControl extends Control:
         self.add_child(self._current_layer)
         self.add_child(self._viewport_mod)
         self.add_child(self._level_cont)
-        self._viewport_mod.add_child(self._viewport)
+        self.add_child(self._viewport)
         self._viewport_mod.add_child(self._viewport_rend)
         # self.add_child(self._viewport_rend)
 
@@ -156,6 +161,7 @@ class ShadowControl extends Control:
 
     func _on_draw() -> void:
         var mouse_pos = get_local_mouse_position()
+        
         if self._brushmanager.current_brush == null:
             return
         
@@ -179,8 +185,7 @@ class ShadowControl extends Control:
     func _on_stroke_finish() -> void:
         logv("Blending new stroke to layer")
         var viewport_render: Image = self._viewport_tex.get_data()
-        viewport_render.fix_alpha_edges()
-        logi(viewport_render)
+
         var updated_region = viewport_render.get_used_rect()
 
         var shadow_render = self._current_layer.texture.get_data()
@@ -194,14 +199,12 @@ class ShadowControl extends Control:
             "x": shadow_render.get_width(),
             "y": shadow_render.get_height()
         }))
-        # shadow_render.compress(Image.COMPRESS_PVRTC2, Image.COMPRESS_SOURCE_GENERIC, 1.0)
         
         self._current_layer.texture.set_data(shadow_render)
+        var l = shadow_render.save_png("R:\\FUCKER.png")
+        logv(l)
 
         self._brushmanager.current_brush.on_stroke_end()
-        logv(self._current_layer.texture.get_format())
-        # var compressed = shadow_render.duplicate(false)
-        # compressed.compress(Image.COMPRESS_PVRTC2, Image.COMPRESS_SOURCE_GENRIC, 1.0)
 
         logv("Saving to key: " + self._current_layer.get_embedded_key())
         Global.World.EmbeddedTextures[self._current_layer.get_embedded_key()] = self._current_layer.texture.duplicate(false)
