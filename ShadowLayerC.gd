@@ -28,7 +28,9 @@ class ShadowLayer extends Sprite:
         # self.texture.flags = ImageTexture.FLAGA
 
 
-        
+    func queue_free() -> void:
+        print("[ShadowLayer]: Freeing")
+        .queue_free()
 
     func _enter_tree() -> void:
         
@@ -69,6 +71,7 @@ class ShadowLayer extends Sprite:
         ntexture.create_from_image(nimage)
         self._level_id = lvl_id
         self._layer_num = layer_n
+        self.z_index = layer_n
 
         self.world_tex = ntexture
         self.name = str(self)
@@ -85,13 +88,13 @@ class ShadowLayer extends Sprite:
     func set_level_id(new_level_id: int) -> void:
         var old_worldtex_key = self.get_embedded_key()
         # Copy current texture
-        var current_texture = self.texture.duplicate(false)
+        var current_texture = self.world_tex.duplicate(false)
         # Set layer number
         self._level_id = new_level_id
         # Erase old key
-        # World.EmbeddedTextures.erase(old_worldtex_key)
+        World.EmbeddedTextures.erase(old_worldtex_key)
         # Equivalent to Global.World.EmbeddedTextures[self.get_embedded_key()] = current_texture
-        self.texture = current_texture
+        self.world_tex = current_texture
 
     func get_level_id() -> int:
         return self._level_id
@@ -104,8 +107,9 @@ class ShadowLayer extends Sprite:
         var current_texture = self.texture.duplicate(false)
         # Set layer number
         self._layer_num = new_layer
+        self.z_index = new_layer
         # Erase old key
-        # World.EmbeddedTextures.erase(old_worldtex_key)
+        World.EmbeddedTextures.erase(old_worldtex_key)
         # Equivalent to Global.World.EmbeddedTextures[self.get_embedded_key()] = current_texture
         self.texture = current_texture
 

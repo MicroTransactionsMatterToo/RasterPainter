@@ -77,17 +77,14 @@ func start() -> void:
 	logv(Global.Editor.ObjectLibraryPanel)
 	
 	self.control = ShadowControl.new(Global, self.brush_manager, self.layer_manager)
-	# self.layer_manager.get_level_ids()
-
-
-	
+		
 	self.control.add_child(self.brush_manager)
 	Global.World.add_child(self.control)
 	
 	self.brush_manager.set_toolpanel(self._tool_panel)
 	logv("Finished start-up")
 
-	self._on_change_level(Global.World.Level)
+	self.control.connect("level_changed", self, "_on_change_level")
 
 
 func on_tool_enable(tool_id) -> void:
@@ -97,25 +94,6 @@ func on_tool_enable(tool_id) -> void:
 func on_tool_disable(tool_id) -> void:
 	logv("Tool Disabled")
 	self._enabled = false
-
-func on_level_change() -> void:
-	pass
-	# logv("Level Changed, from {old} to {new}".format({
-	# 	"old": self._prev_frame_level.ID,
-	# 	"new": Global.World.Level.ID
-	# }))
-	# var level_layers = self.get_current_level_layers()
-	# logv("New level layers: " + str(level_layers))
-
-	# if len(level_layers) == 1:
-	# 	logv("Only one layer exists on new level, setting it as current layer")
-	# 	self.layer_num = level_layers[0].layer_num
-	# if len(level_layers) == 0:
-	# 	logv("No layers on new level, setting layer_num to default (-50)")
-	# 	self.layer_num = -50
-	
-	# self.control.current_layer = self.get_current_layer()
-	# self.control.set_level(Global.World.Level.ID, level_layers)
 	
 
 func on_content_input(input):
@@ -123,11 +101,7 @@ func on_content_input(input):
 		self.control._on_tool_input(input)
 
 func _on_change_brush_color(color) -> void:
-	# print(Global.World.EmbeddedTextures.keys())
-	# print(World.EmbeddedTextures.values())
 	self.brush_manager.color = color
-	# self.control._viewport_mod.modulate.a = color.a
-	# self.control._pen.self_modulate.a = color.a
 
 func _on_change_brush_size(nsize) -> void:
 	self.brush_manager.size = nsize
@@ -171,12 +145,12 @@ func ui() -> void:
 	layerpanel_parent.add_child_below_node(Global.Editor.ObjectLibraryPanel, self._tool_sidepanel)
 
 	## Layer Tree Stuff
-
 	self._tool_tree = self._tool_sidepanel.find_node("ShadowLayers")
-	
 
-func _on_change_level(nlevel):
-	print("TEST")
+func _on_change_level(curr_layer):
+	self.populate_tree(curr_layer)
+
+func populate_tree(curr_layer):
 	# Clear current entries in layer menu
 	for item in self._tool_tree.get_children():
 		self._tool_tree.remove_child(item)
@@ -185,13 +159,26 @@ func _on_change_level(nlevel):
 	# Create new entries
 	var new_layers = self.layer_manager.loaded_layers
 	new_layers.sort_custom(self.layer_manager, "sort_layers_asc")
+
 	for layer in self.layer_manager.loaded_layers:
-		print(layer.z_index)
+		if layer.level_id == curr_layer.level_id:
+			var n_item = self.setup_tree_item(layer)
+			if n_item != null:
+				self._tool_tree.add_child(n_item)
 
 func setup_tree_item(layer):
-	var tree_item = self.LayerTreeEntryPrefab.instance()
+	logv("Creating tree entry for " + str(layer))
+
+	var tree_item = LayerTreeEntryPrefab.instance()
+	tree_item.get_node("LayerPreview").texture = layer.world_tex
 	tree_item.get_node("SelectButton").icon = load("res://ui/icons/misc/approve.png")
 	tree_item.get_node("DeleteButton").icon = load("res://ui/icons/misc/delete.png")
+	tree_item.get_node("LayerName").text = str(layer.z_index)
+
+	tree_item.get_node("LayerCtrl/MoveUp").icon = load("res://ui/icons/misc/up.png")
+	tree_item.get_node("LayerCtrl/MoveUp").size = Vector2(25, 25)
+	tree_item.get_node("LayerCtrl/MoveDown").icon = load("res://ui/icons/misc/down.png")
+	tree_item.get_node("LayerCtrl/MoveDown").size = Vector2(25, 25)
 
 
 	return tree_item

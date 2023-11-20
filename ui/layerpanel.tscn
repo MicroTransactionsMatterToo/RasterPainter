@@ -31,20 +31,15 @@ margin_bottom = 14.0
 size_flags_vertical = 0
 text = "Layers"
 
-[node name="Panel" type="Panel" parent="MarginContainer/VBoxContainer"]
-margin_top = 18.0
+[node name="LayerTree" parent="MarginContainer/VBoxContainer" instance_placeholder="res://ShadowPainter/ui/layertree.tscn"]
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+margin_top = 194.0
 margin_right = 234.0
 margin_bottom = 214.0
-size_flags_vertical = 3
 
-[node name="ShadowLayers" type="VBoxContainer" parent="MarginContainer/VBoxContainer/Panel"]
-anchor_right = 1.0
-anchor_bottom = 1.0
-margin_top = 4.0
-margin_bottom = -4.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
-
-[node name="ShadowLayer" parent="MarginContainer/VBoxContainer/Panel/ShadowLayers" instance_placeholder="res://ShadowPainter/ui/layertree_item.tscn"]
+[node name="Button" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer"]
 margin_right = 234.0
-size_flags_horizontal = 1
+margin_bottom = 20.0
+size_flags_horizontal = 3
+text = "Add Layer"

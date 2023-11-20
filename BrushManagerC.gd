@@ -68,6 +68,10 @@ class BrushManager extends Node:
         
 
         self._current_brush_name = self._brushes.values()[0].brush_name
+
+    func queue_free() -> void:
+        print("[BrushManager]: Freeing")
+        .queue_free()
     
     func _ui_setup() -> void:
         var brush_size_c = self._tool_panel.get_node("PanelRoot/BrushControls/BrushSettings/BSizeC/BSize")

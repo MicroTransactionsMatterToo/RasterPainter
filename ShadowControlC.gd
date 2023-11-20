@@ -7,7 +7,7 @@ class ShadowControl extends Control:
 
     var _viewport: Viewport
     var _viewport_tex: ViewportTexture
-    var _viewport_rend: TextureRect
+    var _viewport_rend: Sprite
     var _viewport_size_override
     var _viewport_mod: Node2D
     
@@ -64,7 +64,17 @@ class ShadowControl extends Control:
         self._layer_num = -50
         self._current_level = Global.World.Level.ID
 
+    func _enter_tree() -> void:
+        print("ENTERED TREE")
     
+    func _exit_tree() -> void:
+        print("EXITING TREE, CLEAN UP STARTED")
+        print(is_instance_valid(self._layerm))
+        self._layerm.cleanup()
+        print(is_instance_valid(self._layerm))
+        self._current_layer.queue_free()
+        self._brushmanager.queue_free()
+        self.queue_free()
 
     func _ready() -> void:
         logi("Setting up ShadowControl")
@@ -96,15 +106,15 @@ class ShadowControl extends Control:
         self._viewport.render_target_v_flip = true
         logv("Created viewport")
 
-        logv("Creating viewport TextureRect")
-        self._viewport_rend = TextureRect.new()
-        self._viewport_rend.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        logv("Creating viewport Sprite")
+        self._viewport_rend = Sprite.new()
         self._viewport_rend.material = CanvasItemMaterial.new()
         self._viewport_rend.material.blend_mode = CanvasItem.BLEND_MODE_PREMULT_ALPHA
-        self._viewport_rend.set_size(Global.World.WorldRect.size, false)
+        self._viewport_rend.scale = Vector2(RENDER_SCALE, RENDER_SCALE)
+        self._viewport_rend.centered = false
         self._viewport_rend.rect_scale = Vector2(RENDER_SCALE, RENDER_SCALE)
         self._viewport_rend.name = "ViewportRender"
-        logv("Created viewport TextureRect")
+        logv("Created viewport Sprite")
         
         self._viewport_tex = self._viewport.get_texture()
         self._viewport_rend.set_texture(self._viewport_tex)
@@ -136,7 +146,8 @@ class ShadowControl extends Control:
         self.add_child(self._current_layer)
         self.add_child(self._viewport)
         self._viewport_mod.add_child(self._viewport_rend)
-        # self.add_child(self._viewport_rend)
+        
+        self.emit_signal("level_changed", self._current_layer)
 
     func _process(delta: float) -> void:
         if Global.Header.data == null:
@@ -214,6 +225,7 @@ class ShadowControl extends Control:
         self.print_tree_pretty()
         self.remove_child(self._current_layer)
         self._current_layer = nlayer
+        self._viewport_rend.z_index = nlayer.z_index
         self.add_child(nlayer)
 
     func get_current_layer():

@@ -31,10 +31,19 @@ class LayerManager extends Object:
         ShadowLayer = 	load(Global.Root + "ShadowLayerC.gd").ShadowLayer
 
         self.name = "LayerManager"
+
+    # Frees loaded layers and then itself
+    func cleanup() -> void:
+        for layer in self.loaded_layers:
+            if is_instance_valid(layer):
+                layer.queue_free()
+        self.free()
     
+    # getter
     func _get_loaded_layers() -> Array:
         return self._layers
 
+    # Utility function that splits key from Global.World.EmbeddedTextures into it's parts
     func get_key_info(key: String):
         var split_key = key.split("|")
         if len(split_key) < 3:
@@ -92,6 +101,7 @@ class LayerManager extends Object:
 
         return level_layers
 
+
     # Attempts to load the given layer. 
     # Returns null if layer does not exist
     func load_layer(level_id, layer_num):
@@ -128,6 +138,7 @@ class LayerManager extends Object:
         
         return null
     
+    # Creates an invisible text object with a unique node_id on the given level
     func create_level_id(level):
         logv("Generating new level id for " + level.Label)
         var new_text = level.Texts.CreateText()
@@ -138,6 +149,8 @@ class LayerManager extends Object:
         new_text.set_meta("node_id", text_id)
         return text_id
     
+    # Attempts to find the ID for the current level.
+    # Automatically creates ID if it can't find one
     func get_level_id(level):
         var level_ids = self.get_level_ids()
         for key in level_ids.keys():
@@ -147,13 +160,14 @@ class LayerManager extends Object:
         var key = self.create_level_id(level)
         return key
         
-
+    # Gets a level by ID
     func get_level_by_id(id):
         for level in Global.World.AllLevels:
             for textChild in level.Texts.get_children():
                 if textChild.GetNodeID() == id:
                     return level
 
+    # Returns a dict of all levels, mapped as id: Level
     func get_level_ids() -> Dictionary:
         var id_nodes = {}
         for level in Global.World.AllLevels:
@@ -163,11 +177,13 @@ class LayerManager extends Object:
         
         return id_nodes
     
+    # Function for sorting layers by z_index
     func sort_layers(asc: bool):
         print("FUD")
         if asc:
             self._layers.sort_custom(LayerManager, "sort_layers_asc")
     
+    # Sorts layers in ascending order
     static func sort_layers_asc(a, b):
         print("FUCK")
         if a.layer_num < b.layer_num:

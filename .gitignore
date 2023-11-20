@@ -1,0 +1,5 @@
+docs/
+*.puml
+*.gde
+*.tmp
+.vscode
