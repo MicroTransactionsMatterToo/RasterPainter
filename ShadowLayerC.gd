@@ -1,6 +1,6 @@
 var script_class = "tool"
 
-class ShadowLayer extends TextureRect:
+class ShadowLayer extends Sprite:
     var layer_num: int setget set_layer_num, get_layer_num
     var _layer_num: int
     var level_id: int setget set_level_id, get_level_id
@@ -18,8 +18,10 @@ class ShadowLayer extends TextureRect:
         self.World = world
         self.mouse_filter = Control.MOUSE_FILTER_IGNORE
         
-        self.material.blend_mode = CanvasItem.BLEND_MODE_DISABLED
-        self.set_size(World.WorldRect.size, false)
+        self.material = CanvasItemMaterial.new()
+        self.material.blend_mode = CanvasItem.BLEND_MODE_PREMULT_ALPHA
+        self.centered = false
+        self.scale = Vector2(LAYER_SCALE, LAYER_SCALE)
         self.rect_scale = Vector2(LAYER_SCALE, LAYER_SCALE)
 
         # self.texture.storage = ImageTexture.STORAGE_COMPRESS_LOSSLESS
@@ -37,7 +39,7 @@ class ShadowLayer extends TextureRect:
     # Embedded Key format
     # LevelID|Layer Number|Modulate Color (hex)
     # Example
-    # 1|-50|#ff00ff|0.5
+    # afd2113|-50|#ff00ff|0.5
 
     func create_from_embedded_key(key: String):
         var split_key = key.split("|")
@@ -46,10 +48,8 @@ class ShadowLayer extends TextureRect:
         self.layer_num = int(split_key[1])
         self.modulate = Color(split_key[2])
 
-        self.z_index = self.layer_num
         self.world_tex = World.EmbeddedTextures[key]
         self.name = str(self)
-        self.storage = ImageTexture.STORAGE_COMPRESS_LOSSLESS
         
 
     func create_new(lvl_id, layer_n):

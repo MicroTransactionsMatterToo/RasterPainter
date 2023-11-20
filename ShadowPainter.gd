@@ -9,9 +9,12 @@ var ShadowControlC
 var ShadowControl
 var LayerManagerC
 var LayerManager
+var LayerTreeEntryPrefab
 
 var _enabled = false
 var _tool_panel
+var _tool_sidepanel
+var _tool_tree
 
 var _size_slider
 var _strength_slider
@@ -58,6 +61,9 @@ func start() -> void:
 	LayerManagerC 	= ResourceLoader.load(Global.Root + "LayerManagerC.gd", "GDScript", true)
 	LayerManager	= load(Global.Root + "LayerManagerC.gd").LayerManager
 
+	self.LayerTreeEntryPrefab = ResourceLoader.load(Global.Root + "ui/layertree_item.tscn", "", true)
+
+
 
 	self.name = "ShadowPainter"
 
@@ -67,15 +73,12 @@ func start() -> void:
 	
 	self.brush_manager = BrushManager.new(self._tool_panel)
 	self.brush_manager.Global = Global
+	logv("Managers Created")
+	logv(Global.Editor.ObjectLibraryPanel)
 	
 	self.control = ShadowControl.new(Global, self.brush_manager, self.layer_manager)
 	# self.layer_manager.get_level_ids()
 
-	logv("Managers Created")
-	logv(Global.World.EmbeddedTextures)
-	logv(ResourceLoader.get_recognized_extensions_for_type("Shader"))
-	logv("FUCK")
-	logv(ResourceFormatLoader.get_resource_type(Global.Root + "ShadowLayer.shader"))
 
 	
 	self.control.add_child(self.brush_manager)
@@ -83,6 +86,8 @@ func start() -> void:
 	
 	self.brush_manager.set_toolpanel(self._tool_panel)
 	logv("Finished start-up")
+
+	self._on_change_level(Global.World.Level)
 
 
 func on_tool_enable(tool_id) -> void:
@@ -156,17 +161,37 @@ func ui() -> void:
 	self._tool_panel.get_node("PanelRoot/BrushControls/BrushSettings/BColorC").add_child(col_pal)
 	col_pal.AddPresets(cols)
 
-	# self._tool_panel.BeginNamedSection("SizeBox")
-	# self._tool_panel.CreateLabel("Brush Size")
-	# self._size_slider = self._tool_panel.CreateSlider("_brush_size", 20.0, 1.0, 400.0, 1.0, false)
-	# self._size_slider.connect("value_changed", self, "_on_change_brush_size")
-	# self._tool_panel.EndSection()
+	var layerpanel = ResourceLoader.load(Global.Root + "ui/layerpanel.tscn", "", true)
+	var layerpanel_mat = ResourceLoader.load("res://materials/MenuBackground.material", "ShaderMaterial", false)
+	var layerpanel_parent = Global.Editor.ObjectLibraryPanel.get_parent()
 
-	# self._tool_panel.CreateLabel("Brush Strength")
-	# self._tool_panel.CreateSlider("_brush_strength", 75.0, 0.0, 100.0, 1.0, false)
-
-
-	# self._tool_panel.CreateLabel("Brush Color")
-	# self._colorbox = self._tool_panel.CreateColorPalette("brush_color", false, "#ff0000", ["#ff0000"], false, true)
-	# self._colorbox.connect("color_changed", self, "_on_change_brush_color")
+	self._tool_sidepanel = layerpanel.instance()
+	self._tool_sidepanel.material = layerpanel_mat
 	
+	layerpanel_parent.add_child_below_node(Global.Editor.ObjectLibraryPanel, self._tool_sidepanel)
+
+	## Layer Tree Stuff
+
+	self._tool_tree = self._tool_sidepanel.find_node("ShadowLayers")
+	
+
+func _on_change_level(nlevel):
+	print("TEST")
+	# Clear current entries in layer menu
+	for item in self._tool_tree.get_children():
+		self._tool_tree.remove_child(item)
+		item.queue_free()
+	
+	# Create new entries
+	var new_layers = self.layer_manager.loaded_layers
+	new_layers.sort_custom(self.layer_manager, "sort_layers_asc")
+	for layer in self.layer_manager.loaded_layers:
+		print(layer.z_index)
+
+func setup_tree_item(layer):
+	var tree_item = self.LayerTreeEntryPrefab.instance()
+	tree_item.get_node("SelectButton").icon = load("res://ui/icons/misc/approve.png")
+	tree_item.get_node("DeleteButton").icon = load("res://ui/icons/misc/delete.png")
+
+
+	return tree_item

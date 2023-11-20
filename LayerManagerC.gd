@@ -162,3 +162,14 @@ class LayerManager extends Object:
                     id_nodes[textChild.get_meta("node_id")] = level
         
         return id_nodes
+    
+    func sort_layers(asc: bool):
+        print("FUD")
+        if asc:
+            self._layers.sort_custom(LayerManager, "sort_layers_asc")
+    
+    static func sort_layers_asc(a, b):
+        print("FUCK")
+        if a.layer_num < b.layer_num:
+            return true
+        return false

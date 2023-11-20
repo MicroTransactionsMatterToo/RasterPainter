@@ -35,6 +35,9 @@ class ShadowControl extends Control:
     signal stroke_finished(position)
     signal stroke_started(position)
 
+    signal level_changed(level)
+    signal layer_changed(layer)
+
     const LOG_LEVEL = 4
     const RENDER_SCALE = 2
 
@@ -82,9 +85,9 @@ class ShadowControl extends Control:
         self._viewport.size_override_stretch = true
         # VisualServer.set_default_clear_color(Color(1, 0, 1, 0))
 
-        self._viewport.usage = Viewport.USAGE_2D
-        self._viewport.hdr = true
-        self._viewport.use_32_bpc_depth = true
+        self._viewport.usage = Viewport.USAGE_3D
+        self._viewport.disable_3d = true
+        self._viewport.hdr = false
         # self._viewport.render_target_clear_mode = Viewport.CLEAR_MODE_ONLY_NEXT_FRAME
         self._viewport.transparent_bg = true
 
@@ -96,6 +99,7 @@ class ShadowControl extends Control:
         logv("Creating viewport TextureRect")
         self._viewport_rend = TextureRect.new()
         self._viewport_rend.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        self._viewport_rend.material = CanvasItemMaterial.new()
         self._viewport_rend.material.blend_mode = CanvasItem.BLEND_MODE_PREMULT_ALPHA
         self._viewport_rend.set_size(Global.World.WorldRect.size, false)
         self._viewport_rend.rect_scale = Vector2(RENDER_SCALE, RENDER_SCALE)
@@ -107,14 +111,12 @@ class ShadowControl extends Control:
         
         self._viewport_mod = Node2D.new()
         self._viewport_mod.name = "ViewportMod"
-        self._viewport_mod.material.blend_mode = CanvasItem.BLEND_MODE_PREMULT_ALPHA
         
         
         
         logv("Creating pen")
         self._pen = Node2D.new()
         self._pen.name = "Pen"
-        # self._pen.material.blend_mode = CanvasItem.BLEND_MODE_DISABLED
         self._pen.connect("draw", self, "_on_draw")
         self._viewport.add_child(self._pen)
         self._current_level = self._layerm.get_level_id(Global.World.Level)
@@ -129,9 +131,9 @@ class ShadowControl extends Control:
     
 
         logv("Adding children")
-        self.add_child(self._current_layer)
         self.add_child(self._viewport_mod)
         self.add_child(self._level_cont)
+        self.add_child(self._current_layer)
         self.add_child(self._viewport)
         self._viewport_mod.add_child(self._viewport_rend)
         # self.add_child(self._viewport_rend)
@@ -201,8 +203,6 @@ class ShadowControl extends Control:
         }))
         
         self._current_layer.texture.set_data(shadow_render)
-        var l = shadow_render.save_png("R:\\FUCKER.png")
-        logv(l)
 
         self._brushmanager.current_brush.on_stroke_end()
 
@@ -211,9 +211,10 @@ class ShadowControl extends Control:
 
     func set_current_layer(nlayer) -> void:
         logv("Replacing ")
+        self.print_tree_pretty()
         self.remove_child(self._current_layer)
         self._current_layer = nlayer
-        self.add_child_below_node(self._brushmanager, self._current_layer)
+        self.add_child(nlayer)
 
     func get_current_layer():
         return self._current_layer
@@ -239,7 +240,6 @@ class ShadowControl extends Control:
             # TODO: set current layer to the upper most
             self.current_layer = level_layers[0]
 
-        
 
         logv("Clearing _level_cont children")
         for child in self._level_cont.get_children():
@@ -248,3 +248,5 @@ class ShadowControl extends Control:
         for layer in self._layerm.load_level_layers(self._current_level):
             if layer.level_id != self.current_layer.level_id:
                 self._level_cont.add_child(layer)
+        
+        self.emit_signal("level_changed", self.current_layer)

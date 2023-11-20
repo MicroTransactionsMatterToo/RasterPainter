@@ -2,6 +2,7 @@ class_name BrushManagerC
 var script_class = "tool"
 
 const LOG_LEVEL = 4
+const SHADER_DIR = "shaders/brush_shaders/"
 
 class BrushManager extends Node:
 
@@ -191,20 +192,24 @@ class Pencil extends Brush:
     var line_shader
 
     func _init(global).(global) -> void:
-       self.icon = load("res://ui/icons/tools/cave_brush.png")
-       self.brush_name = "Pencil"
-       self.name = "PencilBrush @" + str(self.get_instance_id())
+        self.icon = load("res://ui/icons/tools/cave_brush.png")
+        self.brush_name = "Pencil"
+        self.name = "PencilBrush @" + str(self.get_instance_id())
+        
+        self.stroke_line.texture_mode = Line2D.LINE_TEXTURE_STRETCH
+        self.stroke_line.antialiased = false
+        self.stroke_line.material.blend_mode = CanvasItem.BLEND_MODE_DISABLED
+        self.stroke_line.joint_mode = Line2D.LINE_JOINT_ROUND
+        self.stroke_line.name = "PenLine2D"
 
-       self.stroke_line.texture_mode = Line2D.LINE_TEXTURE_STRETCH
-       self.stroke_line.antialiased = false
-       self.stroke_line.material.blend_mode = CanvasItem.BLEND_MODE_DISABLED
-       self.stroke_line.joint_mode = Line2D.LINE_JOINT_ROUND
-       self.stroke_line.name = "PenLine2D"
+        self.line_shader = ResourceLoader.load(
+            Global.Root + SHADER_DIR + "PencilBrush.shader", 
+            "Shader", 
+            true
+        ).duplicate(false)
 
-       self.line_shader = ResourceLoader.load(Global.Root + "ShadowLayer.shader", "Shader", true).duplicate(false)
-
-       self.stroke_line.material = ShaderMaterial.new()
-       self.stroke_line.material.shader = self.line_shader
+        self.stroke_line.material = ShaderMaterial.new()
+        self.stroke_line.material.shader = self.line_shader
 
     func paint(pen: Node2D, mouse_pos: Vector2, prev_mouse_pos: Vector2) -> void:
         if !self.line_added:
@@ -259,12 +264,15 @@ class TextureBrush extends Brush:
 
         self.stroke_line.texture_mode = Line2D.LINE_TEXTURE_TILE
         self.stroke_line.antialiased = false
-        # self.stroke_line.material.blend_mode = CanvasItem.BLEND_MODE_DISABLED
         self.stroke_line.joint_mode = Line2D.LINE_JOINT_ROUND
-        self.stroke_line.name = "PenLine2D"
+        self.stroke_line.name = "TextureLine2D"
 
 
-        self.line_shader = ResourceLoader.load(Global.Root + "TextureBrush.shader", "Shader", true).duplicate(false)
+        self.line_shader = ResourceLoader.load(
+            Global.Root + SHADER_DIR + "TextureBrush.shader", 
+            "Shader", 
+            true
+        ).duplicate(false)
         self.line_mat = ShaderMaterial.new()
         self.line_mat.shader = self.line_shader
 
@@ -274,7 +282,6 @@ class TextureBrush extends Brush:
         self.stroke_line.texture = self.stroke_texture
 
     func paint(pen: Node2D, mouse_pos: Vector2, prev_mouse_pos: Vector2) -> void:
-        logv("TEX BR")
         if !self.line_added:
             pen.add_child(self.stroke_line)
             self.line_added = true
@@ -343,20 +350,24 @@ class ShadowBrush extends Brush:
     var line_shader
 
     func _init(global).(global) -> void:
-       self.icon = load("res://ui/icons/tools/cave_brush.png")
-       self.brush_name = "Shadow"
-       self.name = "ShadowBrush @" + str(self.get_instance_id())
+        self.icon = load("res://ui/icons/tools/cave_brush.png")
+        self.brush_name = "Shadow"
+        self.name = "ShadowBrush @" + str(self.get_instance_id())
 
-       self.stroke_line.texture_mode = Line2D.LINE_TEXTURE_STRETCH
-       self.stroke_line.antialiased = false
-       self.stroke_line.material.blend_mode = CanvasItem.BLEND_MODE_DISABLED
-       self.stroke_line.joint_mode = Line2D.LINE_JOINT_ROUND
-       self.stroke_line.name = "PenLine2D"
+        self.stroke_line.texture_mode = Line2D.LINE_TEXTURE_TILE
+        self.stroke_line.antialiased = false
+        self.stroke_line.material.blend_mode = CanvasItem.BLEND_MODE_DISABLED
+        self.stroke_line.joint_mode = Line2D.LINE_JOINT_SHARP
+        self.stroke_line.name = "PenLine2D"
 
-       self.line_shader = ResourceLoader.load(Global.Root + "ShadowBrush.shader", "Shader", true).duplicate(false)
+        self.line_shader = ResourceLoader.load(
+            Global.Root + SHADER_DIR + "ShadowBrush.shader", 
+            "Shader", 
+            true
+        ).duplicate(false)
 
-       self.stroke_line.material = ShaderMaterial.new()
-       self.stroke_line.material.shader = self.line_shader
+        self.stroke_line.material = ShaderMaterial.new()
+        self.stroke_line.material.shader = self.line_shader
 
     func paint(pen: Node2D, mouse_pos: Vector2, prev_mouse_pos: Vector2) -> void:
         if !self.line_added:
@@ -365,7 +376,10 @@ class ShadowBrush extends Brush:
         
         if len(stroke_line.points) > 1:
             if stroke_line.points[-1].distance_to(mouse_pos) < 20.0:
+                var recent_point = (self.stroke_line.get_point_count() - 1)
+                self.stroke_line.set_point_position(recent_point, mouse_pos)
                 return
+
         
         self.stroke_line.add_point(mouse_pos)
 
