@@ -9,7 +9,8 @@ var ShadowControlC
 var ShadowControl
 var LayerManagerC
 var LayerManager
-var LayerTreeEntryPrefab
+var PainterUIC
+var LayerPanel
 
 var _enabled = false
 var _tool_panel
@@ -60,16 +61,18 @@ func start() -> void:
 	ShadowControl 	= load(Global.Root + "ShadowControlC.gd").ShadowControl
 	LayerManagerC 	= ResourceLoader.load(Global.Root + "LayerManagerC.gd", "GDScript", true)
 	LayerManager	= load(Global.Root + "LayerManagerC.gd").LayerManager
+	PainterUIC 		= ResourceLoader.load(Global.Root + "PainterUIC.gd", "GDScript", true)
+	LayerPanel		= load(Global.Root + "PainterUIC.gd").LayerPanel
 
-	self.LayerTreeEntryPrefab = ResourceLoader.load(Global.Root + "ui/layertree_item.tscn", "", true)
 
 
 
 	self.name = "ShadowPainter"
 
-	self.ui()
 	
 	self.layer_manager = LayerManager.new(Global)
+
+	self.ui()
 	
 	self.brush_manager = BrushManager.new(self._tool_panel)
 	self.brush_manager.Global = Global
@@ -77,14 +80,16 @@ func start() -> void:
 	logv(Global.Editor.ObjectLibraryPanel)
 	
 	self.control = ShadowControl.new(Global, self.brush_manager, self.layer_manager)
-		
+	
 	self.control.add_child(self.brush_manager)
 	Global.World.add_child(self.control)
 	
 	self.brush_manager.set_toolpanel(self._tool_panel)
 	logv("Finished start-up")
 
-	self.control.connect("level_changed", self, "_on_change_level")
+	self.layer_panel()
+	self.control.emit_signal("level_changed", self.control._current_level)
+	
 
 
 func on_tool_enable(tool_id) -> void:
@@ -135,50 +140,55 @@ func ui() -> void:
 	self._tool_panel.get_node("PanelRoot/BrushControls/BrushSettings/BColorC").add_child(col_pal)
 	col_pal.AddPresets(cols)
 
-	var layerpanel = ResourceLoader.load(Global.Root + "ui/layerpanel.tscn", "", true)
-	var layerpanel_mat = ResourceLoader.load("res://materials/MenuBackground.material", "ShaderMaterial", false)
+func layer_panel() -> void:
 	var layerpanel_parent = Global.Editor.ObjectLibraryPanel.get_parent()
+	var layerpanel = LayerPanel.new(Global, self.layer_manager, self.control)
 
-	self._tool_sidepanel = layerpanel.instance()
-	self._tool_sidepanel.material = layerpanel_mat
+	layerpanel_parent.add_child(layerpanel)
+
+	# var layerpanel = ResourceLoader.load(Global.Root + "ui/layerpanel.tscn", "", true)
+	# var layerpanel_mat = ResourceLoader.load("res://materials/MenuBackground.material", "ShaderMaterial", false)
+
+	# self._tool_sidepanel = layerpanel.instance()
+	# self._tool_sidepanel.material = layerpanel_mat
 	
-	layerpanel_parent.add_child_below_node(Global.Editor.ObjectLibraryPanel, self._tool_sidepanel)
+	# layerpanel_parent.add_child_below_node(Global.Editor.ObjectLibraryPanel, self._tool_sidepanel)
 
-	## Layer Tree Stuff
-	self._tool_tree = self._tool_sidepanel.find_node("ShadowLayers")
+	# ## Layer Tree Stuff
+	# self._tool_tree = self._tool_sidepanel.find_node("ShadowLayers")
 
 func _on_change_level(curr_layer):
-	self.populate_tree(curr_layer)
+	pass
 
-func populate_tree(curr_layer):
-	# Clear current entries in layer menu
-	for item in self._tool_tree.get_children():
-		self._tool_tree.remove_child(item)
-		item.queue_free()
+# func populate_tree(curr_layer):
+# 	# Clear current entries in layer menu
+# 	for item in self._tool_tree.get_children():
+# 		self._tool_tree.remove_child(item)
+# 		item.queue_free()
 	
-	# Create new entries
-	var new_layers = self.layer_manager.loaded_layers
-	new_layers.sort_custom(self.layer_manager, "sort_layers_asc")
+# 	# Create new entries
+# 	var new_layers = self.layer_manager.loaded_layers
+# 	new_layers.sort_custom(self.layer_manager, "sort_layers_asc")
 
-	for layer in self.layer_manager.loaded_layers:
-		if layer.level_id == curr_layer.level_id:
-			var n_item = self.setup_tree_item(layer)
-			if n_item != null:
-				self._tool_tree.add_child(n_item)
+# 	for layer in self.layer_manager.loaded_layers:
+# 		if layer.level_id == curr_layer.level_id:
+# 			var n_item = self.setup_tree_item(layer)
+# 			if n_item != null:
+# 				self._tool_tree.add_child(n_item)
 
-func setup_tree_item(layer):
-	logv("Creating tree entry for " + str(layer))
+# func setup_tree_item(layer):
+# 	logv("Creating tree entry for " + str(layer))
 
-	var tree_item = LayerTreeEntryPrefab.instance()
-	tree_item.get_node("LayerPreview").texture = layer.world_tex
-	tree_item.get_node("SelectButton").icon = load("res://ui/icons/misc/approve.png")
-	tree_item.get_node("DeleteButton").icon = load("res://ui/icons/misc/delete.png")
-	tree_item.get_node("LayerName").text = str(layer.z_index)
+# 	var tree_item = LayerTreeEntryPrefab.instance()
+# 	tree_item.get_node("LayerPreview").texture = layer.world_tex
+# 	tree_item.get_node("SelectButton").icon = load("res://ui/icons/misc/approve.png")
+# 	tree_item.get_node("DeleteButton").icon = load("res://ui/icons/misc/delete.png")
+# 	tree_item.get_node("LayerName").text = str(layer.z_index)
 
-	tree_item.get_node("LayerCtrl/MoveUp").icon = load("res://ui/icons/misc/up.png")
-	tree_item.get_node("LayerCtrl/MoveUp").size = Vector2(25, 25)
-	tree_item.get_node("LayerCtrl/MoveDown").icon = load("res://ui/icons/misc/down.png")
-	tree_item.get_node("LayerCtrl/MoveDown").size = Vector2(25, 25)
+# 	tree_item.get_node("LayerCtrl/MoveUp").icon = load("res://ui/icons/misc/up.png")
+# 	tree_item.get_node("LayerCtrl/MoveUp").size = Vector2(25, 25)
+# 	tree_item.get_node("LayerCtrl/MoveDown").icon = load("res://ui/icons/misc/down.png")
+# 	tree_item.get_node("LayerCtrl/MoveDown").size = Vector2(25, 25)
 
 
-	return tree_item
+# 	return tree_item

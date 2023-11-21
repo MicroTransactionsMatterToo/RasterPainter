@@ -1,9 +1,14 @@
 class_name LayerManagerC
 var script_class = "tool"
 
+# Principal class in charge of retreiving and creating ShadowLayers
+# Does not hold state other than loaded layers
 class LayerManager extends Object:
     var _layers = []
     var loaded_layers setget ,_get_loaded_layers
+
+    signal layer_created(layer)
+
     var Global
 
     var ShadowLayerC
@@ -76,6 +81,8 @@ class LayerManager extends Object:
         logv("Created layer: " + str(rlayer))
         self._layers.append(rlayer)
 
+        self.emit_signal("layer_created", rlayer)
+
         return rlayer
 
 
@@ -83,21 +90,18 @@ class LayerManager extends Object:
     # loads those not already loaded.
     func load_level_layers(level_id) -> Array:
         logv("Loading layers for level: " + str(level_id))
-        var level_entries = []
+    
         var level_layers = []
-        # Fetch all EmbeddedTextures entries for the given level_id
+        
         for key in Global.World.EmbeddedTextures.keys():
             var key_info = self.get_key_info(key)
             if int(key_info["level"]) == level_id:
-                logv("ASD: " + str(level_id))
-                logv(key_info["level"] == 1)
-                level_entries.append(key_info)
+                var nlayer = self.load_layer(level_id, key_info["layer"])
+                level_layers.append(nlayer)
         
-        # Now attempt to load them all
-        for entry in level_entries:
-            var loaded_layer = self.load_layer(entry["level"], entry["layer"])
-            if loaded_layer != null:
-                level_layers.append(loaded_layer)
+        for layer in self.loaded_layers:
+            if !level_layers.has(layer) and layer.level_id == level_id:
+                level_layers.append(layer)
 
         return level_layers
 
@@ -127,7 +131,7 @@ class LayerManager extends Object:
                 continue
             
             if (
-                key_info["level"] == level_id and
+                key_info["level"] == level_id   and
                 key_info["layer"] == layer_num
             ):
                 logv("Loading layer with key: " + str(key))
@@ -179,13 +183,16 @@ class LayerManager extends Object:
     
     # Function for sorting layers by z_index
     func sort_layers(asc: bool):
-        print("FUD")
         if asc:
             self._layers.sort_custom(LayerManager, "sort_layers_asc")
     
     # Sorts layers in ascending order
     static func sort_layers_asc(a, b):
-        print("FUCK")
         if a.layer_num < b.layer_num:
+            return true
+        return false
+
+    static func sort_layers_desc(a, b):
+        if a.layer_num > b.layer_num:
             return true
         return false

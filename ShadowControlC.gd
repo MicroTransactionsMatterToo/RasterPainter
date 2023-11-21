@@ -64,6 +64,8 @@ class ShadowControl extends Control:
         self._layer_num = -50
         self._current_level = Global.World.Level.ID
 
+        self.name = "ShadowControl"
+
     func _enter_tree() -> void:
         print("ENTERED TREE")
     
@@ -147,7 +149,6 @@ class ShadowControl extends Control:
         self.add_child(self._viewport)
         self._viewport_mod.add_child(self._viewport_rend)
         
-        self.emit_signal("level_changed", self._current_layer)
 
     func _process(delta: float) -> void:
         if Global.Header.data == null:
@@ -217,15 +218,21 @@ class ShadowControl extends Control:
 
         self._brushmanager.current_brush.on_stroke_end()
 
-        logv("Saving to key: " + self._current_layer.get_embedded_key())
-        Global.World.EmbeddedTextures[self._current_layer.get_embedded_key()] = self._current_layer.texture.duplicate(false)
+        var entry_exists = Global.World.EmbeddedTextures[self._current_layer.get_embedded_key()] != null
+        if !entry_exists:
+            logv("Saving to key: " + self._current_layer.get_embedded_key())
+            Global.World.EmbeddedTextures[self._current_layer.get_embedded_key()] = self._current_layer.texture.duplicate(false)
+            self.emit_signal("level_changed", self._current_level)
 
     func set_current_layer(nlayer) -> void:
         logv("Replacing ")
-        self.print_tree_pretty()
         self.remove_child(self._current_layer)
+
+        self._level_cont.remove_child(nlayer)
+        self._level_cont.add_child(self._current_layer)
+        
         self._current_layer = nlayer
-        self._viewport_rend.z_index = nlayer.z_index
+        
         self.add_child(nlayer)
 
     func get_current_layer():
@@ -261,4 +268,4 @@ class ShadowControl extends Control:
             if layer.level_id != self.current_layer.level_id:
                 self._level_cont.add_child(layer)
         
-        self.emit_signal("level_changed", self.current_layer)
+        self.emit_signal("level_changed", self._current_level)
