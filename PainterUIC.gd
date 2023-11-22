@@ -53,7 +53,7 @@ class LayerPanel extends PanelContainer:
     
 
         self.layer_tree = LayerTree.new(Global, self.layerm, self.control)
-        $"MarginContainer/VBoxContainer/LayerTree".replace_by(layer_tree)
+        $"Margins/Align/LayerTree".replace_by(layer_tree)
 
         self.rect_min_size.x = 256
         self.rect_position = Vector2(651, 0)
@@ -64,18 +64,26 @@ class LayerPanel extends PanelContainer:
 
         Global.Editor.get_child("Windows").add_child(self.dialog)
 
-        $"MarginContainer/VBoxContainer/AddLayerButton".connect(
+        $"Margins/Align/LayerControls/AddLayer".connect(
             "pressed",
             self,
             "show_layer_dialog"
         )
+
+        self._set_icons()
+
+    func _set_icons():
+        $"Margins/Align/LayerControls/MoveLayerUp".icon = load("res://ui/icons/misc/up.png")
+        $"Margins/Align/LayerControls/MoveLayerDown".icon = load("res://ui/icons/misc/down.png")
+        $"Margins/Align/LayerControls/AddLayer".icon = load("res://ui/icons/buttons/add.png")
+        $"Margins/Align/LayerControls/DeleteLayer".icon = load("res://ui/icons/misc/delete.png")
     
     func _exit_tree() -> void:
         self.queue_free()
 
     
     func show_layer_dialog():
-        self.dialog.popup()
+        self.dialog.popup_centered()
         
 
 class LayerTree extends Panel:
@@ -147,11 +155,17 @@ class LayerTree extends Panel:
         self._on_level_change(self.control._current_level)
 
 
-class LayerTreeItem extends HBoxContainer:
+class LayerTreeItem extends PanelContainer:
     var Global
     var template
     var layer setget _set_layer, _get_layer
     var _layer
+
+    var selected setget set_selected, get_selected
+    var _selected
+
+    var focused setget set_focused, get_focused
+    var _focused
 
     signal layer_num_changed(layer, from, to)
 
@@ -159,23 +173,47 @@ class LayerTreeItem extends HBoxContainer:
         self.Global = global
         self.template = ResourceLoader.load(Global.Root + "ui/layertree_item.tscn", "", true)
 
+        self.self_modulate = Color(0, 0, 0, 0)
+        self.rect_min_size.x = 50
+
         var instance = self.template.instance()
         self.add_child(instance)
         instance.remove_and_skip()
 
+        var preview_stylebox = ResourceLoader.load(Global.Root + "ui/styleboxes/layertreeitem.stylebox", "", true)
+        $"HB/Preview".add_stylebox_override('panel', preview_stylebox)
+
+        # Load chequered background
+        var background_text = ImageTexture.new()
+        background_text.load(Global.Root + "icons/preview_background.png")
+        $"HB/Preview/PreviewBackground".texture = background_text
+
+        var vis_b: CheckButton = $"HB/Visibility"
+        var checked_tex = ImageTexture.new()
+        checked_tex.load(Global.Root + "icons/visible.png")
+        checked_tex.set_size_override(Vector2(15, 15))
+        vis_b.set("custom_icons/checked", checked_tex)
+        
+        var unchecked_tex = ImageTexture.new()
+        unchecked_tex.load(Global.Root + "icons/hidden.png")
+        unchecked_tex.set_size_override(Vector2(15, 15))
+        vis_b.set("custom_icons/unchecked", unchecked_tex)
+
+        vis_b.rect_scale = Vector2(0.75, 0.75)
+        
+
     func _ready() -> void:
-        # In-place replacement
+        self.mouse_filter = MOUSE_FILTER_PASS
 
-        $"SelectButton".icon = load("res://ui/icons/misc/edit.png")
-        $"DeleteButton".icon = load("res://ui/icons/misc/delete.png")
-
-        $"LayerCtrl/MoveUp".connect("pressed", self, "move_up")
-        $"LayerCtrl/MoveDown".connect("pressed", self, "move_down")
+        $"LayerButton".connect("toggled", self, "on_toggle")
+        $"HB/Visibility".connect("toggled", self, "on_visibility_toggle")
 
     func _set_layer(n_layer) -> void:
         self._layer = n_layer
-        $"LayerPreview".texture = self._layer.world_tex
-        $"LayerName".text = self._layer.layer_num
+        
+        $"HB/Preview/LayerPreview".texture = self._layer.world_tex
+        $"HB/LayerName".text = self._layer.layer_name
+        $"HB/ZLevel".text = self._layer.z_index
 
     func _get_layer(): return self._layer
     
@@ -190,26 +228,77 @@ class LayerTreeItem extends HBoxContainer:
 
     func move_down():
         print("MOVING DOWN")
-        # Set new Z-index
-        self._layer.z_index -= 1
-        # Shuffle siblings if needed
-        var siblings = self.get_parent().get_children()
-        var relevant_siblings = siblings.slice(self.get_index(), siblings.size())
-        var new_index = null
+        var offset = 0
+        var z_indexes = self.get_used_z_indexes()
 
-        for sibling in relevant_siblings:
-            if sibling.visible and sibling.layer.z_index > self.layer.z_index:
-                new_index = sibling.get_index()
+        while z_indexes.has(self.layer.z_index - offset):
+            offset -= 1
+
         
-        if new_index != null:
-            self.get_parent().move_child(self, new_index)
 
-        self.emit_signal(
+        self.call_deferred(
+            "emit_signal",
             "layer_num_changed", 
             self.layer, 
             self.layer.z_index + 1, 
             self.layer.z_index
         )
+
+    func get_used_z_indexes():
+        var parent = self.get_parent()
+        var z_indexes = []
+        for child in parent.get_children():
+            if child.visible:
+                z_indexes.append(child.layer.z_index)
+        
+        z_indexes.sort()
+        return z_indexes
+    
+    func on_toggle(toggle_val):
+        if toggle_val:
+            var only_selected = true
+            for child in self.get_parent().get_children():
+                if child.selected:
+                    only_selected = false
+            
+            self.selected = true
+            self.focused = only_selected
+        else:
+            self.focused = false
+            self.selected = false
+
+        var selected_children = []
+        for child in self.get_parent().get_children():
+            if child.selected:
+                selected_children.append(child)
+        
+        if len(selected_children) > 1:
+            for child in selected_children:
+                child.focused = false
+        elif len(selected_children) == 1:
+            selected_children[0].focused = true
+
+    func on_visibility_toggle(toggle_val):
+        self.layer.visible = toggle_val
+    # --- self.selected get/set
+
+    func get_selected() -> bool:
+        return self._selected
+    
+    func set_selected(val: bool) -> void:
+        self._selected = val
+
+    # --- self.focused get/set
+    
+    func get_focused() -> bool:
+        return self._focused
+
+    func set_focused(val: bool) -> void:
+        if val:
+            $"HB/Preview".self_modulate = Color(1, 1, 1, 1)
+        else:
+            $"HB/Preview".self_modulate = Color(1, 1, 1, 0)
+
 
 class NewLayerDialog extends WindowDialog:
     var Global
@@ -241,9 +330,13 @@ class NewLayerDialog extends WindowDialog:
         $"Margins/Align/AcceptButton".connect("pressed", self, "create_layer")
 
     func create_layer():
+        print("FUCKER")
+        print($"Margins/Align/LayerName/LayerNameEdit".text)
         var test = self.layerm.create_layer(
             self.control._current_level, 
-            $"Margins/Align/LayerNum/LayerNumEdit".value
+            $"Margins/Align/LayerNum/LayerNumEdit".value,
+            $"Margins/Align/LayerName/LayerNameEdit".text
         )
+        print(test)
 
         self.control.set_current_layer(test)

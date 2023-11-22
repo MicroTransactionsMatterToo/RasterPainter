@@ -58,12 +58,13 @@ class LayerManager extends Object:
             return {
                 "level": int(split_key[0]),
                 "layer": int(split_key[1]),
-                "modulate": split_key[2]
+                "modulate": split_key[2],
+                "name": split_key[3]
             }
 
     # Creates a new layer and returns it, or returns the existing layer matching
     # the parameters
-    func create_layer(level_id, layer_num):
+    func create_layer(level_id, layer_num, lname = "New Layer"):
         logv("Attempting to create layer at [{lvl}, {lyr}]".format({
             "lvl": level_id,
             "lyr": layer_num
@@ -77,7 +78,7 @@ class LayerManager extends Object:
 
         
         rlayer = ShadowLayer.new(Global.World)
-        rlayer.create_new(level_id, layer_num)
+        rlayer.create_new(level_id, layer_num, lname)
         logv("Created layer: " + str(rlayer))
         self._layers.append(rlayer)
 

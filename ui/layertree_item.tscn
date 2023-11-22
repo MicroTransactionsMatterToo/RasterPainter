@@ -2,61 +2,86 @@
 
 [ext_resource path="res://icon.png" type="Texture" id=1]
 
-[node name="ShadowLayer" type="HBoxContainer"]
+[node name="ShadowLayer" type="Panel"]
+margin_right = 256.0
+margin_bottom = 50.0
+
+[node name="LayerButton" type="Button" parent="."]
 margin_right = 256.0
 margin_bottom = 50.0
 size_flags_horizontal = 3
-size_flags_stretch_ratio = 2.0
+size_flags_vertical = 3
+toggle_mode = true
 
-[node name="LayerPreview" type="TextureRect" parent="."]
-margin_right = 50.0
+[node name="HB" type="HBoxContainer" parent="."]
+self_modulate = Color( 1, 1, 1, 0 )
+margin_right = 256.0
 margin_bottom = 50.0
-grow_horizontal = 0
-rect_min_size = Vector2( 50, 50 )
+rect_min_size = Vector2( 40, 0 )
+mouse_filter = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Visibility" type="CheckBox" parent="HB"]
+margin_right = 25.0
+margin_bottom = 50.0
+rect_min_size = Vector2( 25, 25 )
+mouse_filter = 1
+size_flags_horizontal = 5
+size_flags_vertical = 5
+pressed = true
+icon_align = 1
+expand_icon = true
+
+[node name="Preview" type="PanelContainer" parent="HB"]
+margin_left = 29.0
+margin_top = 5.0
+margin_right = 68.0
+margin_bottom = 44.0
+rect_min_size = Vector2( 25, 25 )
+size_flags_horizontal = 5
+size_flags_vertical = 4
+
+[node name="PreviewBackground" type="TextureRect" parent="HB/Preview"]
+margin_left = 7.0
+margin_top = 7.0
+margin_right = 32.0
+margin_bottom = 32.0
+rect_min_size = Vector2( 25, 25 )
+size_flags_horizontal = 3
+size_flags_vertical = 3
+texture = ExtResource( 1 )
+expand = true
+stretch_mode = 5
+
+[node name="LayerPreview" type="TextureRect" parent="HB/Preview"]
+margin_left = 7.0
+margin_top = 7.0
+margin_right = 32.0
+margin_bottom = 32.0
+grow_horizontal = 2
+grow_vertical = 2
+rect_min_size = Vector2( 25, 25 )
+mouse_filter = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
 size_flags_stretch_ratio = 0.5
 texture = ExtResource( 1 )
 expand = true
 stretch_mode = 6
 
-[node name="LayerName" type="Label" parent="."]
-margin_left = 54.0
+[node name="LayerName" type="Label" parent="HB"]
+margin_left = 72.0
 margin_top = 18.0
-margin_right = 200.0
+margin_right = 227.0
 margin_bottom = 32.0
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 1.5
 text = "Layer 2"
 
-[node name="SelectButton" type="Button" parent="."]
-margin_left = 204.0
-margin_top = 15.0
-margin_right = 220.0
-margin_bottom = 35.0
-rect_min_size = Vector2( 16, 16 )
-size_flags_vertical = 4
-
-[node name="DeleteButton" type="Button" parent="."]
-margin_left = 224.0
-margin_top = 15.0
-margin_right = 240.0
-margin_bottom = 35.0
-rect_min_size = Vector2( 16, 16 )
-size_flags_vertical = 4
-
-[node name="LayerCtrl" type="VBoxContainer" parent="."]
-margin_left = 244.0
-margin_top = 3.0
+[node name="ZLevel" type="Label" parent="HB"]
+margin_left = 231.0
+margin_top = 18.0
 margin_right = 256.0
-margin_bottom = 47.0
-size_flags_vertical = 4
-
-[node name="MoveUp" type="Button" parent="LayerCtrl"]
-margin_right = 12.0
-margin_bottom = 20.0
-size_flags_vertical = 5
-
-[node name="MoveDown" type="Button" parent="LayerCtrl"]
-margin_top = 24.0
-margin_right = 12.0
-margin_bottom = 44.0
-size_flags_vertical = 5
+margin_bottom = 32.0
+text = "test"

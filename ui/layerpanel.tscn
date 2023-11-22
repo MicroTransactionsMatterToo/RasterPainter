@@ -8,7 +8,7 @@ margin_right = -117.0
 margin_bottom = -315.0
 rect_min_size = Vector2( 256, 0 )
 
-[node name="MarginContainer" type="MarginContainer" parent="."]
+[node name="Margins" type="MarginContainer" parent="."]
 margin_left = 7.0
 margin_top = 7.0
 margin_right = 249.0
@@ -19,24 +19,59 @@ custom_constants/margin_top = 4
 custom_constants/margin_left = 4
 custom_constants/margin_bottom = 4
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+[node name="Align" type="VBoxContainer" parent="Margins"]
 margin_left = 4.0
 margin_top = 4.0
 margin_right = 238.0
 margin_bottom = 267.0
 
-[node name="Label" type="Label" parent="MarginContainer/VBoxContainer"]
+[node name="Label" type="Label" parent="Margins/Align"]
 margin_right = 234.0
 margin_bottom = 14.0
 size_flags_vertical = 0
 text = "Layers"
 
-[node name="LayerTree" parent="MarginContainer/VBoxContainer" instance_placeholder="res://ShadowPainter/ui/layertree.tscn"]
+[node name="LayerTree" parent="Margins/Align" instance_placeholder="res://ShadowPainter/ui/layertree.tscn"]
 margin_bottom = 239.0
 
-[node name="AddLayerButton" type="Button" parent="MarginContainer/VBoxContainer"]
+[node name="LayerControls" type="HBoxContainer" parent="Margins/Align"]
+margin_left = 83.0
 margin_top = 243.0
-margin_right = 234.0
+margin_right = 151.0
 margin_bottom = 263.0
+hint_tooltip = "Test	"
+size_flags_horizontal = 4
+
+[node name="MoveLayerUp" type="Button" parent="Margins/Align/LayerControls"]
+margin_right = 12.0
+margin_bottom = 20.0
+hint_tooltip = "Move Selected Layer(s) Up"
 size_flags_horizontal = 3
-text = "Add Layer"
+
+[node name="MoveLayerDown" type="Button" parent="Margins/Align/LayerControls"]
+margin_left = 16.0
+margin_right = 28.0
+margin_bottom = 20.0
+hint_tooltip = "Move Selected Layer(s) Down"
+size_flags_horizontal = 3
+icon_align = 1
+
+[node name="VSeparator" type="VSeparator" parent="Margins/Align/LayerControls"]
+margin_left = 32.0
+margin_right = 36.0
+margin_bottom = 20.0
+
+[node name="AddLayer" type="Button" parent="Margins/Align/LayerControls"]
+margin_left = 40.0
+margin_right = 52.0
+margin_bottom = 20.0
+hint_tooltip = "Add Layer"
+size_flags_horizontal = 3
+icon_align = 1
+
+[node name="DeleteLayer" type="Button" parent="Margins/Align/LayerControls"]
+margin_left = 56.0
+margin_right = 68.0
+margin_bottom = 20.0
+size_flags_horizontal = 3
+icon_align = 1

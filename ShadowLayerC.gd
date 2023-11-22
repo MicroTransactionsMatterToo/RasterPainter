@@ -6,7 +6,9 @@ class ShadowLayer extends Sprite:
     var level_id: int setget set_level_id, get_level_id
     var _level_id: int
     var world_tex: ImageTexture setget set_worldtex, get_worldtex
-    var _world_tex: ImageTexture 
+    var _world_tex: ImageTexture
+    var layer_name: String setget set_lname, get_lname
+    var _layer_name: String = "New Layer"
 
     var World 
 
@@ -49,12 +51,13 @@ class ShadowLayer extends Sprite:
         self.level_id = int(split_key[0])
         self.layer_num = int(split_key[1])
         self.modulate = Color(split_key[2])
+        self._layer_num = split_key[3]
 
         self.world_tex = World.EmbeddedTextures[key]
         self.name = str(self)
         
 
-    func create_new(lvl_id, layer_n):
+    func create_new(lvl_id, layer_n, lname = "New Layer"):
         var texture_size = Vector2(
             self.World.WorldRect.size.x / LAYER_SCALE,
             self.World.WorldRect.size.y / LAYER_SCALE
@@ -72,15 +75,17 @@ class ShadowLayer extends Sprite:
         self._level_id = lvl_id
         self._layer_num = layer_n
         self.z_index = layer_n
+        self.layer_name = lname
 
         self.world_tex = ntexture
         self.name = str(self)
 
     func get_embedded_key() -> String:
-        return "{level_id}|{layer_num}|{modcol}".format({
+        return "{level_id}|{layer_num}|{modcol}|{name}".format({
             "level_id": self._level_id,
             "layer_num": self.layer_num,
-            "modcol": "#" + self.modulate.to_html(true)
+            "modcol": "#" + self.modulate.to_html(true),
+            "name": self.layer_name
         })
 
     # --- self.level_id get/set
@@ -145,12 +150,22 @@ class ShadowLayer extends Sprite:
         else:
             return self._world_tex
 
+    # --- self.layer_name get/set
+    func set_lname(val: String):
+        # Remove characters that will cause issues
+        val = val.replace("|", "").replace("\\", "")
+        self._layer_name = val
+
+    func get_lname() -> String:
+        return self._layer_name
+
 
         
     func _to_string() -> String:
-        return "[ShadowLayer <Z: {z}, Level: {lvl}> @ {id}]".format({
+        return "[ShadowLayer \"{name}\" <Z: {z}, Level: {lvl}> @ {id}]".format({
             "z": self.layer_num,
             "lvl": self.level_id,
-            "id": self.get_instance_id()
+            "id": self.get_instance_id(),
+            "name": self.layer_name
         })
     
