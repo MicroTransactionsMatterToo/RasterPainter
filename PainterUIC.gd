@@ -132,14 +132,12 @@ class LayerTree extends Panel:
     func _on_level_change(nlevel_id):
         logv("On Level Change")
         var new_level_layers = self.layerm.load_level_layers(nlevel_id)
-        print(new_level_layers)
         new_level_layers.sort_custom(self.layerm, "sort_layers_desc")
 
         for entry in $"ShadowLayers".get_children():
             entry.visible = false
 
         for i in range(new_level_layers.size()):
-            logv("FUCKING INDEX: " + str(i))
             if $"ShadowLayers".get_child(i) != null:
                 logv("Reusing existing entry")
                 $"ShadowLayers".get_child(i).layer = new_level_layers[i]
@@ -154,6 +152,17 @@ class LayerTree extends Panel:
     func _on_layer_change(nlayer):
         self._on_level_change(self.control._current_level)
 
+    func get_items():
+        var rval = []
+
+        # Fetch all current tree items
+        for item in self.get_children():
+            if item.visible:
+                rval.append(item)
+        
+        return rval
+
+    
 
 class LayerTreeItem extends PanelContainer:
     var Global
@@ -216,43 +225,6 @@ class LayerTreeItem extends PanelContainer:
         $"HB/ZLevel".text = self._layer.z_index
 
     func _get_layer(): return self._layer
-    
-    func move_up():
-        self._layer.z_index += 1
-        self.emit_signal(
-            "layer_num_changed", 
-            self.layer, 
-            self.layer.z_index - 1, 
-            self.layer.z_index
-        )
-
-    func move_down():
-        print("MOVING DOWN")
-        var offset = 0
-        var z_indexes = self.get_used_z_indexes()
-
-        while z_indexes.has(self.layer.z_index - offset):
-            offset -= 1
-
-        
-
-        self.call_deferred(
-            "emit_signal",
-            "layer_num_changed", 
-            self.layer, 
-            self.layer.z_index + 1, 
-            self.layer.z_index
-        )
-
-    func get_used_z_indexes():
-        var parent = self.get_parent()
-        var z_indexes = []
-        for child in parent.get_children():
-            if child.visible:
-                z_indexes.append(child.layer.z_index)
-        
-        z_indexes.sort()
-        return z_indexes
     
     func on_toggle(toggle_val):
         if toggle_val:

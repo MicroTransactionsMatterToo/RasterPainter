@@ -104,6 +104,8 @@ class LayerManager extends Object:
             if !level_layers.has(layer) and layer.level_id == level_id:
                 level_layers.append(layer)
 
+        level_layers.sort_custom(self, "sort_layers_desc")
+
         return level_layers
 
 
@@ -181,6 +183,21 @@ class LayerManager extends Object:
                     id_nodes[textChild.get_meta("node_id")] = level
         
         return id_nodes
+
+    # Returns an array of the Z-index of all layers for the given level ID, descending
+    func z_indexes(level_id):
+        var rval = []
+
+        for layer in self.loaded_layers:
+            if layer.level_id == level_id:
+                rval.append(layer.z_index)
+        
+        rval.sort()
+        rval.invert()
+
+        return rval
+    
+        
     
     # Function for sorting layers by z_index
     func sort_layers(asc: bool):
