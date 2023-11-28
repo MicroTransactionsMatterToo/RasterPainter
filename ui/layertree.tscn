@@ -13,6 +13,10 @@ margin_top = 4.0
 margin_bottom = -4.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
+custom_constants/separation = 0
 
 [node name="ShadowLayer" parent="ShadowLayers" instance_placeholder="res://ShadowPainter/ui/layertree_item.tscn"]
 margin_right = 234.0
+margin_bottom = 164.0
+rect_min_size = Vector2( 25, 25 )
+size_flags_horizontal = 3

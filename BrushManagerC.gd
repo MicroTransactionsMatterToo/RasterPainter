@@ -1,7 +1,7 @@
 class_name BrushManagerC
 var script_class = "tool"
 
-const LOG_LEVEL = 4
+const LOG_LEVEL = 0
 const SHADER_DIR = "shaders/brush_shaders/"
 
 class BrushManager extends Node:

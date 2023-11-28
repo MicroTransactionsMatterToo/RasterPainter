@@ -89,6 +89,7 @@ func start() -> void:
 
 	self.layer_panel()
 	self.control.emit_signal("level_changed", self.control._current_level)
+
 	
 
 

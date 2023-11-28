@@ -10,7 +10,14 @@ class ShadowLayer extends Sprite:
     var layer_name: String setget set_lname, get_lname
     var _layer_name: String = "New Layer"
 
+    var uuid: String setget , _get_uuid
+    var _uuid
+
     var World 
+
+    signal layer_change(n_layer)
+    signal level_change(n_level)
+    signal name_change(n_name)
 
 
 
@@ -48,12 +55,15 @@ class ShadowLayer extends Sprite:
     func create_from_embedded_key(key: String):
         var split_key = key.split("|")
         
-        self.level_id = int(split_key[0])
-        self.layer_num = int(split_key[1])
-        self.modulate = Color(split_key[2])
-        self._layer_num = split_key[3]
+        self._level_id = int(split_key[0])
+        self._layer_num = int(split_key[1])
+        self._modulate = Color(split_key[2])
+        self._layer_name = split_key[3]
+        self.z_index = self._layer_num
+        self._uuid = split_key[4]
 
-        self.world_tex = World.EmbeddedTextures[key]
+        self._world_tex = World.EmbeddedTextures[key]
+        self.texture = self._world_tex
         self.name = str(self)
         
 
@@ -76,30 +86,35 @@ class ShadowLayer extends Sprite:
         self._layer_num = layer_n
         self.z_index = layer_n
         self.layer_name = lname
+        self._uuid = 200000 + (randi() % 100000)
+        self._uuid = "%x" % self._uuid
 
         self.world_tex = ntexture
         self.name = str(self)
 
     func get_embedded_key() -> String:
-        return "{level_id}|{layer_num}|{modcol}|{name}".format({
+        return "{level_id}|{layer_num}|{modcol}|{name}|{uuid}".format({
             "level_id": self._level_id,
             "layer_num": self.layer_num,
             "modcol": "#" + self.modulate.to_html(true),
-            "name": self.layer_name
+            "name": self.layer_name,
+            "uuid": self.uuid
         })
 
     # --- self.level_id get/set
 
     func set_level_id(new_level_id: int) -> void:
+        print("SET LEVEL")
         var old_worldtex_key = self.get_embedded_key()
         # Copy current texture
-        var current_texture = self.world_tex.duplicate(false)
+        var current_texture = self.world_tex
         # Set layer number
         self._level_id = new_level_id
         # Erase old key
         World.EmbeddedTextures.erase(old_worldtex_key)
         # Equivalent to Global.World.EmbeddedTextures[self.get_embedded_key()] = current_texture
-        self.world_tex = current_texture
+        self.set_worldtex(current_texture)
+        self.emit_signal("level_change", self._level_id)
 
     func get_level_id() -> int:
         return self._level_id
@@ -107,26 +122,34 @@ class ShadowLayer extends Sprite:
     # --- self.layer_num get/set
 
     func set_layer_num(new_layer: int) -> void:
-        var old_worldtex_key = self.get_embedded_key()
         # Copy current texture
-        var current_texture = self.texture.duplicate(false)
+        var current_texture = self.texture
         # Set layer number
         self._layer_num = new_layer
         self.z_index = new_layer
         # Erase old key
-        World.EmbeddedTextures.erase(old_worldtex_key)
-        # Equivalent to Global.World.EmbeddedTextures[self.get_embedded_key()] = current_texture
-        self.texture = current_texture
+        for key in World.EmbeddedTextures.keys():
+            var key_uuid = key.split("|")[-1]
+            if key_uuid == self.uuid and key != self.get_embedded_key():
+                World.EmbeddedTextures[key] = null
+        self.set_worldtex(current_texture)
+        self.emit_signal("layer_change", self.z_index)
 
     func get_layer_num() -> int:
         return self._layer_num
 
+    func set_data(image):
+        self.texture.set_data(image)
+        self.world_tex = self.texture
+
     # --- self.texture get/set
 
     func set_worldtex(val: ImageTexture) -> void:
+        print("SET WORLDTEX: " + str(self))
         if val != null:
             self._world_tex = val
             self.texture = self._world_tex
+            World.EmbeddedTextures[self.get_embedded_key()] = val
 
     func get_worldtex() -> ImageTexture:
         if self._world_tex == null:
@@ -159,13 +182,18 @@ class ShadowLayer extends Sprite:
     func get_lname() -> String:
         return self._layer_name
 
+    # --- self.uuid get
+    func _get_uuid() -> String:
+        return self._uuid
+
 
         
     func _to_string() -> String:
-        return "[ShadowLayer \"{name}\" <Z: {z}, Level: {lvl}> @ {id}]".format({
+        return "[ShadowLayer \"{name}\" <Z: {z}, Level: {lvl}> @ {id} <{uuid}>]".format({
             "z": self.layer_num,
             "lvl": self.level_id,
             "id": self.get_instance_id(),
-            "name": self.layer_name
+            "name": self.layer_name,
+            "uuid": self.uuid
         })
     

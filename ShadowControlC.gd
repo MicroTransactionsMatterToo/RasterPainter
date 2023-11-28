@@ -132,14 +132,19 @@ class ShadowControl extends Control:
         self._pen.connect("draw", self, "_on_draw")
         self._viewport.add_child(self._pen)
         self._current_level = self._layerm.get_level_id(Global.World.Level)
-        self._current_layer = self._layerm.create_layer(
-            self._current_level,
-            self._layer_num
-        )
+        var existing_level_layers = self._layerm.load_level_layers(self._current_level)
+        if len(existing_level_layers) == 0:
+            self._current_layer = self._layerm.create_layer(
+                self._current_level,
+                self._layer_num
+            )
+        else:
+            self._current_layer = existing_level_layers[0]
 
-        logv("Creating level container")
-        self._level_cont = Node2D.new()
-        self._level_cont.name = "LevelContainer"
+            
+            logv("Creating level container")
+            self._level_cont = Node2D.new()
+            self._level_cont.name = "LevelContainer"
     
 
         logv("Adding children")
@@ -148,6 +153,8 @@ class ShadowControl extends Control:
         self.add_child(self._current_layer)
         self.add_child(self._viewport)
         self._viewport_mod.add_child(self._viewport_rend)
+
+        self._on_level_change()
         
 
     func _process(delta: float) -> void:
@@ -214,15 +221,10 @@ class ShadowControl extends Control:
             "y": shadow_render.get_height()
         }))
         
-        self._current_layer.texture.set_data(shadow_render)
+        self._current_layer.set_data(shadow_render)
 
         self._brushmanager.current_brush.on_stroke_end()
 
-        var entry_exists = Global.World.EmbeddedTextures[self._current_layer.get_embedded_key()] != null
-        if !entry_exists:
-            logv("Saving to key: " + self._current_layer.get_embedded_key())
-            Global.World.EmbeddedTextures[self._current_layer.get_embedded_key()] = self._current_layer.texture.duplicate(false)
-            self.emit_signal("level_changed", self._current_level)
 
     func set_current_layer(nlayer) -> void:
         logv("Replacing ")

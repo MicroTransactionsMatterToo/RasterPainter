@@ -5,6 +5,7 @@
 [node name="ShadowLayer" type="Panel"]
 margin_right = 256.0
 margin_bottom = 50.0
+size_flags_vertical = 3
 
 [node name="LayerButton" type="Button" parent="."]
 margin_right = 256.0

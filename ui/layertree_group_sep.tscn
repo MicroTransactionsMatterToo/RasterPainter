@@ -1,0 +1,42 @@
+[gd_scene format=2]
+
+[node name="Root" type="HBoxContainer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_right = -805.0
+margin_bottom = -580.0
+size_flags_horizontal = 3
+size_flags_vertical = 4
+
+[node name="HB" type="HBoxContainer" parent="."]
+margin_right = 219.0
+margin_bottom = 20.0
+size_flags_horizontal = 3
+
+[node name="HSeparator" type="HSeparator" parent="HB"]
+margin_right = 17.0
+margin_bottom = 20.0
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.3
+
+[node name="LockedLayerName" type="Label" parent="HB"]
+margin_left = 21.0
+margin_top = 3.0
+margin_right = 65.0
+margin_bottom = 17.0
+text = "Terrain"
+
+[node name="HSeparator2" type="HSeparator" parent="HB"]
+margin_left = 69.0
+margin_right = 186.0
+margin_bottom = 20.0
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.0
+
+[node name="LockedLayerIndex" type="Label" parent="HB"]
+margin_left = 190.0
+margin_top = 3.0
+margin_right = 219.0
+margin_bottom = 17.0
+custom_colors/font_color = Color( 0.494118, 0.490196, 0.490196, 1 )
+text = "-500"

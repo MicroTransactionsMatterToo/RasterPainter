@@ -59,7 +59,8 @@ class LayerManager extends Object:
                 "level": int(split_key[0]),
                 "layer": int(split_key[1]),
                 "modulate": split_key[2],
-                "name": split_key[3]
+                "name": split_key[3],
+                "uuid": split_key[4]
             }
 
     # Creates a new layer and returns it, or returns the existing layer matching
@@ -95,9 +96,12 @@ class LayerManager extends Object:
         var level_layers = []
         
         for key in Global.World.EmbeddedTextures.keys():
+            if Global.World.EmbeddedTextures[key] == null:
+                print("FUCK")
+                continue
             var key_info = self.get_key_info(key)
             if int(key_info["level"]) == level_id:
-                var nlayer = self.load_layer(level_id, key_info["layer"])
+                var nlayer = self.load_layer(level_id, key_info["layer"], key_info["uuid"])
                 level_layers.append(nlayer)
         
         for layer in self.loaded_layers:
@@ -111,16 +115,22 @@ class LayerManager extends Object:
 
     # Attempts to load the given layer. 
     # Returns null if layer does not exist
-    func load_layer(level_id, layer_num):
+    func load_layer(level_id, layer_num, uuid = null):
         logv("Get layer Level: {lvl}, Layer: {lyr}".format({
             "lvl": level_id,
             "lyr": layer_num
         }))
+
         # Check to see if we've already loaded the layer
         for layer in self.loaded_layers:
             if  (
-                layer.level_id == level_id and
-                layer.layer_num == layer_num
+                (
+                    layer.level_id == level_id and
+                    layer.layer_num == layer_num
+                ) or (
+                    layer.uuid == uuid and
+                    uuid != null
+                )
             ):
                 logv("Layer {lyr} already loaded".format({"lyr": str(layer)}))
                 return layer
@@ -131,6 +141,11 @@ class LayerManager extends Object:
             # Check to see if key was valid, to avoid conflicts with future uses
             # of EmbeddedTexture
             if key_info == null:
+                continue
+
+            # Ignore keys with a null value
+            if Global.World.EmbeddedTextures[key] == null:
+                print("WAS NULL")
                 continue
             
             if (
@@ -196,8 +211,6 @@ class LayerManager extends Object:
         rval.invert()
 
         return rval
-    
-        
     
     # Function for sorting layers by z_index
     func sort_layers(asc: bool):
