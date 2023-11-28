@@ -1,96 +1,192 @@
 var script_class = "tool"
 
 class ShadowLayer extends Sprite:
-    var layer_num: int setget set_layer_num, get_layer_num
-    var _layer_num: int
+    # Level UUID this layer is associated with
     var level_id: int setget set_level_id, get_level_id
-    var _level_id: int
-    var world_tex: ImageTexture setget set_worldtex, get_worldtex
-    var _world_tex: ImageTexture
-    var layer_name: String setget set_lname, get_lname
-    var _layer_name: String = "New Layer"
+    var _level_id
 
-    var uuid: String setget , _get_uuid
-    var _uuid
+    # Display name for this layer
+    var layer_name: String setget set_layer_name, get_layer_name
+    var _layer_name: String
 
-    var World 
+    # UUID for this layer
+    var uuid: String setget , get_uuid
+    var _uuid: String
 
-    signal layer_change(n_layer)
-    signal level_change(n_level)
-    signal name_change(n_name)
+    var embedded_key: String setget , get_embedded_key
 
+    var Global
 
+    # Emitted when `z_index` is changed
+    signal z_index_change(old, new)
+    # Emitted when layer is moved to a different level
+    signal level_change(old, new)
+    # Emitted when name is change
+    signal name_change(old, new)
 
-    const LAYER_SCALE = 2
+    # Constant for scaling texture to correct size
+    const RENDER_SCALE = 2
+    const LOG_LEVEL = 4
 
-    func _init(world) -> void:
-        self.World = world
-        self.mouse_filter = Control.MOUSE_FILTER_IGNORE
-        
+    func logv(msg):
+        if LOG_LEVEL > 3:
+            printraw("[V] <ShadowLayer>: ")
+            print(msg)
+        else:
+            pass
+
+    func logd(msg):
+        if LOG_LEVEL > 2:
+            printraw("[D] <ShadowLayer>: ")
+            print(msg)
+        else:
+            pass
+    
+    func logi(msg):
+        if LOG_LEVEL >= 1:
+            printraw("[I] <ShadowLayer>: ")
+            print(msg)
+        else:
+            pass
+
+    # ============= BUILTINS ================
+
+    func _init(global).() -> void:
+        self.Global = global
+
+        # Set material to ensure correct rendering of transparency
         self.material = CanvasItemMaterial.new()
         self.material.blend_mode = CanvasItem.BLEND_MODE_PREMULT_ALPHA
+
         self.centered = false
-        self.scale = Vector2(LAYER_SCALE, LAYER_SCALE)
-        self.rect_scale = Vector2(LAYER_SCALE, LAYER_SCALE)
+        self.scale = Vector2(RENDER_SCALE, RENDER_SCALE)
+        self.rect_scale = Vector2(RENDER_SCALE, RENDER_SCALE)
 
-        # self.texture.storage = ImageTexture.STORAGE_COMPRESS_LOSSLESS
-        # self.texture.flags = ImageTexture.FLAGA
+    func _to_string() -> String:
+        return "[ShadowLayer \"{name}\" <Z: {z}, Level: {lvl}, UUID: {uuid}> @ id]".format({
+            "z": self.z_index,
+            "lvl": self.level_id,
+            "id": self.get_instance_id(),
+            "name": self.layer_name,
+            "uuid": self.uuid
+        })
 
+    func get_name() -> String:
+        return str(self)
 
     func queue_free() -> void:
-        print("[ShadowLayer]: Freeing")
+        logd("queue_free called")
         .queue_free()
 
-    func _enter_tree() -> void:
-        
-        printraw("WORLD IS: ")
-        print(self.World.WorldRect.size)
+    # ============= INSTANTIATION ================
 
+    func create_new(level_id, z_index, layer_name):
+        logv("Creating new ShadowLayer @ Level: %s, Z: %s, name: %s" % [
+            level_id, 
+            z_index, 
+            layer_name
+        ])
 
-    # Embedded Key format
-    # LevelID|Layer Number|Modulate Color (hex)
-    # Example
-    # afd2113|-50|#ff00ff|0.5
-
-    func create_from_embedded_key(key: String):
-        var split_key = key.split("|")
-        
-        self._level_id = int(split_key[0])
-        self._layer_num = int(split_key[1])
-        self._modulate = Color(split_key[2])
-        self._layer_name = split_key[3]
-        self.z_index = self._layer_num
-        self._uuid = split_key[4]
-
-        self._world_tex = World.EmbeddedTextures[key]
-        self.texture = self._world_tex
-        self.name = str(self)
-        
-
-    func create_new(lvl_id, layer_n, lname = "New Layer"):
+        # Create a new texture
         var texture_size = Vector2(
-            self.World.WorldRect.size.x / LAYER_SCALE,
-            self.World.WorldRect.size.y / LAYER_SCALE
+            Global.World.WorldRect.size.x / RENDER_SCALE,
+            Global.World.WorldRect.size.y / RENDER_SCALE
         )
 
-        var ntexture = ImageTexture.new()
-        var nimage = Image.new()
-        nimage.create(
+        var empty_image = Image.new()
+        empty_image.create(
             texture_size.x,
             texture_size.y,
             false,
             Image.FORMAT_RGBA8
         )
-        ntexture.create_from_image(nimage)
-        self._level_id = lvl_id
-        self._layer_num = layer_n
-        self.z_index = layer_n
-        self.layer_name = lname
-        self._uuid = 200000 + (randi() % 100000)
-        self._uuid = "%x" % self._uuid
 
-        self.world_tex = ntexture
-        self.name = str(self)
+        var new_texture = ImageTexture.new()
+        new_texture.create_from_image(empty_image)
+        if new_texture != null: logv("New texture created")
+
+        # Set attributes
+        self._level_id = level_id
+        .set_z_index(z_index)
+        self._layer_name = layer_name
+
+        self._uuid = "%x" % (200000 + (randi() % 100000))
+
+        .set_texture(new_texture)
+    
+    # Creates a new ShadowLayer from a key in EmbeddedTextures
+    func create_from_key(key: String):
+        logv("Creating ShadowLayer from key %s" % key)
+        var key_data = key.split("|")
+
+        self._level_id      = int(key_data[0])
+        self.modulate       = Color(key_data[2])
+        self._layer_name    = key_data[3]
+        self._uuid          = key_data[4]
+        .set_z_index(int(key_data[1]))
+
+        .set_texture(Global.World.EmbeddedTextures[key])
+
+    # ======== GETTERS/SETTERS =========
+
+    # ---- self.level_id get/set
+    func set_level_id(new_id: int):
+        logv("Moving layer \"%s\" from level %s to %s" %[
+            str(self),
+            self.level_id,
+            new_id
+        ])
+
+        var old_key = self.embedded_key
+        var old_level = self._level_id
+        self._level_id = new_id
+
+        Global.World.EmbeddedTextures[old_key] = null
+        Global.World.EmbeddedTextures[self.embedded_key] = self.texture
+
+        self.emit_signal("level_change", old_level, new_id)
+
+    func get_level_id() -> int:
+        return self._level_id
+
+    # ---- self.layer_name get/set
+
+    func set_layer_name(new_name: String):
+        logv("Setting layer name to %s" % new_name)
+
+        var old_key = self.embedded_key
+        var old_name = self._layer_name
+        self._layer_name = new_name
+
+        Global.World.EmbeddedTextures[old_key] = null
+        Global.World.EmbeddedTextures[self.embedded_key] = self.texture
+
+        self.emit_signal("name_change", old_name, new_name)
+
+    func get_layer_name() -> String:
+        return self._layer_name
+
+    # ---- self.z_index set/get
+
+    func set_z_index(value):
+        logv("Setting layer Z-index from %d to %d" % [self.z_index, value])
+
+        var old_key = self.embedded_key
+        var old_z = self.z_index
+        .set_z_index(value)
+
+        Global.World.EmbeddedTextures[old_key] = null
+        Global.World.EmbeddedTextures[self.embedded_key] = self.texture
+
+        self.emit_signal("z_index_change", old_z, value)
+
+
+    # ---- self.uuid get
+
+    func get_uuid() -> String:
+        return self._uuid
+
+    # ---- self.embedded_key get
 
     func get_embedded_key() -> String:
         return "{level_id}|{layer_num}|{modcol}|{name}|{uuid}".format({
@@ -100,100 +196,3 @@ class ShadowLayer extends Sprite:
             "name": self.layer_name,
             "uuid": self.uuid
         })
-
-    # --- self.level_id get/set
-
-    func set_level_id(new_level_id: int) -> void:
-        print("SET LEVEL")
-        var old_worldtex_key = self.get_embedded_key()
-        # Copy current texture
-        var current_texture = self.world_tex
-        # Set layer number
-        self._level_id = new_level_id
-        # Erase old key
-        World.EmbeddedTextures.erase(old_worldtex_key)
-        # Equivalent to Global.World.EmbeddedTextures[self.get_embedded_key()] = current_texture
-        self.set_worldtex(current_texture)
-        self.emit_signal("level_change", self._level_id)
-
-    func get_level_id() -> int:
-        return self._level_id
-
-    # --- self.layer_num get/set
-
-    func set_layer_num(new_layer: int) -> void:
-        # Copy current texture
-        var current_texture = self.texture
-        # Set layer number
-        self._layer_num = new_layer
-        self.z_index = new_layer
-        # Erase old key
-        for key in World.EmbeddedTextures.keys():
-            var key_uuid = key.split("|")[-1]
-            if key_uuid == self.uuid and key != self.get_embedded_key():
-                World.EmbeddedTextures[key] = null
-        self.set_worldtex(current_texture)
-        self.emit_signal("layer_change", self.z_index)
-
-    func get_layer_num() -> int:
-        return self._layer_num
-
-    func set_data(image):
-        self.texture.set_data(image)
-        self.world_tex = self.texture
-
-    # --- self.texture get/set
-
-    func set_worldtex(val: ImageTexture) -> void:
-        print("SET WORLDTEX: " + str(self))
-        if val != null:
-            self._world_tex = val
-            self.texture = self._world_tex
-            World.EmbeddedTextures[self.get_embedded_key()] = val
-
-    func get_worldtex() -> ImageTexture:
-        if self._world_tex == null:
-            var texture_size = Vector2(
-                World.WorldRect.size.x / LAYER_SCALE,
-                World.WorldRect.size.y / LAYER_SCALE
-            )
-            print(texture_size)
-            var ntexture = ImageTexture.new()
-            # ntexture.storage = ImageTexture.STORAGE_COMPRESS_LOSSLESS
-            var nimage = Image.new()
-            nimage.create(
-                texture_size.x,
-                texture_size.y,
-                false,
-                Image.FORMAT_RGBA8
-            )
-            ntexture.create_from_image(nimage)
-            self.world_tex = ntexture
-            return self._world_tex
-        else:
-            return self._world_tex
-
-    # --- self.layer_name get/set
-    func set_lname(val: String):
-        # Remove characters that will cause issues
-        val = val.replace("|", "").replace("\\", "")
-        self._layer_name = val
-
-    func get_lname() -> String:
-        return self._layer_name
-
-    # --- self.uuid get
-    func _get_uuid() -> String:
-        return self._uuid
-
-
-        
-    func _to_string() -> String:
-        return "[ShadowLayer \"{name}\" <Z: {z}, Level: {lvl}> @ {id} <{uuid}>]".format({
-            "z": self.layer_num,
-            "lvl": self.level_id,
-            "id": self.get_instance_id(),
-            "name": self.layer_name,
-            "uuid": self.uuid
-        })
-    
