@@ -5,408 +5,326 @@ const LOG_LEVEL = 0
 const SHADER_DIR = "shaders/brush_shaders/"
 
 class BrushManager extends Node:
-
     var Global
 
     var color: Color setget set_color, get_color
     var _color: Color
+
     var size: float setget set_size, get_size
-    var _size: float = 300
-    var _strength: float
-
-    var _brush_buttons
-
-    var _tool_panel
+    var _size: float = 150
 
     var current_brush setget set_brush, get_brush
     var _current_brush_name: String
 
-    var _brushes: Dictionary = {}
-    var _available_brushes = [
-        Pencil,
+    var _brushes := {}
+    var available_brushes := [
+        PencilBrush,
         TextureBrush,
         ShadowBrush
     ]
 
-    func _init(tool_panel).() -> void:
-        self.name = "BrushManager"
-        self._tool_panel = tool_panel
-        self._brush_buttons = ButtonGroup.new()
+    signal brush_size_changed(new_size)
+    signal brush_color_changed(new_color)
+    signal brush_changed()
 
-    func _ready() -> void:
-        logi("Brush Manager initialised")
-
-        for brush_class in self._available_brushes:
-            var instance = brush_class.new(self.Global)
-
-            var brush_button = Button.new()
-            brush_button.icon = instance.icon
-            brush_button.set_meta("brush_name", instance.brush_name)
-            brush_button.group = self._brush_buttons
-            brush_button.toggle_mode = true
-
-            var brush_selector = self._tool_panel.get_node("PanelRoot/BrushControls/BrushSelector")
-            brush_selector.add_child(brush_button)
-
-            self._brushes[instance.brush_name] = instance
-            logv("Added brush {name} to available brushes".format({
-                "name": instance.brush_name
-            }))
-            print(self._brushes)
-            self.add_child(instance)
-
-        self._brush_buttons.connect(
-            "pressed",
-            self,
-            "_on_brushbutton"
-        )
-        self._brush_buttons.get_buttons()[0].set_pressed_no_signal(true)
-        self.set_size(300)
-
-        self._ui_setup()
-
-        
-
-        self._current_brush_name = self._brushes.values()[0].brush_name
-
-    func queue_free() -> void:
-        print("[BrushManager]: Freeing")
-        .queue_free()
-    
-    func _ui_setup() -> void:
-        var brush_size_c = self._tool_panel.get_node("PanelRoot/BrushControls/BrushSettings/BSizeC/BSize")
-        var brush_size_slider: HSlider = brush_size_c.get_node("HSlider")
-        var brush_size_spinbox: SpinBox = brush_size_c.get_node("SpinBox")
-
-        brush_size_slider.share(brush_size_spinbox)
-        brush_size_slider.connect(
-            "value_changed",
-            self,
-            "set_size"
-        )
-
-        var brush_color_pallete = self._tool_panel.get_node("PanelRoot/BrushControls/BrushSettings/BColorC/BrushPalette")
-        brush_color_pallete.connect(
-            "color_changed",
-            self,
-            "set_color"
-        )
+    # ===== LOGGING =====
+    const LOG_LEVEL = 4
 
     func logv(msg):
         if LOG_LEVEL > 3:
-            printraw("[V] BM: ")
+            printraw("[V] <BrushManager>: ")
             print(msg)
         else:
             pass
 
+    func logd(msg):
+        if LOG_LEVEL > 2:
+            printraw("[D] <BrushManager>: ")
+            print(msg)
+        else:
+            pass
+    
     func logi(msg):
         if LOG_LEVEL >= 1:
-            printraw("[I] BM: ")
+            printraw("[I] <BrushManager>: ")
             print(msg)
         else:
             pass
 
-    func get_brush() -> Brush:
-        return self._brushes.get(self._current_brush_name)
+    # ===== BUILTINS =====
 
+    func _init(global).() -> void:
+        self.Global = global
+
+    func name() -> String:
+        return "BrushManager"
+
+    func _to_string():
+        return "[BrushManager <Current: %s, NumBrushes: %d]" % [
+            self._current_brush_name,
+            len(self.available_brushes)
+        ]
+
+    func queue_free() -> void:
+        logv("Freeing")
+        .queue_free()
+    
+    # ===== GETTERS/SETTERS =====
+
+    # ---- self.current_brush set/get
     func set_brush(brush_name: String) -> void:
         if self._brushes.has(brush_name):
             self._current_brush_name = brush_name
-            if (self._tool_panel != null):
-                self.clear_brush_ui()
-                self.get_brush().brush_ui(self._tool_panel)
+            self.emit_signal("brush_changed")
+        else:
+            logd("Brush with name %s not found, ignoring" % brush_name)
+    
+    func get_brush():
+        return self._brushes.get(self._current_brush_name)
 
-    func clear_brush_ui():
-        var brush_ui = self._tool_panel.get_node("PanelRoot/BrushUI")
-        for child in brush_ui.get_children():
-            brush_ui.remove_child(child)
-
-    func set_color(color) -> void:
+    # ---- self.color set/get
+    func set_color(color: Color) -> void:
+        if color == null: return
         self._color = color
-        for brush in self._brushes.values():
-            brush.set_color(color)
-
+        self.emit_signal("brush_color_changed", self._color)
+    
     func get_color() -> Color:
         return self._color
 
-    func set_size(size) -> void:
+    # ---- self.size set/get
+    func set_size(size: float) -> void:
+        if size == null: return
         self._size = size
-        for brush in self._brushes.values():
-            brush.set_size(size)
+        self.emit_signal("brush_size_changed", self._size)
 
     func get_size() -> float:
         return self._size
 
-    func set_toolpanel(panel):
-        self._tool_panel = panel
-        self.get_brush().brush_ui(self._tool_panel)
-
-    func _on_brushbutton(button):
-        logv("Brush changed to " + str(button.get_meta("brush_name")))
-        self.set_brush(button.get_meta("brush_name"))
-
-
 class Brush extends Node2D:
-    var size: float = 300
-    var color: Color = Color.red
-    var icon: Texture
-    var brush_name: String = "Generic Brush"
-
     var Global
-    var World
-    var WorldUI
+    var brushmanager
 
-    func _init(global):
-        self.World = global.World
-        self.WorldUI = global.WorldUI
-        self.Global = global
+    var brush_name := "Generic Brush"
+    var icon: Texture
 
-    
+    var ui: Node
+    var template: PackedScene
 
+    # ===== LOGGING =====
+    const LOG_LEVEL = 4
 
     func logv(msg):
         if LOG_LEVEL > 3:
-            printraw("[V] BR: ")
+            printraw("[V] <BrushManager>: ")
+            print(msg)
+        else:
+            pass
+
+    func logd(msg):
+        if LOG_LEVEL > 2:
+            printraw("[D] <BrushManager>: ")
             print(msg)
         else:
             pass
     
     func logi(msg):
         if LOG_LEVEL >= 1:
-            printraw("[I] B: ")
+            printraw("[I] <BrushManager>: ")
             print(msg)
         else:
             pass
 
-    func paint(pen: Node2D, mouse_pos: Vector2, prev_mouse_pos: Vector2) -> void:
-        print("Raw Brush Called")
+    # ===== BUILTINS ======
 
-    func brush_ui(ui_root):
-        logv("YOEP")
+    func _init(global, brush_manager).():
+        self.Global = global
+        self.brushmanager = brush_manager
+        self.brushmanager.connect("brush_size_changed", self, "set_size")
+        self.brushmanager.connect("brush_color_changed", self, "set_color")
+
+    func queue_free():
+        if self.ui != null: self.ui.queue_free()
+        .queue_free()
+    
+    func _to_string() -> String:
+        return "[Brush \"%s\"]" % self.brush_name
+
+    func get_name() -> String:
+        return "%s @ %d" % [self.brush_name, self.get_instance_id()]
+
+    # ===== BRUSH STUFF =====
+    func paint(pen: Node2D, mouse_pos: Vector2, prev_mouse_pos: Vector2) -> void:
         return
 
-    func _to_string() -> String:
-        return "[Brush <Name: {name}>]".format({
-            "name": self.brush_name
-        })
+    func on_stroke_end() -> void:
+        pass
 
-class Pencil extends Brush:
-    var stroke_line = Line2D.new()
-    var line_added = false
-    var line_shader
+    func on_selected() -> void:
+        pass
 
-    func _init(global).(global) -> void:
-        self.icon = load("res://ui/icons/tools/cave_brush.png")
-        self.brush_name = "Pencil"
-        self.name = "PencilBrush @" + str(self.get_instance_id())
+    func brush_ui(ui_root: Node):
+        return null
+
+    func set_color(color: Color) -> void:
+        print("BASE SET COLOR")
+
+    func set_size(size: float) -> void:
+        pass
+
+
+### LineBrush
+# Base class for any brush that primarily uses `Line2D` for stroke drawing
+class LineBrush extends Brush:
+    var stroke_line: Line2D = Line2D.new()
+    var stroke_shader
+    
+    var shader_param = null
+
+    var previous_point_drawn: Vector2
+
+    const STROKE_THRESHOLD: float = 20.0
+
+    # ===== OVERRIDES =====
+    func paint(pen: Node2D, mouse_pos: Vector2, prev_mouse_pos: Vector2) -> void:
+        if !self.stroke_line.get_parent() == pen:
+            logv("Added stroke_line to pen")
+            pen.add_child(self.stroke_line)
         
-        self.stroke_line.texture_mode = Line2D.LINE_TEXTURE_STRETCH
-        self.stroke_line.antialiased = false
-        self.stroke_line.material.blend_mode = CanvasItem.BLEND_MODE_DISABLED
-        self.stroke_line.joint_mode = Line2D.LINE_JOINT_ROUND
-        self.stroke_line.name = "PenLine2D"
+        if len(self.stroke_line.points) == 0:
+            logv("No points in stroke line, ignoring any modifiers")
+            self.stroke_line.add_point(mouse_pos)
+        
+        if Input.is_key_pressed(KEY_SHIFT):
+            logv("SHIFT is pressed, making a straight line")
+            if len(self.stroke_line.points) == 1: self.add_stroke_point(mouse_pos)
+            else: 
+                self.stroke_line.set_point_position(-1, mouse_pos)
+                self.previous_point_drawn = mouse_pos
+            
+            return
 
-        self.line_shader = ResourceLoader.load(
+        if self.should_add_point(mouse_pos):
+            self.add_stroke_point(mouse_pos)
+        
+    func set_color(color: Color) -> void:
+        self.stroke_line.default_color = Color(
+            color.r,
+            color.g,
+            color.b,
+            1.0
+        )
+
+        self.stroke_line.material.set_shader_param(self.shader_param, color.a)
+    
+    func set_size(size: float) -> void:
+        if size < 1.0: return
+        self.stroke_line.width = size * 2.0
+
+    func on_stroke_end() -> void:
+        self.stroke_line.clear_points()
+
+    # ===== BRUSH SPECIFIC =====
+    func add_stroke_point(position: Vector2):
+        self.stroke_line.add_point(position)
+        self.previous_point_drawn = position
+
+    func should_add_point(position: Vector2) -> bool:
+        return self.previous_point_drawn.distance_to(position) > STROKE_THRESHOLD
+
+### PencilBrush
+# Brush for solid colors
+class PencilBrush extends LineBrush:
+    func _init(global, brush_manager).(global, brush_manager):
+        self.icon = load("res://ui/icons/tools/path_tool.png")
+        self.brush_name = "PencilBrush"
+
+        self.stroke_line.texture_mode           = Line2D.LINE_TEXTURE_STRETCH
+        self.stroke_line.joint_mode             = Line2D.LINE_JOINT_ROUND
+        self.stroke_line.antialiased            = false
+        self.stroke_line.name                   = "PencilStroke"
+
+        self.stroke_shader = ResourceLoader.load(
             Global.Root + SHADER_DIR + "PencilBrush.shader", 
             "Shader", 
             true
         ).duplicate(false)
-
         self.stroke_line.material = ShaderMaterial.new()
-        self.stroke_line.material.shader = self.line_shader
+        self.stroke_line.material.shader = self.stroke_shader
 
-    func paint(pen: Node2D, mouse_pos: Vector2, prev_mouse_pos: Vector2) -> void:
-        if !self.line_added:
-            pen.get_parent().add_child(self.stroke_line)
-            self.line_added = true
-        
-        if len(stroke_line.points) > 1:
-            if stroke_line.points[-1].distance_to(mouse_pos) < 20.0:
-                return
-        
-        self.stroke_line.add_point(mouse_pos)
+        self.shader_param = "override_alpha"
 
-    func set_size(size: float) -> void:
-        if size < 1:
-            return
-        
-        self.size = size
-        self.stroke_line.width = size * 2
-    
-    func set_color(ncolor) -> void:
-        self.color = ncolor
-        self.color.a = 1.0
-
-        self.stroke_line.default_color = self.color
-        self.stroke_line.material.set_shader_param("override_alpha", ncolor.a)
-
-    func on_stroke_end() -> void:
-        self.stroke_line.clear_points()
-    
-    func on_select() -> void:
-        WorldUI.CursorMode = 5
-        WorldUI.CursorRadius = self.size
-
-    func brush_ui(ui_root):
-        return
-
-class TextureBrush extends Brush:
-    var stroke_asset = load("res://textures/paths/stairs_stone_2.png") 
-    var stroke_texture
-    var stroke_line = Line2D.new()
-    var line_added = false
-    var line_shader
-    var line_mat
-    var path_grid
-    var test_rect
-    var test_rect2
-
-    func _init(global).(global) -> void:
-        self.icon = load("res://ui/icons/tools/cave_brush.png")
+### TextureBrush
+# Brush for drawing lines of any loaded asset
+class TextureBrush extends LineBrush:
+    var path_grid_menu = null
+    func _init(global, brush_manager).(global, brush_manager):
+        self.icon = load("res://ui/icons/material_brush.png")
         self.brush_name = "TextureBrush"
-        self.name = "TextureBrush @" + str(self.get_instance_id())
 
-        self.stroke_line.texture_mode = Line2D.LINE_TEXTURE_TILE
-        self.stroke_line.antialiased = false
-        self.stroke_line.joint_mode = Line2D.LINE_JOINT_ROUND
-        self.stroke_line.name = "TextureLine2D"
+        self.stroke_line.texture_mode           = Line2D.LINE_TEXTURE_STRETCH
+        self.stroke_line.joint_mode             = Line2D.LINE_JOINT_ROUND
+        self.stroke_line.antialiased            = false
+        self.stroke_line.name                   = "TextureStroke"
 
-
-        self.line_shader = ResourceLoader.load(
+        self.stroke_shader = ResourceLoader.load(
             Global.Root + SHADER_DIR + "TextureBrush.shader", 
             "Shader", 
             true
         ).duplicate(false)
-        self.line_mat = ShaderMaterial.new()
-        self.line_mat.shader = self.line_shader
+        self.stroke_line.material = ShaderMaterial.new()
+        self.stroke_line.material.shader = self.stroke_shader
 
-        self.stroke_texture = self.stroke_asset
+        self.shader_param = "alpha_mult"
 
-        self.stroke_line.material = self.line_mat
-        self.stroke_line.texture = self.stroke_texture
-
-    func paint(pen: Node2D, mouse_pos: Vector2, prev_mouse_pos: Vector2) -> void:
-        if !self.line_added:
-            pen.add_child(self.stroke_line)
-            self.line_added = true
-        
-        if len(stroke_line.points) > 1:
-            if stroke_line.points[-1].distance_to(mouse_pos) < 20.0:
-                return
-        
-        self.stroke_line.add_point(mouse_pos)
-
-    func set_size(size: float) -> void:
-        if size < 1:
-            return
-        
-        self.size = size
-        self.stroke_line.width = size * 2
-    
-    func set_color(ncolor) -> void:
-        self.color = ncolor
-        self.color.a = 1.0
-
-        self.stroke_line.default_color = self.color
-        self.stroke_line.material.set_shader_param("alpha_mult", ncolor.a)
-
-    func set_texture(idx):
-        logv("Set TextureBrush texture: " + str(idx))
-        var texture = self.path_grid.Selected
-
+    # ===== BRUSH SPECIFIC ======
+    func set_texture(texture: Texture) -> void:
         self.stroke_line.texture = texture
 
+    func on_texture_selected(idx):
+        self.set_texture(self.path_grid_menu.Selected)
 
-    func on_stroke_end() -> void:
-        self.stroke_line.clear_points()
-    
-    func on_select() -> void:
-        WorldUI.CursorMode = 5
-        WorldUI.CursorRadius = self.size
-
-    func brush_ui(ui_root):
+    # ===== UI =====
+    func brush_ui(ui_root: Node):
         var panel_root = ui_root.get_node("PanelRoot")
         var brush_ui = panel_root.get_node("BrushUI")
-        logv(panel_root)
-        if self.path_grid == null:
+
+        if self.path_grid_menu == null:
             var GridMenu = load("res://scripts/ui/elements/GridMenu.cs")
-            self.path_grid = GridMenu.new()
 
-            self.path_grid.Load("Paths")
-            self.path_grid.max_columns = 1;
-            self.path_grid.ShowsPreview = true
-            self.path_grid.select(0, true)
-            self.path_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-            self.path_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
-            logv(self.path_grid.OnTextureSelected)
+            self.path_grid_menu = GridMenu.new()
+            self.path_grid_menu.Load("Paths")
 
-            self.path_grid.connect(
+            self.path_grid_menu.max_columns = 1
+            self.path_grid_menu.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+            self.path_grid_menu.size_flags_vertical = Control.SIZE_EXPAND_FILL
+            self.path_grid_menu.ShowsPreview = true
+
+            self.path_grid_menu.connect(
                 "item_selected",
                 self,
-                "set_texture"
+                "on_texture_selected"
             )
 
-        brush_ui.add_child(self.path_grid)
+            brush_ui.add_child(self.path_grid_menu)
+            self.path_grid_menu.select(0, true)
 
-class ShadowBrush extends Brush:
-    var stroke_line = Line2D.new()
-    var line_added = false
-    var line_shader
+class ShadowBrush extends LineBrush:
+    func _init(global, brush_manager).(global, brush_manager) -> void:
+        self.icon = load("res://ui/icons/tools/light_tool.png")
+        self.brush_name = "ShadowBrush"
 
-    func _init(global).(global) -> void:
-        self.icon = load("res://ui/icons/tools/cave_brush.png")
-        self.brush_name = "Shadow"
-        self.name = "ShadowBrush @" + str(self.get_instance_id())
+        self.stroke_line.texture_mode       = Line2D.LINE_TEXTURE_TILE
+        self.stroke_line.antialiased        = false
+        self.stroke_line.joint_mode         = Line2D.LINE_JOINT_SHARP
+        self.stroke_line.name               = "ShadowBrushLine2D"
 
-        self.stroke_line.texture_mode = Line2D.LINE_TEXTURE_TILE
-        self.stroke_line.antialiased = false
-        self.stroke_line.material.blend_mode = CanvasItem.BLEND_MODE_DISABLED
-        self.stroke_line.joint_mode = Line2D.LINE_JOINT_SHARP
-        self.stroke_line.name = "PenLine2D"
-
-        self.line_shader = ResourceLoader.load(
+        self.stroke_shader = ResourceLoader.load(
             Global.Root + SHADER_DIR + "ShadowBrush.shader", 
             "Shader", 
             true
         ).duplicate(false)
 
         self.stroke_line.material = ShaderMaterial.new()
-        self.stroke_line.material.shader = self.line_shader
+        self.stroke_line.material.shader = self.stroke_shader
 
-    func paint(pen: Node2D, mouse_pos: Vector2, prev_mouse_pos: Vector2) -> void:
-        if !self.line_added:
-            pen.get_parent().add_child(self.stroke_line)
-            self.line_added = true
-        
-        if len(stroke_line.points) > 1:
-            if stroke_line.points[-1].distance_to(mouse_pos) < 20.0:
-                var recent_point = (self.stroke_line.get_point_count() - 1)
-                self.stroke_line.set_point_position(recent_point, mouse_pos)
-                return
-
-        
-        self.stroke_line.add_point(mouse_pos)
-
-    func set_size(size: float) -> void:
-        if size < 1:
-            return
-        
-        self.size = size
-        self.stroke_line.width = size * 2
-    
-    func set_color(ncolor) -> void:
-        self.color = ncolor
-        self.color.a = 1.0
-
-        self.stroke_line.default_color = self.color
-        self.stroke_line.material.set_shader_param("override_alpha", ncolor.a)
-
-    func on_stroke_end() -> void:
-        self.stroke_line.clear_points()
-    
-    func on_select() -> void:
-        WorldUI.CursorMode = 5
-        WorldUI.CursorRadius = self.size
-
-    func brush_ui(ui_root):
-        pass
+        self.shader_param = "alpha_mult"
