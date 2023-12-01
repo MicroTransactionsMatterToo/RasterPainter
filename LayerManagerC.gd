@@ -11,6 +11,9 @@ class LayerManager extends Object:
     var ShadowLayerC
     var ShadowLayer
 
+    signal layer_added(new_layer)
+    signal layer_modified(layer)
+
     const LOG_LEVEL = 4
 
     func logv(msg):
@@ -76,6 +79,9 @@ class LayerManager extends Object:
             return false
         
         self.loaded_layers[new_layer.uuid] = new_layer
+        self.emit_signal("layer_added", new_layer)
+        new_layer.connect("layer_modified", self, "on_layer_changes")
+
         return true
 
     func load_layer(layer_key: String):
@@ -95,6 +101,7 @@ class LayerManager extends Object:
                 logv("Found key in textures, loading")
                 var new_layer = ShadowLayer.new()
                 new_layer.create_from_embedded_key(key)
+                self.add_layer(new_layer)
 
                 return new_layer
         
@@ -112,8 +119,7 @@ class LayerManager extends Object:
             
             var key_info = self.get_key_info(key)
             if key_info["level"] == level_id:
-                var new_layer = self.load_layer(key)
-                self.add_layer(new_layer)
+                self.load_layer(key)
 
         for layer in self.loaded_layers.values():
             if layer.level_id == level_id:
@@ -187,6 +193,10 @@ class LayerManager extends Object:
                     id_nodes[textChild.get_meta("node_id")] = level
         
         return id_nodes
+
+    # ====== SIGNAL ======
+    func on_layer_changes(__, ___, layer):
+        self.emit_signal("layer_modified", layer)
 
     # ====== SORTING ======
     static func sort_layers_asc(a, b) -> bool:

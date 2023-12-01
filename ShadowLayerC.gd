@@ -18,11 +18,13 @@ class ShadowLayer extends Sprite:
     var Global
 
     # Emitted when `z_index` is changed
-    signal z_index_change(old, new)
+    signal z_index_change(old, new, obj)
     # Emitted when layer is moved to a different level
-    signal level_change(old, new)
+    signal level_change(old, new, obj)
     # Emitted when name is change
-    signal name_change(old, new)
+    signal name_change(old, new, obj)
+    # Emitted on any change
+    signal layer_modified(obj)
 
     # Constant for scaling texture to correct size
     const RENDER_SCALE = 2
@@ -144,7 +146,8 @@ class ShadowLayer extends Sprite:
         Global.World.EmbeddedTextures[old_key] = null
         Global.World.EmbeddedTextures[self.embedded_key] = self.texture
 
-        self.emit_signal("level_change", old_level, new_id)
+        self.emit_signal("level_change", old_level, new_id, self)
+        self.emit_signal("layer_modified", self)
 
     func get_level_id() -> int:
         return self._level_id
@@ -161,7 +164,8 @@ class ShadowLayer extends Sprite:
         Global.World.EmbeddedTextures[old_key] = null
         Global.World.EmbeddedTextures[self.embedded_key] = self.texture
 
-        self.emit_signal("name_change", old_name, new_name)
+        self.emit_signal("name_change", old_name, new_name, self)
+        self.emit_signal("layer_modified", self)
 
     func get_layer_name() -> String:
         return self._layer_name
@@ -178,7 +182,8 @@ class ShadowLayer extends Sprite:
         Global.World.EmbeddedTextures[old_key] = null
         Global.World.EmbeddedTextures[self.embedded_key] = self.texture
 
-        self.emit_signal("z_index_change", old_z, value)
+        self.emit_signal("z_index_change", old_z, value, self)
+        self.emit_signal("layer_modified", self)
 
 
     # ---- self.uuid get
