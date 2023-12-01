@@ -9,38 +9,38 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="BrushControls" type="VBoxContainer" parent="."]
-margin_right = 444.0
+margin_right = 443.0
 margin_bottom = 64.0
 size_flags_horizontal = 3
 size_flags_vertical = 2
 
 [node name="BrushSelector" type="HBoxContainer" parent="BrushControls"]
-margin_right = 444.0
+margin_right = 443.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="BrushSettings" type="VBoxContainer" parent="BrushControls"]
 margin_top = 4.0
-margin_right = 444.0
+margin_right = 443.0
 margin_bottom = 64.0
 
 [node name="BSizeC" type="VBoxContainer" parent="BrushControls/BrushSettings"]
-margin_right = 444.0
+margin_right = 443.0
 margin_bottom = 42.0
 
 [node name="Label" type="Label" parent="BrushControls/BrushSettings/BSizeC"]
-margin_right = 444.0
+margin_right = 443.0
 margin_bottom = 14.0
 text = "Brush Size"
 
 [node name="BSize" type="HBoxContainer" parent="BrushControls/BrushSettings/BSizeC"]
 margin_top = 18.0
-margin_right = 444.0
+margin_right = 443.0
 margin_bottom = 42.0
 
 [node name="HSlider" type="HSlider" parent="BrushControls/BrushSettings/BSizeC/BSize"]
 margin_top = 4.0
-margin_right = 366.0
+margin_right = 365.0
 margin_bottom = 20.0
 size_flags_horizontal = 3
 size_flags_vertical = 4
@@ -50,38 +50,25 @@ value = 300.0
 allow_greater = true
 
 [node name="SpinBox" type="SpinBox" parent="BrushControls/BrushSettings/BSizeC/BSize"]
-margin_left = 370.0
-margin_right = 444.0
+margin_left = 369.0
+margin_right = 443.0
 margin_bottom = 24.0
 
 [node name="BColorC" type="VBoxContainer" parent="BrushControls/BrushSettings"]
 margin_top = 46.0
-margin_right = 444.0
+margin_right = 443.0
 margin_bottom = 60.0
 size_flags_horizontal = 3
 size_flags_vertical = 2
 
 [node name="Label" type="Label" parent="BrushControls/BrushSettings/BColorC"]
-margin_right = 444.0
+margin_right = 443.0
 margin_bottom = 14.0
 text = "Brush Color"
 
 [node name="BrushUI" type="VBoxContainer" parent="."]
-margin_top = 195.0
-margin_right = 444.0
-margin_bottom = 386.0
+margin_top = 388.0
+margin_right = 443.0
+margin_bottom = 772.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
-
-[node name="LayerControls" type="VBoxContainer" parent="."]
-margin_top = 390.0
-margin_right = 444.0
-margin_bottom = 773.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
-size_flags_stretch_ratio = 2.0
-
-[node name="Label" type="Label" parent="LayerControls"]
-margin_right = 444.0
-margin_bottom = 14.0
-text = "TEST"

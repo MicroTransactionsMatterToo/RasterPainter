@@ -162,8 +162,18 @@ class Brush extends Node2D:
     func on_selected() -> void:
         pass
 
-    func brush_ui(ui_root: Node):
+    # ===== BRUSH UI =====
+
+    func brush_ui():
         return null
+
+    func hide_ui():
+        if self.ui != null: self.ui.visible = false
+
+    func show_ui():
+        if self.ui != null: self.ui.visible = true
+
+    # ===== SETTERS =====
 
     func set_color(color: Color) -> void:
         print("BASE SET COLOR")
@@ -284,9 +294,9 @@ class TextureBrush extends LineBrush:
         self.set_texture(self.path_grid_menu.Selected)
 
     # ===== UI =====
-    func brush_ui(ui_root: Node):
-        var panel_root = ui_root.get_node("PanelRoot")
-        var brush_ui = panel_root.get_node("BrushUI")
+    func brush_ui():
+        if self.ui == null:
+            self.ui = VBoxContainer.new()
 
         if self.path_grid_menu == null:
             var GridMenu = load("res://scripts/ui/elements/GridMenu.cs")
@@ -305,8 +315,11 @@ class TextureBrush extends LineBrush:
                 "on_texture_selected"
             )
 
-            brush_ui.add_child(self.path_grid_menu)
             self.path_grid_menu.select(0, true)
+            
+            self.ui.add_child(self.path_grid_menu)
+        
+        return self.ui
 
 class ShadowBrush extends LineBrush:
     func _init(global, brush_manager).(global, brush_manager) -> void:
