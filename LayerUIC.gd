@@ -46,21 +46,21 @@ class LayerPanel extends PanelContainer:
     # ===== LOGGING =====
     func logv(msg):
         if LOG_LEVEL > 3:
-            printraw("[V] <LayerUI>: ")
+            printraw("(%d) [V] <LayerUI>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
 
     func logd(msg):
         if LOG_LEVEL > 2:
-            printraw("[D] <LayerUI>: ")
+            printraw("(%d) [D] <LayerUI>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
     
     func logi(msg):
         if LOG_LEVEL >= 1:
-            printraw("[I] <LayerUI>: ")
+            printraw("(%d) [I] <LayerUI>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
@@ -71,19 +71,26 @@ class LayerPanel extends PanelContainer:
         self.layerm = layerm
         self.scontrol = scontrol
         
-        Utils.load_scene_inplace(self, "ui/layerpanel.tscn")
+        self.template = ResourceLoader.load(Global.Root + "ui/layerpanel.tscn", "", true)
+        var instance = self.template.instance()
+        self.add_child(instance)
+        instance.remove_and_skip()
 
         # self.layer_add_dialog = NewLayerDialog.new()
         self.name = "LayerPanel"
 
     func _ready():
+        logv("LayerUI ready")
         var panel_mat = ResourceLoader.load("res://materials/MenuBackground.material")
 
         # TODO: Double check this doesn't need jank
         self.material = panel_mat
 
-        #self.layer_tree = LayerTree.new(Global, self.layerm, self.scontrol)
+        self.layer_tree = LayerTree.new(Global, self.layerm, self.scontrol)
+        logv("layertree %s" % self.layer_tree)
         $"Margins/Align/LayerTree".replace_by(self.layer_tree)
+
+        self.layer_add_dialog = NewLayerDialog.new(Global, self.layerm, self.scontrol)
 
         self.rect_min_size.x = 256
         self.rect_position = Vector2(651, 0)
@@ -101,12 +108,14 @@ class LayerPanel extends PanelContainer:
         $"Margins/Align/LayerControls/MoveLayerDown".connect(
             "pressed",
             self,
-            "move_layers_down"
+            "move_layers",
+            [DIR_DOWN]
         )
         $"Margins/Align/LayerControls/MoveLayerUp".connect(
             "pressed",
             self,
-            "move_layers_up"
+            "move_layers",
+            [DIR_UP]
         )
 
         self._set_icons()
@@ -129,35 +138,52 @@ class LayerPanel extends PanelContainer:
 
     # ===== LAYER MOVEMENT =====
     func move_layers(direction: bool):
+        logd("Moving layers, direction: %s" % direction)
         var selected_items = self.layer_tree.current_selection
+        logv("got selection")
         if direction == DIR_DOWN:
             selected_items.invert()
-
-        if len(selected_items) == 0: logd("No layers selected, ignoring move request")
         
+        if len(selected_items) == 0: 
+            logd("No layers selected, ignoring move request")
+            return
+        
+        logd("Moving layers")
         for item in selected_items:
+            logv("moving item %s" % item)
             self.move_layer(item, direction)
 
         self.emit_signal("layer_order_changed")
         
-    func move_layer(item: Node2D, direction: bool = DIR_DOWN):
+    func move_layer(item: CanvasItem, direction: bool = DIR_DOWN):
+        logv("move_layer called, item: %s, direction: %s" % [item, direction])
         var item_index = item.get_index()
+        item_index = item_index - 1 if direction else item_index + 1
         var item_next = self.layer_tree.tree.get_child(item_index)
-        item_next = item_next - 1 if direction else item_next + 1
+        if item_next == null: return
+
+        logv("next item found: %s" % item_next)
 
         # Handle item above being a layer separator
         if item_next.magic != null:
+            logv("next item was separator")
             var min_new_z = int(item_next.layer_z) - 1
             var valid_groups = self.layer_tree.separators.keys()
             valid_groups.sort()
 
             var new_z = self.layer_tree.get_group_for_z(min_new_z, direction).layer_z
-            var group_zs = self.dialog.get_group_z_array(new_z)
+            logv("got new_z: %d" % new_z)
+            logv(self.layer_add_dialog)
+            var group_zs = self.layer_add_dialog.get_group_z_array(new_z)
+            logv("got group_zs: %s" % [group_zs])
 
             new_z = group_zs.max() + 1 if group_zs.size() != 0 else new_z + 1
             if group_zs.max() == min_new_z:
-                logv("Refusing to move layer to group that is full")
-                return
+                logv("Item below is in the way")
+                if group_zs.size() == len(range(min_new_z, group_zs.max())):
+                    logv("Group full")
+                
+
             
             item.layer.set_z_index(new_z)
         
@@ -181,21 +207,21 @@ class LayerTree extends Panel:
     # ===== LOGGING =====
     func logv(msg):
         if LOG_LEVEL > 3:
-            printraw("[V] <LayerTree>: ")
+            printraw("(%d) [V] <LayerTree>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
 
     func logd(msg):
         if LOG_LEVEL > 2:
-            printraw("[D] <LayerTree>: ")
+            printraw("(%d) [D] <LayerTree>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
     
     func logi(msg):
         if LOG_LEVEL >= 1:
-            printraw("[I] <LayerTree>: ")
+            printraw("(%d) [I] <LayerTree>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
@@ -206,7 +232,10 @@ class LayerTree extends Panel:
         self.layerm = layerm
         self.scontrol = scontrol
 
-        Utils.load_scene_inplace(self, Global.Root + "ui/layertree.tscn")
+        self.template = ResourceLoader.load(Global.Root + "ui/layertree.tscn", "", true)
+        var instance = template.instance()
+        self.add_child(instance)
+        instance.remove_and_skip()
 
         self.size_flags_vertical = SIZE_EXPAND_FILL
 
@@ -215,7 +244,7 @@ class LayerTree extends Panel:
         self.tree.remove_child($"ShadowLayers/ShadowLayer")
 
         self.scontrol.connect("level_changed", self, "populate_tree", [self.scontrol.curr_level_id])
-        self.layerm.connect("layer_added", self, "populate_tree", [self.scontrol.curr_level_id])
+        self.layerm.connect("layer_added", self, "on_layer_added")
         self.layerm.connect("layer_modified", self, "on_layer_modified")
 
         # Populate group separators
@@ -229,6 +258,8 @@ class LayerTree extends Panel:
             self.tree.add_child(separator)
             self.separators[key] = separator
 
+        self.populate_tree(self.scontrol.curr_level_id)
+
     # ===== TREE FUNCTIONS =====
     func get_group_for_z(z_index: int, direction: bool = DIR_UP):
         logv("Get group for %d" % z_index)
@@ -236,14 +267,18 @@ class LayerTree extends Panel:
         var locked_keys = LOCKED_LAYERS.keys()
         locked_keys.sort()
 
+        logv("keys sorted")
+
         var insert_index = locked_keys.bsearch(z_index)
         locked_keys.insert(insert_index, z_index)
+        logv('key inserted')
 
         if direction == DIR_UP:
             group = locked_keys[insert_index + 1]
         else:
             group = locked_keys[insert_index - 1]
 
+        logv("group set, result was %s (%s)" % [group, self.separators[group]])
         return self.separators[group] if group != null else null
 
     func get_layer_items(show_hidden = false) -> Array:
@@ -252,7 +287,7 @@ class LayerTree extends Panel:
         for item in self.tree.get_children():
             if show_hidden and item.magic == null:
                 rval.append(item)
-            elif not item.visible and item.magic == null:
+            elif item.visible == (!show_hidden) and item.magic == null:
                 rval.append(item)
         
         return rval
@@ -275,12 +310,18 @@ class LayerTree extends Panel:
         var level_layers = self.layerm.get_layers_in_level(level_id)
         level_layers.sort_custom(self.layerm, "sort_layers_desc")
 
+        logv("sorted level_layers")
+
         var tree_items = self.get_layer_items(true)
+        logv('got tree_items: %s' % [tree_items])
 
         # Hide all entries and set layer to null
         for entry in tree_items:
+            logv("hiding %s" % entry)
             entry.visible = false
             entry.layer = null
+
+        logv("hid tree_items")
 
         # Assign layers to tree items as we go, creating new tree items if needed
         for idx in range(level_layers.size()):
@@ -327,13 +368,15 @@ class LayerTree extends Panel:
         for entry in self.get_layer_items():
             if entry.selected:
                 selected.append(entry)
-        
         return selected
 
     # ===== SIGNAL HANDLERS =====
     func on_layer_modified(layer):
         if layer.level_id == self.scontrol.curr_level_id:
             self.order_tree()
+
+    func on_layer_added(layer):
+        self.populate_tree(self.scontrol.curr_level_id)
 
     # ===== SORTING =====
     func sort_entries_asc(a, b):
@@ -361,21 +404,21 @@ class LayerTreeItem extends PanelContainer:
     # ===== LOGGING =====
     func logv(msg):
         if LOG_LEVEL > 3:
-            printraw("[V] <LayerTreeItem>: ")
+            printraw("(%d) [V] <LayerTreeItem>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
 
     func logd(msg):
         if LOG_LEVEL > 2:
-            printraw("[D] <LayerTreeItem>: ")
+            printraw("(%d) [D] <LayerTreeItem>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
     
     func logi(msg):
         if LOG_LEVEL >= 1:
-            printraw("[I] <LayerTreeItem>: ")
+            printraw("(%d) [I] <LayerTreeItem>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
@@ -385,19 +428,22 @@ class LayerTreeItem extends PanelContainer:
         self.Global = global
         self.tree = tree
 
-        Utils.load_scene_inplace(self, Global.Root + "ui/layertree_item.tscn")
+        self.template = ResourceLoader.load(Global.Root + "ui/layertree_item.tscn", "", true)
+        var instance = template.instance()
+        self.add_child(instance)
+        instance.remove_and_skip()
         
-        self.self_modulate = Color(0, 0, 0, 0)
         self.rect_min_size.x = 50
-
+        
         self.mouse_filter = MOUSE_FILTER_PASS
-
+        
         var preview_stylebox = ResourceLoader.load(
             Global.Root + "ui/styleboxes/layertreeitem.stylebox", 
             "", 
             true
         )
         $"HB/Preview".add_stylebox_override('panel', preview_stylebox)
+        self.self_modulate = Color(0, 0, 0, 0)
 
         # Load chequered background for preview
         var background_texture := ImageTexture.new()
@@ -408,6 +454,15 @@ class LayerTreeItem extends PanelContainer:
 
         $"LayerButton".connect("toggled", self, "on_toggle")
         $"HB/Visibility".connect("toggled", self, "on_visibility_toggle")
+
+    func _process(delta):
+        $"HB/Preview".self_modulate = Color(1, 1, 1, (1 if self.active else 0))
+        if (
+            self.tree.scontrol.active_layer != self._layer and 
+            self.active and
+            self._layer != null
+        ):
+            self.tree.scontrol.set_active_layer(self._layer)
 
     # ===== UI =====
     func _set_visibility_button_textures():
@@ -425,6 +480,29 @@ class LayerTreeItem extends PanelContainer:
 
         vis_button.rect_scale = Vector2(0.75, 0.75)
 
+    func on_toggle(val):
+        if Input.is_key_pressed(KEY_SHIFT):
+            self._selected = !self._selected
+            return
+
+        var toggle_val = val if self.tree.current_selection.size() == 1 else true
+        for item in self.tree.get_layer_items():
+            item.selected = false
+
+        self.selected = true
+
+    func on_visibility_toggle(val):
+        if self._layer != null:
+            self._layer.visible = val
+            self._layer.set_meta("visibility", val)
+
+    # ==== SIGNAL HANDLERS =====
+    func on_layer_modified(layer):
+        if layer == null or self._layer == null: return
+        $"HB/Preview/LayerPreview".texture = self._layer.texture
+        $"HB/LayerName".text = self._layer.layer_name
+        $"HB/ZLevel".text = self._layer.z_index
+
     # ===== GETTERS/SETTERS ======
 
     # ---- self.active get/set
@@ -436,14 +514,25 @@ class LayerTreeItem extends PanelContainer:
     func get_layer(): return self._layer
 
     func set_layer(new_layer) -> void:
-        self._layer = new_layer
+        if new_layer == null:
+            if self._layer != null:
+                self._layer.disconnect("layer_modified", self, "on_layer_modified")
+            self._layer = null
+        else:
+            if self._layer != null:
+                self._layer.disconnect("layer_modified", self, "on_layer_modified")
 
-        $"HB/Preview/LayerPreview".texture = self._layer.texture
-        $"HB/LayerName".text = self._layer.layer_name
-        $"HB/ZLevel".text = self._layer.z_index
+            self._layer = new_layer
+            self._layer.connect("layer_modified", self, "on_layer_modified")
+            ($"HB/Visibility" as Button).set_pressed_no_signal(self._layer.visible)
+
+            $"HB/Preview/LayerPreview".texture = self._layer.texture
+            $"HB/LayerName".text = self._layer.layer_name
+            $"HB/ZLevel".text = self._layer.z_index
 
     # ---- self.selected get/set
-    func get_selected() -> bool: return self._selected
+    func get_selected() -> bool: 
+        return self._selected
     
     func set_selected(val: bool) -> void:
         self._selected = val
@@ -466,7 +555,10 @@ class LayerTreeSep extends HBoxContainer:
         self.layerm = layerm
         self.scontrol = scontrol
 
-        Utils.load_scene_inplace(self, Global.Root + "ui/layertree_group_sep.tscn")
+        self.template = ResourceLoader.load(Global.Root + "ui/layertree_group_sep.tscn", "", true)
+        var instance = self.template.instance()
+        self.add_child(instance)
+        instance.remove_and_skip()
 
         self.set_anchor_and_margin(0, 0, 0, false)
         self.size_flags_horizontal = SIZE_EXPAND_FILL
@@ -499,39 +591,44 @@ class NewLayerDialog extends WindowDialog:
     # ===== LOGGING =====
     func logv(msg):
         if LOG_LEVEL > 3:
-            printraw("[V] <NewLayerDialog>: ")
+            printraw("(%d) [V] <NewLayerDialog>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
 
     func logd(msg):
         if LOG_LEVEL > 2:
-            printraw("[D] <NewLayerDialog>: ")
+            printraw("(%d) [D] <NewLayerDialog>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
     
     func logi(msg):
         if LOG_LEVEL >= 1:
-            printraw("[I] <NewLayerDialog>: ")
+            printraw("(%d) [I] <NewLayerDialog>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
     
     # ===== BUILTIN =====
     func _init(global, layerm, scontrol).():
+        logv("init")
         self.Global = global
         self.layerm = layerm
         self.scontrol = scontrol
 
 
-        ShadowLayerC 	= ResourceLoader.load(Global.Root + "ShadowLayerC.gd", "GDScript", true)
-        ShadowLayer 	= load(Global.Root + "ShadowLayerC.gd").ShadowLayer
+        # Load classes
+        ShadowLayerC =	ResourceLoader.load(Global.Root + "ShadowLayerC.gd", "GDScript", true)
+        ShadowLayer = 	load(Global.Root + "ShadowLayerC.gd").ShadowLayer
 
         self.window_title = "Create New Layer"
         self.name = "NewLayerDialog"
 
-        Utils.load_scene_inplace(self, Global.Root + "ui/create_layer_dialog.tscn")
+        self.template = ResourceLoader.load(Global.Root + "ui/create_layer_dialog.tscn", "", true)
+        var instance = self.template.instance()
+        self.add_child(instance)
+        instance.remove_and_skip()
 
         self.set_anchor(0, 0.5, false, false)
         self.rect_position = Vector2(135, -10)
@@ -549,13 +646,18 @@ class NewLayerDialog extends WindowDialog:
         self.dropdown = $"Margins/Align/LayerNum/LayerNumEdit"
 
         for z_index in LOCKED_LAYERS.keys():
-            dropdown.add_item(LOCKED_LAYERS[z_index], z_index)
+            self.dropdown.add_item(LOCKED_LAYERS[z_index], z_index)
 
     func create_layer():
+        logv("UI create new layer called")
         var new_layer_index: int
-        var layer_group_z = dropdown.get_selected_id()
+        var layer_group_z = self.dropdown.get_selected_id()
+        
+        logv("layer_group_z is %s" % layer_group_z)
 
         var filtered_zs = self.get_group_z_array(layer_group_z)
+
+        logv("zs in group: %s" % [filtered_zs])
 
         if len(filtered_zs) == 0:
             new_layer_index = layer_group_z + 1
@@ -565,14 +667,18 @@ class NewLayerDialog extends WindowDialog:
             logv("Existing layers in group, creating at Z: %d" % (filtered_zs.max() + 1))
         
         var layer_name = $"Margins/Align/LayerName/LayerNameEdit".text
-
-        var new_layer = ShadowLayer.new()
+        logv("layer_name is %s" % layer_name)
+        logv(ShadowLayer)
+        var new_layer = ShadowLayer.new(Global)
+        logv("new_layer: %s" % new_layer)
         new_layer.create_new(self.scontrol.curr_level_id, new_layer_index, layer_name)
+        logv("new_layer initialized: %s" % new_layer)
         self.layerm.add_layer(new_layer)
 
         self.scontrol.set_active_layer(new_layer)
 
     func get_group_z_array(layer_group_z):
+        logv("get_group_z_array for %s" % layer_group_z)
         var locked_zs = LOCKED_LAYERS.keys()
         locked_zs.sort()
 

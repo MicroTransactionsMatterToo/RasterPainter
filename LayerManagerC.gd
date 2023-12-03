@@ -18,26 +18,27 @@ class LayerManager extends Object:
 
     func logv(msg):
         if LOG_LEVEL > 3:
-            printraw("[V] <LayerManager>: ")
+            printraw("(%d) [V] <LayerManager>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
 
     func logd(msg):
         if LOG_LEVEL > 2:
-            printraw("[D] <LayerManager>: ")
+            printraw("(%d) [D] <LayerManager>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
     
     func logi(msg):
         if LOG_LEVEL >= 1:
-            printraw("[I] <LayerManager>: ")
+            printraw("(%d) [I] <LayerManager>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
 
     func _init(global).() -> void:
+        logv("init")
         self.Global = global
         # Load classes
         ShadowLayerC =	ResourceLoader.load(Global.Root + "ShadowLayerC.gd", "GDScript", true)
@@ -121,10 +122,13 @@ class LayerManager extends Object:
             if key_info["level"] == level_id:
                 self.load_layer(key)
 
+        logv("got embedded entries")
+
         for layer in self.loaded_layers.values():
             if layer.level_id == level_id:
                 level_layers.append(layer)
 
+        logv("completed appending")
         return level_layers
 
     func layer_map(instance: Object, funcname: String, extra_args = []):
@@ -182,6 +186,7 @@ class LayerManager extends Object:
                 return key
         
         if create_if_missing:
+            logd("Creating level_id as none was found")
             var key = self.create_level_id(level)
             return key
 
@@ -195,7 +200,7 @@ class LayerManager extends Object:
         return id_nodes
 
     # ====== SIGNAL ======
-    func on_layer_changes(__, ___, layer):
+    func on_layer_changes(layer):
         self.emit_signal("layer_modified", layer)
 
     # ====== SORTING ======

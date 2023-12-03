@@ -32,21 +32,21 @@ class ShadowLayer extends Sprite:
 
     func logv(msg):
         if LOG_LEVEL > 3:
-            printraw("[V] <ShadowLayer>: ")
+            printraw("(%d) [V] <ShadowLayer>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
 
     func logd(msg):
         if LOG_LEVEL > 2:
-            printraw("[D] <ShadowLayer>: ")
+            printraw("(%d) [D] <ShadowLayer>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
     
     func logi(msg):
         if LOG_LEVEL >= 1:
-            printraw("[I] <ShadowLayer>: ")
+            printraw("(%d) [I] <ShadowLayer>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
@@ -54,6 +54,7 @@ class ShadowLayer extends Sprite:
     # ============= BUILTINS ================
 
     func _init(global).() -> void:
+        logv("init")
         self.Global = global
 
         # Set material to ensure correct rendering of transparency

@@ -1,7 +1,7 @@
 class_name BrushManagerC
 var script_class = "tool"
 
-const LOG_LEVEL = 0
+const LOG_LEVEL = 4
 const SHADER_DIR = "shaders/brush_shaders/"
 
 class BrushManager extends Node:
@@ -17,7 +17,7 @@ class BrushManager extends Node:
     var _current_brush_name: String
 
     var _brushes := {}
-    var available_brushes := [
+    var available_brushes = [
         PencilBrush,
         TextureBrush,
         ShadowBrush
@@ -32,21 +32,21 @@ class BrushManager extends Node:
 
     func logv(msg):
         if LOG_LEVEL > 3:
-            printraw("[V] <BrushManager>: ")
+            printraw("(%d) [V] <BrushManager>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
 
     func logd(msg):
         if LOG_LEVEL > 2:
-            printraw("[D] <BrushManager>: ")
+            printraw("(%d) [D] <BrushManager>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
     
     func logi(msg):
         if LOG_LEVEL >= 1:
-            printraw("[I] <BrushManager>: ")
+            printraw("(%d) [I] <BrushManager>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
@@ -54,7 +54,22 @@ class BrushManager extends Node:
     # ===== BUILTINS =====
 
     func _init(global).() -> void:
+        logv("init")
         self.Global = global
+
+        print(self.available_brushes)
+
+        for brush_class in self.available_brushes:
+            logv("Adding brush %s to available brushes" % brush_class)
+            var instance = brush_class.new(self.Global, self)
+            logv("Brush Instance %s" % instance)
+
+            self._brushes[instance.brush_name] = instance
+            self.add_child(instance)
+
+        self._current_brush_name = self._brushes.values()[0].brush_name
+
+            
 
     func name() -> String:
         return "BrushManager"
@@ -83,7 +98,8 @@ class BrushManager extends Node:
         return self._brushes.get(self._current_brush_name)
 
     # ---- self.color set/get
-    func set_color(color: Color) -> void:
+    func set_color(color) -> void:
+        logv("set_color to %s" % color)
         if color == null: return
         self._color = color
         self.emit_signal("brush_color_changed", self._color)
@@ -92,7 +108,8 @@ class BrushManager extends Node:
         return self._color
 
     # ---- self.size set/get
-    func set_size(size: float) -> void:
+    func set_size(size) -> void:
+        logv("set_size to %s" % size)
         if size == null: return
         self._size = size
         self.emit_signal("brush_size_changed", self._size)
@@ -115,21 +132,21 @@ class Brush extends Node2D:
 
     func logv(msg):
         if LOG_LEVEL > 3:
-            printraw("[V] <BrushManager>: ")
+            printraw("(%d) [V] <Brush>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
 
     func logd(msg):
         if LOG_LEVEL > 2:
-            printraw("[D] <BrushManager>: ")
+            printraw("(%d) [D] <Brush>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
     
     func logi(msg):
         if LOG_LEVEL >= 1:
-            printraw("[I] <BrushManager>: ")
+            printraw("(%d) [I] <Brush>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
@@ -137,6 +154,7 @@ class Brush extends Node2D:
     # ===== BUILTINS ======
 
     func _init(global, brush_manager).():
+        logv("init")
         self.Global = global
         self.brushmanager = brush_manager
         self.brushmanager.connect("brush_size_changed", self, "set_size")
@@ -153,8 +171,8 @@ class Brush extends Node2D:
         return "%s @ %d" % [self.brush_name, self.get_instance_id()]
 
     # ===== BRUSH STUFF =====
-    func paint(pen: Node2D, mouse_pos: Vector2, prev_mouse_pos: Vector2) -> void:
-        return
+    func paint(pen, mouse_pos, prev_mouse_pos) -> void:
+        pass
 
     func on_stroke_end() -> void:
         pass
@@ -165,12 +183,15 @@ class Brush extends Node2D:
     # ===== BRUSH UI =====
 
     func brush_ui():
+        logv("Brush default brush_ui called")
         return null
 
     func hide_ui():
+        logv("Default hide_ui called")
         if self.ui != null: self.ui.visible = false
 
     func show_ui():
+        logv("Default show_ui called")
         if self.ui != null: self.ui.visible = true
 
     # ===== SETTERS =====
@@ -194,8 +215,11 @@ class LineBrush extends Brush:
 
     const STROKE_THRESHOLD: float = 20.0
 
+    func _init(global, brush_manager).(global, brush_manager):
+        return
+
     # ===== OVERRIDES =====
-    func paint(pen: Node2D, mouse_pos: Vector2, prev_mouse_pos: Vector2) -> void:
+    func paint(pen, mouse_pos, prev_mouse_pos) -> void:
         if !self.stroke_line.get_parent() == pen:
             logv("Added stroke_line to pen")
             pen.add_child(self.stroke_line)
@@ -232,6 +256,20 @@ class LineBrush extends Brush:
 
     func on_stroke_end() -> void:
         self.stroke_line.clear_points()
+
+    # ===== BRUSH UI =====
+
+    func brush_ui():
+        logv("Brush default brush_ui called")
+        return null
+
+    func hide_ui():
+        logv("Default hide_ui called")
+        if self.ui != null: self.ui.visible = false
+
+    func show_ui():
+        logv("Default show_ui called")
+        if self.ui != null: self.ui.visible = true
 
     # ===== BRUSH SPECIFIC =====
     func add_stroke_point(position: Vector2):
@@ -297,6 +335,7 @@ class TextureBrush extends LineBrush:
     func brush_ui():
         if self.ui == null:
             self.ui = VBoxContainer.new()
+            logv("TextureBrush create UI")
 
         if self.path_grid_menu == null:
             var GridMenu = load("res://scripts/ui/elements/GridMenu.cs")
@@ -318,6 +357,7 @@ class TextureBrush extends LineBrush:
             self.path_grid_menu.select(0, true)
             
             self.ui.add_child(self.path_grid_menu)
+            logv("TextureBrush grid menu")
         
         return self.ui
 
