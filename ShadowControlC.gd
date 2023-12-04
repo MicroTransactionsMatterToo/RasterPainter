@@ -39,6 +39,7 @@ class ShadowControl extends Control:
 
     # +++++ State ++++++
     var history_queue: FIFOQueue
+    var redo_queue: FIFOQueue
     
     var active_layer setget set_active_layer, get_active_layer
     var _active_layer
@@ -108,6 +109,7 @@ class ShadowControl extends Control:
         self.toolpanel = toolpanel
 
         self.history_queue = FIFOQueue.new(NUM_UNDO_STATES)
+        self.redo_queue = FIFOQueue.new(NUM_UNDO_STATES)
 
         self.mouse_filter = MOUSE_FILTER_PASS
 
@@ -350,9 +352,11 @@ class ShadowControl extends Control:
     # ===== RENDERING =====
 
     func _on_stroke_finished() -> void:
-        logv("Appending to history")
+        logv("Appending to history and clearing redo queue")
         var current_state = self.active_layer.texture.duplicate()
+        current_state.set_meta("layer_id", self.active_layer.uuid)
         self.history_queue.push(current_state)
+        self.redo_queue.clear()
 
         logv("Blending stroke into layer %s" % self.active_layer)
         var viewport_image := self.viewport_tex.get_data()
@@ -479,3 +483,14 @@ class FIFOQueue extends Object:
     
     func pop() -> Object:
         return self._backing_array.pop_back()
+
+    func empty() -> bool:
+        return self._backing_array.empty()
+
+    func clear():
+        return self._backing_array.clear()
+
+    func last_uuid():
+        if self.empty(): return null
+        
+        return self._backing_array[-1].get_meta("layer_id")

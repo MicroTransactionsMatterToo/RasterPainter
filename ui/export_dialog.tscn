@@ -1,0 +1,83 @@
+[gd_scene format=2]
+
+[node name="ExportDialog" type="WindowDialog"]
+visible = true
+margin_right = 356.0
+margin_bottom = 228.0
+window_title = "Export Layer"
+
+[node name="Align" type="VBoxContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 5.0
+margin_top = 5.0
+margin_right = -5.0
+margin_bottom = -5.0
+
+[node name="Preview" type="HBoxContainer" parent="Align"]
+margin_right = 346.0
+margin_bottom = 100.0
+size_flags_horizontal = 3
+size_flags_vertical = 2
+
+[node name="Spacer" type="Control" parent="Align/Preview"]
+margin_right = 48.0
+margin_bottom = 100.0
+size_flags_horizontal = 3
+size_flags_vertical = 9
+
+[node name="PreviewRect" type="TextureRect" parent="Align/Preview"]
+margin_left = 52.0
+margin_right = 293.0
+margin_bottom = 100.0
+rect_min_size = Vector2( 100, 100 )
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 5.0
+
+[node name="Spacer2" type="Control" parent="Align/Preview"]
+margin_left = 297.0
+margin_right = 346.0
+margin_bottom = 100.0
+size_flags_horizontal = 3
+size_flags_vertical = 9
+
+[node name="FileSelect" type="HBoxContainer" parent="Align"]
+margin_top = 174.0
+margin_right = 346.0
+margin_bottom = 194.0
+
+[node name="Label" type="Label" parent="Align/FileSelect"]
+margin_top = 3.0
+margin_right = 55.0
+margin_bottom = 17.0
+text = "File Path"
+
+[node name="FilePath" type="TextEdit" parent="Align/FileSelect"]
+margin_left = 59.0
+margin_right = 318.0
+margin_bottom = 20.0
+size_flags_horizontal = 3
+
+[node name="FileSelect" type="Button" parent="Align/FileSelect"]
+margin_left = 322.0
+margin_right = 346.0
+margin_bottom = 20.0
+text = "..."
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Align"]
+margin_top = 198.0
+margin_right = 346.0
+margin_bottom = 218.0
+
+[node name="Accept" type="Button" parent="Align/HBoxContainer"]
+margin_right = 171.0
+margin_bottom = 20.0
+size_flags_horizontal = 3
+text = "Accept"
+
+[node name="Cancel" type="Button" parent="Align/HBoxContainer"]
+margin_left = 175.0
+margin_right = 346.0
+margin_bottom = 20.0
+size_flags_horizontal = 3
+text = "Cancel"

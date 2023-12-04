@@ -197,7 +197,7 @@ class ShadowLayer extends Sprite:
     func get_embedded_key() -> String:
         return "{level_id}|{layer_num}|{modcol}|{name}|{uuid}".format({
             "level_id": self._level_id,
-            "layer_num": self.layer_num,
+            "layer_num": self.z_index,
             "modcol": "#" + self.modulate.to_html(true),
             "name": self.layer_name,
             "uuid": self.uuid

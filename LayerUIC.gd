@@ -40,6 +40,7 @@ class LayerPanel extends PanelContainer:
     var layerm
 
     var layer_add_dialog: WindowDialog
+    var import_dialog: WindowDialog
 
     signal layer_order_changed()
 
@@ -90,7 +91,8 @@ class LayerPanel extends PanelContainer:
         logv("layertree %s" % self.layer_tree)
         $"Margins/Align/LayerTree".replace_by(self.layer_tree)
 
-        self.layer_add_dialog = NewLayerDialog.new(Global, self.layerm, self.scontrol)
+        self.layer_add_dialog = NewLayerDialog.new(Global, self.layerm, self.scontrol, self)
+        self.import_dialog = ImportDialog.new(Global, self.layerm, self.scontrol, self)
 
         self.rect_min_size.x = 256
         self.rect_position = Vector2(651, 0)
@@ -99,6 +101,7 @@ class LayerPanel extends PanelContainer:
         self.size_flags_vertical = SIZE_FILL
 
         Global.Editor.get_child("Windows").add_child(self.layer_add_dialog)
+        Global.Editor.get_child("Windows").add_child(self.import_dialog)
 
         $"Margins/Align/LayerControls/AddLayer".connect(
             "pressed",
@@ -117,6 +120,11 @@ class LayerPanel extends PanelContainer:
             "move_layers",
             [DIR_UP]
         )
+        $"Margins/Align/LayerControls/Import".connect(
+            "pressed",
+            self.import_dialog,
+            "popup_centered"
+        )
 
         self._set_icons()
 
@@ -131,6 +139,8 @@ class LayerPanel extends PanelContainer:
         $"Margins/Align/LayerControls/MoveLayerDown".icon = load("res://ui/icons/misc/down.png")
         $"Margins/Align/LayerControls/AddLayer".icon = load("res://ui/icons/buttons/add.png")
         $"Margins/Align/LayerControls/DeleteLayer".icon = load("res://ui/icons/misc/delete.png")
+        $"Margins/Align/LayerControls/Import".icon = load("res://ui/icons/menu/open.png")
+        $"Margins/Align/LayerControls/Export".icon = load("res://ui/icons/menu/export.png")
 
     # ===== MISC UI =====
     func show_layer_dialog():
@@ -174,7 +184,7 @@ class LayerPanel extends PanelContainer:
             var new_z = self.layer_tree.get_group_for_z(min_new_z, direction).layer_z
             logv("got new_z: %d" % new_z)
             logv(self.layer_add_dialog)
-            var group_zs = self.layer_add_dialog.get_group_z_array(new_z)
+            var group_zs = self.get_group_z_array(new_z)
             logv("got group_zs: %s" % [group_zs])
 
             new_z = group_zs.max() + 1 if group_zs.size() != 0 else new_z + 1
@@ -191,6 +201,25 @@ class LayerPanel extends PanelContainer:
             var new_z = item_next.layer.z_index
             item_next.layer.set_z_index(item.layer.z_index)
             item.layer.set_z_index(new_z)
+
+    func get_group_z_array(layer_group_z):
+        logv("get_group_z_array for %s" % layer_group_z)
+        var locked_zs = LOCKED_LAYERS.keys()
+        locked_zs.sort()
+
+        var layer_group_index = locked_zs.find(layer_group_z)
+        var next_group_z = locked_zs[layer_group_index + 1]
+        next_group_z = next_group_z if next_group_z != null else 8192
+
+        var current_zs = self.layerm.layer_z_indexes(self.scontrol.curr_level_id)
+        var filtered_zs = []
+        for z in current_zs:
+            if z > (next_group_z - 1) or z < layer_group_z or z == -50:
+                continue
+            else:
+                filtered_zs.append(z)
+        
+        return filtered_zs
 
 class LayerTree extends Panel:
     var Global
@@ -508,6 +537,8 @@ class LayerTreeItem extends PanelContainer:
     # ---- self.active get/set
     func get_active() -> bool:
         if self.tree == null: return false
+        if self.tree.scontrol.active_layer.uuid == self._layer.uuid:
+            return true
         return len(tree.current_selection) == 1 and self._selected
 
     # ---- self.layer get/set
@@ -579,7 +610,8 @@ class LayerTreeSep extends HBoxContainer:
 class NewLayerDialog extends WindowDialog:
     var Global
     var template
-
+    
+    var tree
     var layerm
     var scontrol
 
@@ -611,11 +643,12 @@ class NewLayerDialog extends WindowDialog:
             pass
     
     # ===== BUILTIN =====
-    func _init(global, layerm, scontrol).():
+    func _init(global, layerm, scontrol, tree).():
         logv("init")
         self.Global = global
         self.layerm = layerm
         self.scontrol = scontrol
+        self.tree = tree
 
 
         # Load classes
@@ -655,7 +688,7 @@ class NewLayerDialog extends WindowDialog:
         
         logv("layer_group_z is %s" % layer_group_z)
 
-        var filtered_zs = self.get_group_z_array(layer_group_z)
+        var filtered_zs = self.tree.get_group_z_array(layer_group_z)
 
         logv("zs in group: %s" % [filtered_zs])
 
@@ -667,6 +700,7 @@ class NewLayerDialog extends WindowDialog:
             logv("Existing layers in group, creating at Z: %d" % (filtered_zs.max() + 1))
         
         var layer_name = $"Margins/Align/LayerName/LayerNameEdit".text
+        layer_name = layer_name if layer_name != "" else "New Layer"
         logv("layer_name is %s" % layer_name)
         logv(ShadowLayer)
         var new_layer = ShadowLayer.new(Global)
@@ -677,21 +711,158 @@ class NewLayerDialog extends WindowDialog:
 
         self.scontrol.set_active_layer(new_layer)
 
-    func get_group_z_array(layer_group_z):
-        logv("get_group_z_array for %s" % layer_group_z)
-        var locked_zs = LOCKED_LAYERS.keys()
-        locked_zs.sort()
+class ImportDialog extends WindowDialog:
+    var Global
+    var template
 
-        var layer_group_index = locked_zs.find(layer_group_z)
-        var next_group_z = locked_zs[layer_group_index + 1]
-        next_group_z = next_group_z if next_group_z != null else 8192
+    var tree
+    var layerm
+    var scontrol
 
-        var current_zs = self.layerm.layer_z_indexes(self.scontrol.curr_level_id)
-        var filtered_zs = []
-        for z in current_zs:
-            if z > (next_group_z - 1) or z < layer_group_z or z == -50:
-                continue
-            else:
-                filtered_zs.append(z)
+    var dropdown: OptionButton
+    var filedialog
+
+    var import_image
+
+    var ShadowLayerC
+    var ShadowLayer
+
+    # ===== LOGGING =====
+    func logv(msg):
+        if LOG_LEVEL > 3:
+            printraw("(%d) [V] <ImportDialog>: " % OS.get_ticks_msec())
+            print(msg)
+        else:
+            pass
+
+    func logd(msg):
+        if LOG_LEVEL > 2:
+            printraw("(%d) [D] <ImportDialog>: " % OS.get_ticks_msec())
+            print(msg)
+        else:
+            pass
+    
+    func logi(msg):
+        if LOG_LEVEL >= 1:
+            printraw("(%d) [I] <ImportDialog>: " % OS.get_ticks_msec())
+            print(msg)
+        else:
+            pass
+    
+    # ===== BUILTINS =====
+    func _init(global, layerm, scontrol, tree).():
+        logv("init")
+        self.Global = global
+        self.layerm = layerm
+        self.scontrol = scontrol
+        self.tree = tree
+
+
+        # Load classes
+        ShadowLayerC =	ResourceLoader.load(Global.Root + "ShadowLayerC.gd", "GDScript", true)
+        ShadowLayer = 	load(Global.Root + "ShadowLayerC.gd").ShadowLayer
+        logv("classes loaded")
+
+        self.window_title = "Import Layer"
+        self.name = "ImportDialog"
+        logv("set name and title")
+
+        self.template = ResourceLoader.load(Global.Root + "ui/import_dialog.tscn", "", true)
+        var instance = self.template.instance()
+        self.add_child(instance)
+        instance.remove_and_skip()
+        logv("load template %s %s" % [instance, self])
+
+        self.set_anchor(0, 0.5, false, false)
+        self.rect_position = Vector2(135, -10)
+        self.rect_size = Vector2(300, 150)
+        logv("set sizes")
+
+        self.popup_exclusive = false
+        self.size_flags_horizontal = SIZE_FILL
+        self.size_flags_vertical = SIZE_FILL
+
+        $"Align/Buttons/Accept".connect(
+            "pressed",
+            self,
+            "import_layer"
+        )
+        logv('connect accept button')
+
+
+        self.dropdown = $"Align/LayerNum/LayerNumEdit"
+        logv("got dropdown %s" % self.dropdown)
+
+        for z_index in LOCKED_LAYERS.keys():
+            self.dropdown.add_item(LOCKED_LAYERS[z_index], z_index)
+
+        logv("added layers to dropdown")
+
+        self.filedialog = FileDialog.new()
+        logv("created filedialog %s" % self.filedialog)
+
+        self.filedialog.add_filter("*.png; PNG image")
+        self.filedialog.mode = self.filedialog.MODE_OPEN_FILE
+        self.filedialog.access = FileDialog.ACCESS_FILESYSTEM
+        self.filedialog.current_dir = "/"
+
+        self.filedialog.resizable = true
+
+        self.filedialog.connect('file_selected', self, "on_file_selected")
+
+        $"Align/FileSelect/FileSelect".connect(
+            "pressed",
+            self.filedialog,
+            "popup_centered",
+            [Vector2(500, 600)]
+        )
+        logv("Connect file select")
+        Global.Editor.get_child("Windows").add_child(self.filedialog)
+
+
+    func on_file_selected(path):
+        logv("file for import selected: %s" % path)
+        var import_image = Image.new()
+        var err = import_image.load(path)
+        if err != OK:
+            logd("Failed to import, error code was: %d" % err)
+            return
         
-        return filtered_zs
+        import_image.resize(
+            Global.World.WorldRect.size.x / self.scontrol.RENDER_SCALE,
+            Global.World.WorldRect.size.y / self.scontrol.RENDER_SCALE
+        )
+
+        self.import_image = import_image
+        
+
+    func import_layer():
+        logv("UI create new layer called")
+        var new_layer_index: int
+        var layer_group_z = self.dropdown.get_selected_id()
+        
+        logv("layer_group_z is %s" % layer_group_z)
+
+        var filtered_zs = self.tree.get_group_z_array(layer_group_z)
+
+        logv("zs in group: %s" % [filtered_zs])
+
+        if len(filtered_zs) == 0:
+            new_layer_index = layer_group_z + 1
+            logv("No existing layers in group, creating at group Z + 1")
+        else:
+            new_layer_index = filtered_zs.max() + 1
+            logv("Existing layers in group, creating at Z: %d" % (filtered_zs.max() + 1))
+        
+        var layer_name = $"LayerName/LayerNameEdit".text
+        layer_name = layer_name if layer_name != "" else "New Layer"
+        logv("layer_name is %s" % layer_name)
+        logv(ShadowLayer)
+        var new_layer = ShadowLayer.new(Global)
+        logv("new_layer: %s" % new_layer)
+        new_layer.create_new(self.scontrol.curr_level_id, new_layer_index, layer_name)
+        new_layer.texture.set_data(self.import_image)
+        logv("new_layer initialized: %s" % new_layer)
+        self.layerm.add_layer(new_layer)
+
+        self.scontrol.set_active_layer(new_layer)

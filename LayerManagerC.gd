@@ -100,9 +100,12 @@ class LayerManager extends Object:
                 Global.World.EmbeddedTextures[key] != null
             ):
                 logv("Found key in textures, loading")
-                var new_layer = ShadowLayer.new()
-                new_layer.create_from_embedded_key(key)
+                var new_layer = ShadowLayer.new(Global)
+                logv("instance created %s" % new_layer)
+                new_layer.create_from_key(key)
+                logv("created from key")
                 self.add_layer(new_layer)
+                logv("added")
 
                 return new_layer
         
@@ -130,6 +133,10 @@ class LayerManager extends Object:
 
         logv("completed appending")
         return level_layers
+
+    func get_layer_by_uuid(layer_uuid):
+        return self.layer_filter(self, "uuid_lambda", [layer_uuid])[0]
+
 
     func layer_map(instance: Object, funcname: String, extra_args = []):
         var map_result := []
@@ -216,3 +223,4 @@ class LayerManager extends Object:
 
     # == SHIT THAT SHOULD BE LAMBDAS ==
     func lid_lambda(layer, level_id): return layer.level_id == level_id
+    func uuid_lambda(layer, uuid): return layer.uuid == uuid

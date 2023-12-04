@@ -35,9 +35,9 @@ text = "Layers"
 margin_bottom = 239.0
 
 [node name="LayerControls" type="HBoxContainer" parent="Margins/Align"]
-margin_left = 83.0
+margin_left = 63.0
 margin_top = 243.0
-margin_right = 151.0
+margin_right = 171.0
 margin_bottom = 263.0
 hint_tooltip = "Test	"
 size_flags_horizontal = 4
@@ -75,3 +75,18 @@ margin_right = 68.0
 margin_bottom = 20.0
 size_flags_horizontal = 3
 icon_align = 1
+
+[node name="VSeparator2" type="VSeparator" parent="Margins/Align/LayerControls"]
+margin_left = 72.0
+margin_right = 76.0
+margin_bottom = 20.0
+
+[node name="Import" type="Button" parent="Margins/Align/LayerControls"]
+margin_left = 80.0
+margin_right = 92.0
+margin_bottom = 20.0
+
+[node name="Export" type="Button" parent="Margins/Align/LayerControls"]
+margin_left = 96.0
+margin_right = 108.0
+margin_bottom = 20.0

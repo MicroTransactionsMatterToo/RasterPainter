@@ -67,16 +67,32 @@ margin_bottom = 14.0
 text = "Brush Color"
 
 [node name="BrushUI" type="VBoxContainer" parent="."]
-margin_top = 195.0
+margin_top = 376.0
 margin_right = 443.0
-margin_bottom = 386.0
+margin_bottom = 748.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="LayerControls" type="VBoxContainer" parent="."]
-margin_top = 390.0
+margin_top = 752.0
 margin_right = 443.0
 margin_bottom = 772.0
 size_flags_horizontal = 3
-size_flags_vertical = 3
-size_flags_stretch_ratio = 2.0
+size_flags_stretch_ratio = 0.5
+
+[node name="HistoryB" type="HBoxContainer" parent="LayerControls"]
+margin_left = 174.0
+margin_right = 268.0
+margin_bottom = 20.0
+size_flags_horizontal = 4
+
+[node name="Undo" type="Button" parent="LayerControls/HistoryB"]
+margin_right = 46.0
+margin_bottom = 20.0
+text = "Undo"
+
+[node name="Redo" type="Button" parent="LayerControls/HistoryB"]
+margin_left = 50.0
+margin_right = 94.0
+margin_bottom = 20.0
+text = "Redo"

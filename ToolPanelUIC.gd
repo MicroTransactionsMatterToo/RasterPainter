@@ -18,6 +18,12 @@ class ShadowToolpanel extends VBoxContainer:
 
     var ColorPalette
 
+    enum HistoryOperation {
+        UNDO,
+        REDO
+    }
+
+
     # ===== LOGGING =====
     func logv(msg):
         if LOG_LEVEL > 3:
@@ -96,6 +102,9 @@ class ShadowToolpanel extends VBoxContainer:
         )
         logv("ColorPalette added to UI")
 
+        $"LayerControls/HistoryB/Undo".icon = load("res://ui/icons/menu/undo.png")
+        $"LayerControls/HistoryB/Redo".icon = load("res://ui/icons/menu/redo.png")
+
         self.populate_brushes()
         logv("Brushes populated")
 
@@ -106,6 +115,24 @@ class ShadowToolpanel extends VBoxContainer:
             self,
             "on_brush_button_pressed"
         )
+
+        $"LayerControls/HistoryB/Undo".connect(
+            "pressed",
+            self,
+            "on_undo_redo",
+            [HistoryOperation.UNDO]
+        )
+
+        $"LayerControls/HistoryB/Redo".connect(
+            "pressed",
+            self,
+            "on_undo_redo",
+            [HistoryOperation.REDO]
+        )
+
+    func _process(delta):
+        ($"LayerControls/HistoryB/Redo" as Button).disabled = self.scontrol.redo_queue.empty()
+        ($"LayerControls/HistoryB/Undo" as Button).disabled = self.scontrol.history_queue.empty()
 
     func on_color_changed(color):
         logv("Color changed %s to %s" % [self.brushmgr.color, color])
@@ -120,6 +147,49 @@ class ShadowToolpanel extends VBoxContainer:
         self.brushmgr.current_brush.hide_ui()
         self.brushmgr.current_brush = button.get_meta("brush_name")
         self.brushmgr.current_brush.show_ui()
+
+    func on_undo_redo(operation: int):
+        logv("on_undo_redo: %s" % operation)
+        var operation_queue
+        var append_queue
+        match operation:
+            HistoryOperation.REDO: 
+                operation_queue = self.scontrol.redo_queue
+                append_queue = self.scontrol.history_queue
+            HistoryOperation.UNDO: 
+                operation_queue = self.scontrol.history_queue
+                append_queue = self.scontrol.redo_queue
+            _: 
+                logv("Invalid operation")
+                return null
+
+        if operation_queue.empty():
+            logv("History Queue is empty, not undoing")
+            return
+        
+        var uuid = operation_queue.last_uuid()
+        if uuid == null:
+            logv("Invalid history entry, ignoring")
+            self.scontrol.history_queue.pop()
+            return
+        
+        var layer = self.layerm.get_layer_by_uuid(uuid)
+        if layer == null:
+            logv("Layer that history item pointed to no longer exists, ignoring")
+            operation_queue.pop()
+            return
+
+        var texture = operation_queue.pop()
+        logv("history texture is %s, current texture is %s" % [texture, layer.texture])
+        
+        var current_texture = layer.texture.duplicate(false)
+        current_texture.set_meta("layer_id", layer.uuid)
+        append_queue.push(current_texture)
+
+        
+        layer.texture = texture
+        
+
 
     func populate_brushes():
         logv("Populating brushes from %s" % self.brushmgr._brushes)
