@@ -82,6 +82,7 @@ func start() -> void:
 	self.toolpanel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	self.toolpanel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	logv("Control added as child")
+	logv("InputMap: %s" % [InputMap.get_actions()])
 
 func on_tool_enable(tool_id) -> void:
 	logv("ShadowPainter enabled")

@@ -232,7 +232,7 @@ class LineBrush extends Brush:
             logv("SHIFT is pressed, making a straight line")
             if len(self.stroke_line.points) == 1: self.add_stroke_point(mouse_pos)
             else: 
-                self.stroke_line.set_point_position(-1, mouse_pos)
+                self.stroke_line.set_point_position(self.stroke_line.points.size() - 1, mouse_pos)
                 self.previous_point_drawn = mouse_pos
             
             return
