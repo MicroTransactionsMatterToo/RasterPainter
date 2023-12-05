@@ -305,11 +305,34 @@ class PencilBrush extends LineBrush:
 # Brush for drawing lines of any loaded asset
 class TextureBrush extends LineBrush:
     var path_grid_menu = null
+
+    # ===== LOGGING =====
+    func logv(msg):
+        if LOG_LEVEL > 3:
+            printraw("(%d) [V] <TextureBrush>: " % OS.get_ticks_msec())
+            print(msg)
+        else:
+            pass
+
+    func logd(msg):
+        if LOG_LEVEL > 2:
+            printraw("(%d) [D] <TextureBrush>: " % OS.get_ticks_msec())
+            print(msg)
+        else:
+            pass
+    
+    func logi(msg):
+        if LOG_LEVEL >= 1:
+            printraw("(%d) [I] <TextureBrush>: " % OS.get_ticks_msec())
+            print(msg)
+        else:
+            pass
+    
     func _init(global, brush_manager).(global, brush_manager):
-        self.icon = load("res://ui/icons/material_brush.png")
+        self.icon = load("res://ui/icons/tools/material_brush.png")
         self.brush_name = "TextureBrush"
 
-        self.stroke_line.texture_mode           = Line2D.LINE_TEXTURE_STRETCH
+        self.stroke_line.texture_mode           = Line2D.LINE_TEXTURE_TILE
         self.stroke_line.joint_mode             = Line2D.LINE_JOINT_ROUND
         self.stroke_line.antialiased            = false
         self.stroke_line.name                   = "TextureStroke"
@@ -333,8 +356,11 @@ class TextureBrush extends LineBrush:
 
     # ===== UI =====
     func brush_ui():
+        logv("TextureBrush ui called")
         if self.ui == null:
             self.ui = VBoxContainer.new()
+            (self.ui as VBoxContainer).size_flags_vertical = VBoxContainer.SIZE_EXPAND_FILL
+            (self.ui as VBoxContainer).size_flags_horizontal = VBoxContainer.SIZE_EXPAND_FILL
             logv("TextureBrush create UI")
 
         if self.path_grid_menu == null:
@@ -353,6 +379,8 @@ class TextureBrush extends LineBrush:
                 self,
                 "on_texture_selected"
             )
+
+            self.path_grid_menu.rect_size = Vector2(100, 300)
 
             self.path_grid_menu.select(0, true)
             

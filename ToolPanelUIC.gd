@@ -195,8 +195,11 @@ class ShadowToolpanel extends VBoxContainer:
         logv("Populating brushes from %s" % self.brushmgr._brushes)
         for brush in self.brushmgr._brushes.values():
             logv("Adding brush: %s" % brush)
-            $"BrushUI".add_child(brush.ui())
-            brush.hide_ui()
+            var brush_ui = brush.brush_ui()
+            if brush_ui != null:
+                $"BrushUI".add_child(brush_ui)
+                logv("brush_ui added: %s" % brush_ui)
+                brush.hide_ui()
 
             var brush_button = Button.new()
             brush_button.set_meta("brush_name", brush.brush_name)

@@ -722,7 +722,7 @@ class ImportDialog extends WindowDialog:
     var dropdown: OptionButton
     var filedialog
 
-    var import_image
+    var import_file_path
 
     var ShadowLayerC
     var ShadowLayer
@@ -822,11 +822,18 @@ class ImportDialog extends WindowDialog:
 
     func on_file_selected(path):
         logv("file for import selected: %s" % path)
+        self.import_file_path = path
+        
+
+    func import_layer():
+        logv("import_layer called")
+
         var import_image = Image.new()
-        var err = import_image.load(path)
+        var err = import_image.load(self.import_file_path)
         if err != OK:
             logd("Failed to import, error code was: %d" % err)
             return
+        logv("imported %s" % self.import_file_path)
         
         import_image.resize(
             Global.World.WorldRect.size.x / self.scontrol.RENDER_SCALE,
@@ -834,10 +841,6 @@ class ImportDialog extends WindowDialog:
         )
 
         self.import_image = import_image
-        
-
-    func import_layer():
-        logv("UI create new layer called")
         var new_layer_index: int
         var layer_group_z = self.dropdown.get_selected_id()
         
@@ -857,12 +860,15 @@ class ImportDialog extends WindowDialog:
         var layer_name = $"LayerName/LayerNameEdit".text
         layer_name = layer_name if layer_name != "" else "New Layer"
         logv("layer_name is %s" % layer_name)
-        logv(ShadowLayer)
+
         var new_layer = ShadowLayer.new(Global)
         logv("new_layer: %s" % new_layer)
+
         new_layer.create_new(self.scontrol.curr_level_id, new_layer_index, layer_name)
-        new_layer.texture.set_data(self.import_image)
         logv("new_layer initialized: %s" % new_layer)
+        
+        new_layer.texture.set_data(self.import_image)
+        logv("new_layer texture set to imported image")
         self.layerm.add_layer(new_layer)
 
         self.scontrol.set_active_layer(new_layer)
