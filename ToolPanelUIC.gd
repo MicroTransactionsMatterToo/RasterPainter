@@ -76,6 +76,7 @@ class ShadowToolpanel extends VBoxContainer:
 
 
         var color_palette = ColorPalette.new(false)
+        color_palette.SetColor(Color(0, 0, 0, 1), false)
         logv("ColorPalette instance created")
         var color_presets = [
             Color.red.to_html(),
@@ -108,6 +109,7 @@ class ShadowToolpanel extends VBoxContainer:
         self.populate_brushes()
         logv("Brushes populated")
         self.brushmgr.size = ($"BrushControls/BrushSettings/BSizeC/BSize/HSlider" as HSlider).value
+        self.brushmgr.color = color_palette.color
 
 
     func _ready():
@@ -134,6 +136,7 @@ class ShadowToolpanel extends VBoxContainer:
     func _process(delta):
         ($"LayerControls/HistoryB/Redo" as Button).disabled = self.scontrol.redo_queue.empty()
         ($"LayerControls/HistoryB/Undo" as Button).disabled = self.scontrol.history_queue.empty()
+        self.brushmgr.current_brush = self.brush_buttons.get_pressed_button().get_meta("brush_name")
 
     func on_color_changed(color):
         logv("Color changed %s to %s" % [self.brushmgr.color, color])

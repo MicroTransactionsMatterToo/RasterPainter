@@ -91,6 +91,7 @@ class BrushManager extends Node:
 
     # ---- self.current_brush set/get
     func set_brush(brush_name: String) -> void:
+        if self._current_brush_name == brush_name: return
         if self._brushes.has(brush_name):
             self._current_brush_name = brush_name
             self.emit_signal("brush_changed")
