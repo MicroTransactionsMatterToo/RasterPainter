@@ -89,6 +89,8 @@ func on_tool_enable(tool_id) -> void:
 	logv("ShadowPainter enabled")
 	self._enabled = true
 	self.control.layerui.visible = true
+	self.brush_manager.size = self.brush_manager.size
+	Global.World.UI.CursorMode = 5
 
 func on_tool_disable(tool_id) -> void:
 	logv("ShadowPainter disabled")

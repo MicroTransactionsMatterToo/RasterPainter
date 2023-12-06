@@ -163,7 +163,7 @@ class LayerPanel extends PanelContainer:
         if direction == DIR_DOWN:
             selected_items.invert()
         
-        if len(selected_items) == 0: 
+        if len(selected_items) == 0:
             logd("No layers selected, ignoring move request")
             return
         

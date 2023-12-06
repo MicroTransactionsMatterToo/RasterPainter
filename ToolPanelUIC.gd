@@ -107,6 +107,7 @@ class ShadowToolpanel extends VBoxContainer:
 
         self.populate_brushes()
         logv("Brushes populated")
+        self.brushmgr.size = ($"BrushControls/BrushSettings/BSizeC/BSize/HSlider" as HSlider).value
 
 
     func _ready():
@@ -209,5 +210,12 @@ class ShadowToolpanel extends VBoxContainer:
             brush_button.toggle_mode = true
 
             $"BrushControls/BrushSelector".add_child(brush_button)
-
+        
         self.brush_buttons.get_buttons()[0].set_pressed_no_signal(true)
+
+        # for i in self.brush_buttons.get_buttons():
+        #     print(i.get_meta("brush_name") == "PencilBrush")
+        #     if i.get_meta("brush_name") == "PencilBrush":
+        #         print("Set Default Button %s" % i)
+        #         i.set_pressed_no_signal(true)
+        #         break

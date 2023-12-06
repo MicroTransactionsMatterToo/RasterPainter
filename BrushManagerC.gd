@@ -115,6 +115,7 @@ class BrushManager extends Node:
         logv("set_size to %s" % size)
         if size == null: return
         self._size = size
+        Global.World.UI.CursorRadius = self._size
         self.emit_signal("brush_size_changed", self._size)
 
     func get_size() -> float:
