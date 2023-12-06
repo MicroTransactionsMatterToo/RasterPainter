@@ -61,6 +61,9 @@ class ShadowControl extends Control:
 
     # +++++ Rendering Resources +++++
     var transparent_image := Image.new()
+    var blending_viewport := Viewport.new()
+    var blending_rectangle := ColorRect.new()
+    var result_texture: ViewportTexture
 
     # +++++ Signals +++++
     signal stroke_finished(position)
@@ -165,6 +168,8 @@ class ShadowControl extends Control:
         self._bootstrap_layerui()
         logv("layerpanel setup")
 
+        self._bootstrap_blending()
+
     # ===== BOOTSTRAP =====
     func _bootstrap_active_layer():
         self._curr_level_id = self.layerm.get_level_id(Global.World.Level)
@@ -267,6 +272,34 @@ class ShadowControl extends Control:
         self.viewport_render = vp_rend
         logv("viewport_render set")
 
+    func _bootstrap_blending():
+        self.blending_viewport.size = Global.World.WorldRect.size / RENDER_SCALE
+
+        self.blending_viewport.usage = Viewport.USAGE_3D
+        self.blending_viewport.disable_3d = true
+        self.blending_viewport.hdr = false
+        self.blending_viewport.transparent_bg = true
+        self.blending_viewport.render_target_v_flip = true
+        self.blending_viewport.render_target_update_mode = Viewport.UPDATE_ALWAYS
+
+        self.blending_viewport.gui_disable_input = true
+        self.blending_rectangle.rect_size = Global.World.WorldRect.size / RENDER_SCALE
+
+        self.blending_rectangle.material = ShaderMaterial.new()
+        self.blending_rectangle.material.shader = ResourceLoader.load(
+            Global.Root + "shaders/BlendingShader.shader",
+            "Shader",
+            true
+        )
+        self.blending_rectangle.color = Color(0, 0, 0, 0)
+
+        Global.World.add_child(self.blending_viewport)
+        self.blending_viewport.add_child(self.blending_rectangle)
+        self.result_texture = self.blending_viewport.get_texture()
+
+        self.blending_rectangle.material.set_shader_param("base_texture", self.active_layer.texture)
+        self.blending_rectangle.material.set_shader_param("stroke_texture", self.viewport_tex)
+        
     # ===== INPUT =====
     func _process(delta):
         if Global.Header.data == null:
@@ -359,24 +392,22 @@ class ShadowControl extends Control:
         self.redo_queue.clear()
 
         logv("Blending stroke into layer %s" % self.active_layer)
-        var viewport_image := self.viewport_tex.get_data()
-        var updated_region := viewport_image.get_used_rect()
 
-        var layer_image = self.active_layer.texture.get_data()
-        if self.erase_mode:
-            logv("erase flag set, using alpha mask")
-            layer_image.blit_rect_mask(
-                self.transparent_image,
-                viewport_image,
-                updated_region,
-                updated_region.position
-            )
-        else:
-            layer_image.blend_rect(
-                viewport_image,
-                updated_region,
-                updated_region.position
-            )
+        var layer_image = self.result_texture.get_data()
+        # if self.erase_mode:
+        #     logv("erase flag set, using alpha mask")
+        #     layer_image.blit_rect_mask(
+        #         self.transparent_image,
+        #         viewport_image,
+        #         updated_region,
+        #         updated_region.position
+        #     )
+        # else:
+        #     layer_image.blend_rect(
+        #         viewport_image,
+        #         updated_region,
+        #         updated_region.position
+        #     )
 
         self.active_layer.texture.set_data(layer_image)
         self.brushmgr.current_brush.on_stroke_end()

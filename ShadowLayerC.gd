@@ -59,7 +59,7 @@ class ShadowLayer extends Sprite:
 
         # Set material to ensure correct rendering of transparency
         self.material = CanvasItemMaterial.new()
-        self.material.blend_mode = CanvasItem.BLEND_MODE_PREMULT_ALPHA
+        self.material.blend_mode = CanvasItem.BLEND_MODE_MIX
 
         self.centered = false
         self.scale = Vector2(RENDER_SCALE, RENDER_SCALE)

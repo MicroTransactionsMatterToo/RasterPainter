@@ -84,6 +84,7 @@ func start() -> void:
 	logv("Control added as child")
 	logv("InputMap: %s" % [InputMap.get_actions()])
 
+
 func on_tool_enable(tool_id) -> void:
 	logv("ShadowPainter enabled")
 	self._enabled = true
@@ -93,6 +94,9 @@ func on_tool_disable(tool_id) -> void:
 	logv("ShadowPainter disabled")
 	self._enabled = false
 	self.control.layerui.visible = false
+	Global.World.UI.CursorMode = 1
 
 func on_content_input(input):
 	if self._enabled: self.control._on_tool_input(input)
+
+

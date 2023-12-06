@@ -146,6 +146,7 @@ class ShadowToolpanel extends VBoxContainer:
         logv("brush_button pressed: %s" % button)
         self.brushmgr.current_brush.hide_ui()
         self.brushmgr.current_brush = button.get_meta("brush_name")
+        self.brushmgr.current_brush.on_selected()
         self.brushmgr.current_brush.show_ui()
 
     func on_undo_redo(operation: int):

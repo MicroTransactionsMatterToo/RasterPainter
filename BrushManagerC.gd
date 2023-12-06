@@ -271,6 +271,11 @@ class LineBrush extends Brush:
         logv("Default show_ui called")
         if self.ui != null: self.ui.visible = true
 
+    func on_selected() -> void:
+        logv("on_selected, cursor_mode: %s" % Global.World.UI.CursorMode)
+        Global.World.UI.CursorMode = 5
+        Global.World.UI.CursorRadius = self.brushmanager.size
+
     # ===== BRUSH SPECIFIC =====
     func add_stroke_point(position: Vector2):
         self.stroke_line.add_point(position)
@@ -305,28 +310,6 @@ class PencilBrush extends LineBrush:
 # Brush for drawing lines of any loaded asset
 class TextureBrush extends LineBrush:
     var path_grid_menu = null
-
-    # ===== LOGGING =====
-    func logv(msg):
-        if LOG_LEVEL > 3:
-            printraw("(%d) [V] <TextureBrush>: " % OS.get_ticks_msec())
-            print(msg)
-        else:
-            pass
-
-    func logd(msg):
-        if LOG_LEVEL > 2:
-            printraw("(%d) [D] <TextureBrush>: " % OS.get_ticks_msec())
-            print(msg)
-        else:
-            pass
-    
-    func logi(msg):
-        if LOG_LEVEL >= 1:
-            printraw("(%d) [I] <TextureBrush>: " % OS.get_ticks_msec())
-            print(msg)
-        else:
-            pass
     
     func _init(global, brush_manager).(global, brush_manager):
         self.icon = load("res://ui/icons/tools/material_brush.png")

@@ -41,6 +41,7 @@ class LayerPanel extends PanelContainer:
 
     var layer_add_dialog: WindowDialog
     var import_dialog: WindowDialog
+    var export_dialog: WindowDialog
 
     signal layer_order_changed()
 
@@ -92,6 +93,7 @@ class LayerPanel extends PanelContainer:
         $"Margins/Align/LayerTree".replace_by(self.layer_tree)
 
         self.layer_add_dialog = NewLayerDialog.new(Global, self.layerm, self.scontrol, self)
+        self.export_dialog = ExportDialog.new(Global, self.layerm, self.scontrol, self)
         self.import_dialog = ImportDialog.new(Global, self.layerm, self.scontrol, self)
 
         self.rect_min_size.x = 256
@@ -102,6 +104,7 @@ class LayerPanel extends PanelContainer:
 
         Global.Editor.get_child("Windows").add_child(self.layer_add_dialog)
         Global.Editor.get_child("Windows").add_child(self.import_dialog)
+        Global.Editor.get_child("Windows").add_child(self.export_dialog)
 
         $"Margins/Align/LayerControls/AddLayer".connect(
             "pressed",
@@ -123,6 +126,12 @@ class LayerPanel extends PanelContainer:
         $"Margins/Align/LayerControls/Import".connect(
             "pressed",
             self.import_dialog,
+            "popup_centered"
+        )
+
+        $"Margins/Align/LayerControls/Export".connect(
+            "pressed",
+            self.export_dialog,
             "popup_centered"
         )
 
@@ -528,7 +537,7 @@ class LayerTreeItem extends PanelContainer:
     # ==== SIGNAL HANDLERS =====
     func on_layer_modified(layer):
         if layer == null or self._layer == null: return
-        $"HB/Preview/LayerPreview".texture = self._layer.texture
+        $"HB/Preview/LayerPreview".texture = self.tree.scontrol.result_texture
         $"HB/LayerName".text = self._layer.layer_name
         $"HB/ZLevel".text = self._layer.z_index
 
@@ -802,9 +811,9 @@ class ImportDialog extends WindowDialog:
         logv("created filedialog %s" % self.filedialog)
 
         self.filedialog.add_filter("*.png; PNG image")
+        self.filedialog.add_filter("*.webp; WebP image")
         self.filedialog.mode = self.filedialog.MODE_OPEN_FILE
         self.filedialog.access = FileDialog.ACCESS_FILESYSTEM
-        self.filedialog.current_dir = "/"
 
         self.filedialog.resizable = true
 
@@ -840,7 +849,10 @@ class ImportDialog extends WindowDialog:
             Global.World.WorldRect.size.y / self.scontrol.RENDER_SCALE
         )
 
+        logv("resized imported image")
+
         self.import_image = import_image
+        
         var new_layer_index: int
         var layer_group_z = self.dropdown.get_selected_id()
         
@@ -872,3 +884,127 @@ class ImportDialog extends WindowDialog:
         self.layerm.add_layer(new_layer)
 
         self.scontrol.set_active_layer(new_layer)
+        self.import_file_path = null
+
+class ExportDialog extends WindowDialog:
+    var Global
+    var template
+
+    var tree
+    var layerm
+    var scontrol
+
+    var filedialog
+
+    var export_file_path
+
+    # ===== LOGGING =====
+    func logv(msg):
+        if LOG_LEVEL > 3:
+            printraw("(%d) [V] <ExportDialog>: " % OS.get_ticks_msec())
+            print(msg)
+        else:
+            pass
+
+    func logd(msg):
+        if LOG_LEVEL > 2:
+            printraw("(%d) [D] <ExportDialog>: " % OS.get_ticks_msec())
+            print(msg)
+        else:
+            pass
+    
+    func logi(msg):
+        if LOG_LEVEL >= 1:
+            printraw("(%d) [I] <ExportDialog>: " % OS.get_ticks_msec())
+            print(msg)
+        else:
+            pass
+    
+    # ===== BUILTINS =====
+    func _init(global, layerm, scontrol, tree).():
+        logv("init")
+        self.Global = global
+        self.layerm = layerm
+        self.scontrol = scontrol
+        self.tree = tree
+
+        self.window_title = "Export Layer"
+        self.name = "ExportDialog"
+        
+        self.template = ResourceLoader.load(Global.Root + "ui/export_dialog.tscn", "", true)
+        var instance = self.template.instance()
+        self.add_child(instance)
+        instance.remove_and_skip()
+        logv("load template %s %s" % [instance, self])
+
+        self.set_anchor(0, 0, false, false)
+        self.rect_position = Vector2(135, -10)
+        self.rect_size = Vector2(300, 300)
+        logv("set sizes")
+
+        self.popup_exclusive = false
+        self.size_flags_horizontal = SIZE_FILL
+        self.size_flags_vertical = SIZE_FILL
+
+        $"Align/Buttons/Accept".connect(
+            "pressed",
+            self,
+            "export_image"
+        )
+        logv('connect accept button')
+
+        self.filedialog = FileDialog.new()
+        logv("created filedialog %s" % self.filedialog)
+
+        self.filedialog.add_filter("*.png; PNG image")
+        self.filedialog.add_filter("*.webp; WebP image")
+        self.filedialog.mode = self.filedialog.MODE_SAVE_FILE
+        self.filedialog.access = FileDialog.ACCESS_FILESYSTEM
+
+        self.filedialog.resizable = true
+
+        self.filedialog.connect('file_selected', self, "_on_file_selected")
+
+        $"Align/FileSelect/FileSelect".connect(
+            "pressed",
+            self.filedialog,
+            "popup_centered",
+            [Vector2(500, 600)]
+        )
+
+        logv("Connect file select")
+        Global.Editor.get_child("Windows").add_child(self.filedialog)
+
+        # Load chequered background for preview
+        var background_texture := ImageTexture.new()
+        background_texture.load(Global.Root + "icons/preview_background.png")
+        background_texture.set_size_override(Vector2(50, 50))
+        $"Align/Preview/PrevBox/Background".texture = background_texture
+
+        self.connect("about_to_show", self, "_on_about_to_show")
+
+    func _on_about_to_show():
+        logv("About to show")
+        var active_texture: ImageTexture = self.scontrol.active_layer.texture
+        ($"Align/Preview/PrevBox/PreviewRect" as TextureRect).texture = active_texture.duplicate(false)
+        ($"Align/Preview/PrevBox" as AspectRatioContainer).ratio = Global.World.WorldRect.size.x / Global.World.WorldRect.size.y
+        logv("preview_texture set to [%s, %s]" % [self.scontrol.active_layer.texture, active_texture])
+
+    func _on_file_selected(path):
+        logv("file_selected: %s" % path)
+        if path == null:
+            $"Align/Buttons/Accept".disabled = true
+            return
+        
+        $"Align/Buttons/Accept".disabled = false
+        $"Align/FileSelect/FilePath".text = path
+    
+    func export_image():
+        logv("exporting layer to %s" % $"Align/FileSelect/FilePath".text)
+        
+        var path = $"Align/FileSelect/FilePath".text
+        var image = $"Align/Preview/PrevBox/PreviewRect".texture.get_data()
+        image.premultiply_alpha()
+        logv("image is %s" % image)
+        logv("save_webp is %s" % image.has_method("save_webp"))
+        image.save_webp(path)
