@@ -62,6 +62,9 @@ class Preferences extends PanelContainer:
         self.size_flags_horizontal = SIZE_EXPAND_FILL
         self.size_flags_vertical = SIZE_EXPAND_FILL
 
+    func _exit_tree():
+        self.queue_free()
+
     # ===== UI SETUP =====
     func _setup_brush_settings():
         var cat_root = ($"Align/BrushSettings" as VBoxContainer)

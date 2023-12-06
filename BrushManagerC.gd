@@ -80,6 +80,9 @@ class BrushManager extends Node:
             len(self.available_brushes)
         ]
 
+    func _exit_tree():
+        self.queue_free()
+
     func queue_free() -> void:
         logv("Freeing")
         .queue_free()

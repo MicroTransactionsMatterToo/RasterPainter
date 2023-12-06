@@ -169,6 +169,17 @@ class ShadowControl extends Control:
         logv("layerpanel setup")
 
         self._bootstrap_blending()
+    
+    func _exit_tree():
+        self.queue_free()
+
+
+    func queue_free():
+        self.layerm.cleanup()
+        self.brushmgr.queue_free()
+        self.history_queue.free()
+        self.redo_queue.free()
+        .queue_free()
 
     # ===== BOOTSTRAP =====
     func _bootstrap_active_layer():
@@ -299,7 +310,7 @@ class ShadowControl extends Control:
 
         self.blending_rectangle.material.set_shader_param("base_texture", self.active_layer.texture)
         self.blending_rectangle.material.set_shader_param("stroke_texture", self.viewport_tex)
-        
+
     # ===== INPUT =====
     func _process(delta):
         if Global.Header.data == null:
@@ -507,6 +518,10 @@ class FIFOQueue extends Object:
 
     func _init(max_depth = 10):
         self._max_depth = max_depth
+
+    func free():
+        self._backing_array.empty()
+        .free()
 
     func push(item: Object):
         self._backing_array.push_back(item)
