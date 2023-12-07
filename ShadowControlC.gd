@@ -381,7 +381,7 @@ class ShadowControl extends Control:
             self.pen.update()
 
     func _on_draw() -> void:
-        var mouse_pos = self.get_local_mouse_position()
+        var mouse_pos = Global.World.UI.MousePosition
 
         if self.brushmgr.current_brush == null: return
 
