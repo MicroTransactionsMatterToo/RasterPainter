@@ -241,6 +241,10 @@ class ShadowToolpanel extends VBoxContainer:
 
         
         layer.texture = texture
+        self.scontrol.blending_rectangle.material.set_shader_param(
+            "base_texture", 
+            layer.texture
+        )
         
     ### populate_brushes
     # Loads the UI for each brush in the `BrushManager`

@@ -229,7 +229,7 @@ class LineBrush extends Brush:
 
     var previous_point_drawn: Vector2
 
-    const STROKE_THRESHOLD: float = 20.0
+    const STROKE_THRESHOLD: float = 60.0
 
     func _init(global, brush_manager).(global, brush_manager):
         return
@@ -255,6 +255,8 @@ class LineBrush extends Brush:
 
         if self.should_add_point(mouse_pos):
             self.add_stroke_point(mouse_pos)
+        else:
+            self.stroke_line.set_point_position(self.stroke_line.points.size() -1, mouse_pos)
         
     func set_color(color: Color) -> void:
         self.stroke_line.default_color = Color(
@@ -315,8 +317,7 @@ class PencilBrush extends LineBrush:
         self.stroke_line.joint_mode             = Line2D.LINE_JOINT_ROUND
         self.stroke_line.begin_cap_mode         = Line2D.LINE_CAP_ROUND
         self.stroke_line.end_cap_mode           = Line2D.LINE_CAP_ROUND
-        self.stroke_line.begin_cap_mode         = 2
-        self.stroke_line.sharp_limit            = 20
+        self.stroke_line.round_precision        = 20
         self.stroke_line.antialiased            = false
         self.stroke_line.name                   = "PencilStroke"
 
@@ -416,9 +417,12 @@ class ShadowBrush extends LineBrush:
         self.icon = load("res://ui/icons/tools/light_tool.png")
         self.brush_name = "ShadowBrush"
 
-        self.stroke_line.texture_mode       = Line2D.LINE_TEXTURE_TILE
-        self.stroke_line.antialiased        = false
-        self.stroke_line.joint_mode         = Line2D.LINE_JOINT_SHARP
+        self.stroke_line.texture_mode           = Line2D.LINE_TEXTURE_STRETCH
+        self.stroke_line.joint_mode             = Line2D.LINE_JOINT_ROUND
+        self.stroke_line.begin_cap_mode         = Line2D.LINE_CAP_BOX
+        self.stroke_line.end_cap_mode           = Line2D.LINE_CAP_BOX
+        self.stroke_line.round_precision        = 20
+        self.stroke_line.antialiased            = false
         self.stroke_line.name               = "ShadowBrushLine2D"
 
         self.stroke_shader = ResourceLoader.load(
