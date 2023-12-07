@@ -36,6 +36,7 @@ class ShadowControl extends Control:
     var level_layer_cont: LevelLayerContainer
 
     var pen: Node2D
+    var eraser_pen: Node2D
 
     # +++++ State ++++++
     var history_queue: FIFOQueue
@@ -61,9 +62,13 @@ class ShadowControl extends Control:
 
     # +++++ Rendering Resources +++++
     var transparent_image := Image.new()
+
     var blending_viewport := Viewport.new()
     var blending_rectangle := ColorRect.new()
     var result_texture: ViewportTexture
+
+    var eraser_viewport := Viewport.new()
+    var eraser_mask: ViewportTexture
 
     # +++++ Signals +++++
     signal stroke_finished(position)
@@ -169,6 +174,7 @@ class ShadowControl extends Control:
         logv("layerpanel setup")
 
         self._bootstrap_blending()
+        self._bootstrap_eraser()
     
     func _exit_tree():
         self.queue_free()
@@ -232,8 +238,13 @@ class ShadowControl extends Control:
         logv("Creating pen")
         self.pen = Node2D.new()
         self.pen.name = "Pen"
+        self.pen.material = CanvasItemMaterial.new()
         self.pen.connect("draw", self, "_on_draw")
         logv("pen bootstrapped")
+
+        self.eraser_pen = Node2D.new()
+        self.eraser_pen.name = "EraserPen"
+        logv('eraser pen bootstrapped')
 
     func _bootstrap_viewport():
         logv("Creating viewport")
@@ -294,6 +305,7 @@ class ShadowControl extends Control:
         self.blending_viewport.render_target_update_mode = Viewport.UPDATE_ALWAYS
 
         self.blending_viewport.gui_disable_input = true
+        self.blending_viewport.name = "BlendingViewport"
         self.blending_rectangle.rect_size = Global.World.WorldRect.size / RENDER_SCALE
 
         self.blending_rectangle.material = ShaderMaterial.new()
@@ -303,6 +315,7 @@ class ShadowControl extends Control:
             true
         )
         self.blending_rectangle.color = Color(0, 0, 0, 0)
+        self.blending_rectangle.name = "BlendingRectangle"
 
         Global.World.add_child(self.blending_viewport)
         self.blending_viewport.add_child(self.blending_rectangle)
@@ -310,6 +323,33 @@ class ShadowControl extends Control:
 
         self.blending_rectangle.material.set_shader_param("base_texture", self.active_layer.texture)
         self.blending_rectangle.material.set_shader_param("stroke_texture", self.viewport_tex)
+
+
+
+    func _bootstrap_eraser():
+        self.eraser_viewport.size = Global.World.WorldRect.size / RENDER_SCALE
+        self.eraser_viewport.size_override_stretch = true
+        self.eraser_viewport.set_size_override(
+            true,
+            Global.World.WorldRect.size
+        )
+        logv("viewport size set")
+
+        self.eraser_viewport.usage = Viewport.USAGE_3D
+        self.eraser_viewport.disable_3d = true
+        self.eraser_viewport.hdr = false
+        self.eraser_viewport.transparent_bg = true
+        self.eraser_viewport.render_target_v_flip = true
+        self.eraser_viewport.render_target_update_mode = Viewport.UPDATE_ALWAYS
+
+        self.eraser_viewport.gui_disable_input = true
+        logv("viewport configured")
+
+        self.eraser_mask = self.eraser_viewport.get_texture()
+        self.blending_rectangle.material.set_shader_param("erase_mask", self.eraser_mask)
+
+        Global.World.add_child(self.eraser_viewport)
+        self.eraser_viewport.add_child(self.eraser_pen)
 
     # ===== INPUT =====
     func _process(delta):
@@ -347,11 +387,18 @@ class ShadowControl extends Control:
                 self.emit_signal("stroke_started", mouse_pos)
                 self.prev_mouse_pos = mouse_pos
             self.is_painting = true
-            self.brushmgr.current_brush.paint(
-                self.pen,
-                mouse_pos,
-                self.prev_mouse_pos if self.prev_mouse_pos != null else mouse_pos
-            )
+            if self.brushmgr.current_brush.brush_name == "EraserBrush":
+                self.brushmgr.current_brush.paint(
+                    self.eraser_pen,
+                    mouse_pos,
+                    self.prev_mouse_pos if self.prev_mouse_pos != null else mouse_pos
+                )
+            else:    
+                self.brushmgr.current_brush.paint(
+                    self.pen,
+                    mouse_pos,
+                    self.prev_mouse_pos if self.prev_mouse_pos != null else mouse_pos
+                )
         else:
             if self.is_painting:
                 logv("Stroke finished at %s" % mouse_pos)

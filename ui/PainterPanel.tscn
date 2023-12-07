@@ -1,19 +1,23 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://ShadowPainter/ShadowBrush.shader" type="Shader" id=1]
 
 [sub_resource type="ShaderMaterial" id=1]
 shader = ExtResource( 1 )
-shader_param/alpha_mult = 2.0
-
-[sub_resource type="ShaderMaterial" id=2]
-shader = ExtResource( 1 )
-shader_param/alpha_mult = 2.0
 
 [sub_resource type="ViewportTexture" id=3]
 viewport_path = NodePath("Node2D/Viewport2/Viewport")
 
-[node name="Node2D" type="Node2D"]
+[sub_resource type="CanvasItemMaterial" id=5]
+blend_mode = 2
+
+[sub_resource type="ShaderMaterial" id=2]
+shader = ExtResource( 1 )
+
+[sub_resource type="Curve" id=4]
+_data = [ Vector2( 0.228571, 0.427273 ), 0.0, 0.0, 0, 0, Vector2( 0.48, 0.881818 ), 0.0, 0.0, 0, 0 ]
+
+[node name="Node2D" type="Control"]
 
 [node name="ColorRect" type="ColorRect" parent="."]
 material = SubResource( 1 )
@@ -21,13 +25,33 @@ margin_right = 404.0
 margin_bottom = 304.0
 color = Color( 0.67451, 0.109804, 0.109804, 1 )
 
-[node name="Node2D" type="Node2D" parent="."]
+[node name="Node2D" type="PanelContainer" parent="."]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_right = 839.0
+margin_bottom = 592.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
 
 [node name="Viewport2" type="Viewport" parent="Node2D"]
 size = Vector2( 500, 500 )
 transparent_bg = true
 disable_3d = true
 usage = 0
+
+[node name="TextureRect" type="TextureRect" parent="Node2D/Viewport2"]
+margin_left = 7.0
+margin_top = 7.0
+margin_right = 832.0
+margin_bottom = 585.0
+texture = SubResource( 3 )
+
+[node name="Line2D2" type="Line2D" parent="Node2D/Viewport2"]
+material = SubResource( 5 )
+position = Vector2( 0, 2 )
+points = PoolVector2Array( 109, 267, 218, 92, 537, 260, 491, 514, 414.291, 489.414, 179, 414 )
+default_color = Color( 0, 0, 0, 1 )
 
 [node name="Viewport" type="Viewport" parent="Node2D/Viewport2"]
 size = Vector2( 500, 250 )
@@ -42,14 +66,8 @@ material = SubResource( 2 )
 position = Vector2( -193, -92 )
 points = PoolVector2Array( 74, 461, 471, 424, 784, 229, 616, 76, 270, 337, 577, 418, 620, 425, 634, 423, 641, 418, 642, 415, 639, 401, 637, 399, 632, 395, 624, 394, 618, 393, 614, 392, 604, 392, 594, 391, 589, 391, 584, 396, 582, 401, 579, 408, 576, 425, 575, 432, 573, 440, 570, 448, 566, 454, 556, 460, 541, 461, 533, 459, 527, 454, 525, 446, 528, 441, 538, 437, 545, 437, 551, 440, 560, 447, 576, 452, 598, 458, 616, 461, 646, 459, 660, 453, 667, 446, 672, 438, 674, 428, 675, 421, 675, 415, 674, 408, 673, 404, 673, 399, 681, 395, 702, 336, 802, 369, 780, 409, 771, 439, 738, 477, 679, 489, 591, 496, 705, 422, 749, 399, 702, 431 )
 width = 40.0
+width_curve = SubResource( 4 )
 default_color = Color( 0.0352941, 0.196078, 1, 1 )
 texture_mode = 2
 joint_mode = 2
 round_precision = 32
-
-[node name="TextureRect" type="TextureRect" parent="Node2D/Viewport2"]
-margin_right = 374.0
-margin_bottom = 282.0
-texture = SubResource( 3 )
-expand = true
-stretch_mode = 1

@@ -83,7 +83,9 @@ func start() -> void:
 	self.toolpanel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	logv("Control added as child")
 	logv("InputMap: %s" % [InputMap.get_actions()])
-
+	logv("Icon Path: %s" % (Global.Root + "icons/eraser.png"))
+	var test = File.new()
+	logv("Icon Exists: %s" % test.file_exists(Global.Root + "icons/eraser.png"))
 
 func on_tool_enable(tool_id) -> void:
 	logv("ShadowPainter enabled")

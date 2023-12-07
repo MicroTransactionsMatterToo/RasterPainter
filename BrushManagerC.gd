@@ -20,7 +20,8 @@ class BrushManager extends Node:
     var available_brushes = [
         PencilBrush,
         TextureBrush,
-        ShadowBrush
+        ShadowBrush,
+        EraserBrush
     ]
 
     signal brush_size_changed(new_size)
@@ -137,21 +138,21 @@ class Brush extends Node2D:
 
     func logv(msg):
         if LOG_LEVEL > 3:
-            printraw("(%d) [V] <Brush>: " % OS.get_ticks_msec())
+            printraw("(%d) [V] <%s>: " % [OS.get_ticks_msec(), self.brush_name])
             print(msg)
         else:
             pass
 
     func logd(msg):
         if LOG_LEVEL > 2:
-            printraw("(%d) [D] <Brush>: " % OS.get_ticks_msec())
+            printraw("(%d) [D] <%s>: " % [OS.get_ticks_msec(), self.brush_name])
             print(msg)
         else:
             pass
     
     func logi(msg):
         if LOG_LEVEL >= 1:
-            printraw("(%d) [I] <Brush>: " % OS.get_ticks_msec())
+            printraw("(%d) [I] <%s>: " % [OS.get_ticks_msec(), self.brush_name])
             print(msg)
         else:
             pass
@@ -253,7 +254,8 @@ class LineBrush extends Brush:
             1.0
         )
 
-        self.stroke_line.material.set_shader_param(self.shader_param, color.a)
+        if self.shader_param != null:
+            self.stroke_line.material.set_shader_param(self.shader_param, color.a)
     
     func set_size(size: float) -> void:
         if size < 1.0: return
@@ -397,3 +399,30 @@ class ShadowBrush extends LineBrush:
         self.stroke_line.material.shader = self.stroke_shader
 
         self.shader_param = "alpha_mult"
+
+class EraserBrush extends LineBrush:
+    func _init(global, brush_manager).(global, brush_manager):
+        var icon = ImageTexture.new()
+        icon.load(Global.Root + "icons/eraser.png")
+        self.icon = icon
+        self.brush_name = "EraserBrush"
+
+        self.stroke_line.texture_mode           = Line2D.LINE_TEXTURE_STRETCH
+        self.stroke_line.joint_mode             = Line2D.LINE_JOINT_ROUND
+        self.stroke_line.antialiased            = false
+        self.stroke_line.name                   = "EraserStroke"
+
+
+        self.stroke_shader = ResourceLoader.load(
+            Global.Root + SHADER_DIR + "EraserBrush.shader", 
+            "Shader", 
+            true
+        ).duplicate(false)
+        self.stroke_line.material = ShaderMaterial.new()
+        self.stroke_line.material.shader = self.stroke_shader
+
+    func paint(pen, mouse_pos, prev_mouse_pos):
+        .paint(pen, mouse_pos, prev_mouse_pos)
+
+    func set_color(color):
+        pass

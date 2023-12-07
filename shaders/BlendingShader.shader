@@ -3,11 +3,13 @@ render_mode blend_premul_alpha;
 
 uniform sampler2D stroke_texture;
 uniform sampler2D base_texture;
+uniform sampler2D erase_mask;
 
 void fragment() {
 	vec4 output_color;
 	vec4 stroke_color = texture(stroke_texture, UV);
 	vec4 base_color = texture(base_texture, UV);
+	bool erase = texture(erase_mask, UV).a > 0.0f;
 	if (stroke_color != vec4(0, 0, 0, 0)) {
 		// Unmultiply colours
 		if (stroke_color.a > 0.0f) {
@@ -38,5 +40,9 @@ void fragment() {
 		COLOR = output_color;
 	} else {
 		COLOR = base_color;
+	}
+	
+	if (erase) {
+		COLOR.a = 0.0f;
 	}
 }
