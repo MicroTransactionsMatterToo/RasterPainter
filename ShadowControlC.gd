@@ -436,6 +436,8 @@ class ShadowControl extends Control:
         self.add_child(layer)
         self._active_layer = layer
 
+        self.blending_rectangle.material.set_shader_param("base_texture", self.active_layer.texture)
+
         self.pen.z_index = self._active_layer.z_index
         self.viewport_cont.z_index = self._active_layer.z_index + 1
 
