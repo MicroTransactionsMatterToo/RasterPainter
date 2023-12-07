@@ -208,6 +208,16 @@ class Brush extends Node2D:
     func set_size(size: float) -> void:
         pass
 
+    # ==== UTILS ====
+    
+    ## ui_config
+    # Called to determine which parts of the default brush UI should be shown
+    func ui_config() -> Dictionary:
+        return {
+            "size": true,
+            "color": true
+        }
+
 
 ### LineBrush
 # Base class for any brush that primarily uses `Line2D` for stroke drawing
@@ -232,7 +242,7 @@ class LineBrush extends Brush:
         
         if len(self.stroke_line.points) == 0:
             logv("No points in stroke line, ignoring any modifiers")
-            self.stroke_line.add_point(mouse_pos)
+            self.add_stroke_point(mouse_pos)
         
         if Input.is_key_pressed(KEY_SHIFT):
             logv("SHIFT is pressed, making a straight line")
@@ -283,6 +293,9 @@ class LineBrush extends Brush:
         Global.World.UI.CursorMode = 5
         Global.World.UI.CursorRadius = self.brushmanager.size
 
+    func ui_config() -> Dictionary:
+        return .ui_config()
+
     # ===== BRUSH SPECIFIC =====
     func add_stroke_point(position: Vector2):
         self.stroke_line.add_point(position)
@@ -298,8 +311,12 @@ class PencilBrush extends LineBrush:
         self.icon = load("res://ui/icons/tools/path_tool.png")
         self.brush_name = "PencilBrush"
 
-        self.stroke_line.texture_mode           = Line2D.LINE_TEXTURE_STRETCH
+        self.stroke_line.texture_mode           = Line2D.LINE_TEXTURE_TILE
         self.stroke_line.joint_mode             = Line2D.LINE_JOINT_ROUND
+        self.stroke_line.begin_cap_mode         = Line2D.LINE_CAP_ROUND
+        self.stroke_line.end_cap_mode           = Line2D.LINE_CAP_ROUND
+        self.stroke_line.begin_cap_mode         = 2
+        self.stroke_line.sharp_limit            = 20
         self.stroke_line.antialiased            = false
         self.stroke_line.name                   = "PencilStroke"
 
@@ -312,6 +329,13 @@ class PencilBrush extends LineBrush:
         self.stroke_line.material.shader = self.stroke_shader
 
         self.shader_param = "override_alpha"
+
+    func ui_config() -> Dictionary:
+        return {
+            "size": true,
+            "color": true,
+            "palette": "pencilbrush_palette"
+        }
 
 ### TextureBrush
 # Brush for drawing lines of any loaded asset
@@ -376,8 +400,16 @@ class TextureBrush extends LineBrush:
             
             self.ui.add_child(self.path_grid_menu)
             logv("TextureBrush grid menu")
+
+            self.set_texture(self.path_grid_menu.Selected)
         
         return self.ui
+
+    func ui_config() -> Dictionary:
+        return {
+            "size": true,
+            "color": false
+        }
 
 class ShadowBrush extends LineBrush:
     func _init(global, brush_manager).(global, brush_manager) -> void:
@@ -400,6 +432,12 @@ class ShadowBrush extends LineBrush:
 
         self.shader_param = "alpha_mult"
 
+    func ui_config() -> Dictionary:
+        return {
+            "size": true,
+            "color": true
+        }
+
 class EraserBrush extends LineBrush:
     func _init(global, brush_manager).(global, brush_manager):
         var icon = ImageTexture.new()
@@ -407,10 +445,15 @@ class EraserBrush extends LineBrush:
         self.icon = icon
         self.brush_name = "EraserBrush"
 
-        self.stroke_line.texture_mode           = Line2D.LINE_TEXTURE_STRETCH
+        self.stroke_line.texture_mode           = Line2D.LINE_TEXTURE_TILE
         self.stroke_line.joint_mode             = Line2D.LINE_JOINT_ROUND
         self.stroke_line.antialiased            = false
         self.stroke_line.name                   = "EraserStroke"
+
+        var background_texture := ImageTexture.new()
+        background_texture.load(Global.Root + "icons/preview_background.png")
+        self.stroke_line.texture = background_texture
+        self.stroke_line.default_color = Color(1, 1, 1, 0.75)
 
 
         self.stroke_shader = ResourceLoader.load(
@@ -426,3 +469,9 @@ class EraserBrush extends LineBrush:
 
     func set_color(color):
         pass
+
+    func ui_config() -> Dictionary:
+        return {
+            "size": true,
+            "color": false
+        }

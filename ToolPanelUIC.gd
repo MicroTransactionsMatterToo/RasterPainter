@@ -14,6 +14,8 @@ class ShadowToolpanel extends VBoxContainer:
     var layerm
     var brushmgr
 
+    var palette_control
+
     var brush_buttons := ButtonGroup.new()
 
     var ColorPalette
@@ -75,24 +77,24 @@ class ShadowToolpanel extends VBoxContainer:
         logv("VBoxContainer configured")
 
 
-        var color_palette = ColorPalette.new(false)
-        color_palette.SetColor(Color(0, 0, 0, 1), false)
+        self.palette_control = ColorPalette.new(false)
+        self.palette_control.SetColor(Color(0, 0, 0, 1), false)
         logv("ColorPalette instance created")
         var color_presets = [
             Color.red.to_html(),
             Color.green.to_html(),
             Color.blue.to_html()
         ]
-        color_palette.AddPresets(color_presets)
+        self.palette_control.AddPresets(color_presets)
         logv("ColorPalette presets set")
-        color_palette.connect(
+        self.palette_control.connect(
             "color_changed",
             self,
             "on_color_changed"
         )
         logv("color_changed connected")
 
-        $"BrushControls/BrushSettings/BColorC".add_child(color_palette)
+        $"BrushControls/BrushSettings/BColorC".add_child(self.palette_control)
         $"BrushControls/BrushSettings/BSizeC/BSize/HSlider".connect(
             "value_changed",
             self,
@@ -109,7 +111,7 @@ class ShadowToolpanel extends VBoxContainer:
         self.populate_brushes()
         logv("Brushes populated")
         self.brushmgr.size = ($"BrushControls/BrushSettings/BSizeC/BSize/HSlider" as HSlider).value
-        self.brushmgr.color = color_palette.color
+        self.brushmgr.color = self.palette_control.color
 
 
     func _ready():
@@ -152,7 +154,53 @@ class ShadowToolpanel extends VBoxContainer:
         self.brushmgr.current_brush = button.get_meta("brush_name")
         self.brushmgr.current_brush.on_selected()
         self.brushmgr.current_brush.show_ui()
+        self.configure_ui(
+            self.brushmgr.current_brush.ui_config()
+        )
 
+    ### set_palette
+    # TODO: implement this properly
+    func set_palette(palette_key: String):
+        return null
+        logv("setting palette to %s" % palette_key)
+        var palette
+        if Global.Editor.Toolset.ColorPalettes.has(palette_key):
+            logv("existing palette found, loading")
+            palette = Global.Editor.Toolset.ColorPalettes[palette_key].Save()
+        else:
+            logv("palette not defined, adding")
+            palette = [
+                Color.red,
+                Color.green,
+                Color.blue
+            ]
+            var new_palette = ColorPalette.new(false)
+            new_palette.AddPresets(palette)
+            Global.Editor.Toolset.ColorPalettes[palette_key] = new_palette
+        
+        logv("add palette")
+        self.palette_control.colorList.AddPresets(palette)
+            
+
+    
+    ### configure_ui
+    # Takes a dictionary dictating how the shared brush UI should be configured
+    # Mostly used to disable color selection for brushes where it doesn't apply
+    func configure_ui(config: Dictionary):
+        logv("Configuring brush_ui")
+        for key in config.keys():
+            match key:
+                "size":
+                    $"BrushControls/BrushSettings/BSizeC/BSize".visible = config[key]
+                "color":
+                    $"BrushControls/BrushSettings/BColorC".visible = config[key]
+                "palette":
+                    self.set_palette(config[key])
+                _:
+                    continue
+
+    ### on_undo_redo
+    # Called on undo or redo
     func on_undo_redo(operation: int):
         logv("on_undo_redo: %s" % operation)
         var operation_queue
@@ -194,8 +242,8 @@ class ShadowToolpanel extends VBoxContainer:
         
         layer.texture = texture
         
-
-
+    ### populate_brushes
+    # Loads the UI for each brush in the `BrushManager`
     func populate_brushes():
         logv("Populating brushes from %s" % self.brushmgr._brushes)
         for brush in self.brushmgr._brushes.values():

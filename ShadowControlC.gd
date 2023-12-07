@@ -68,6 +68,7 @@ class ShadowControl extends Control:
     var result_texture: ViewportTexture
 
     var eraser_viewport := Viewport.new()
+    var eraser_preview := TextureRect.new()
     var eraser_mask: ViewportTexture
 
     # +++++ Signals +++++
@@ -161,8 +162,6 @@ class ShadowControl extends Control:
         self.add_child(self.viewport)
         logv("viewport populated")
 
-        
-        
         self._bootstrap_active_layer()
         self.add_child(self._active_layer)
         logv("active_layer added")
@@ -350,6 +349,11 @@ class ShadowControl extends Control:
 
         Global.World.add_child(self.eraser_viewport)
         self.eraser_viewport.add_child(self.eraser_pen)
+
+        self.eraser_preview.texture = eraser_mask
+        self.eraser_preview.mouse_filter = MOUSE_FILTER_IGNORE
+        self.eraser_preview.rect_scale = Vector2(RENDER_SCALE, RENDER_SCALE)
+        Global.World.add_child(self.eraser_preview)
 
     # ===== INPUT =====
     func _process(delta):
