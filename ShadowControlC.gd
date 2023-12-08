@@ -456,20 +456,6 @@ class ShadowControl extends Control:
         logv("Blending stroke into layer %s" % self.active_layer)
 
         var layer_image = self.result_texture.get_data()
-        # if self.erase_mode:
-        #     logv("erase flag set, using alpha mask")
-        #     layer_image.blit_rect_mask(
-        #         self.transparent_image,
-        #         viewport_image,
-        #         updated_region,
-        #         updated_region.position
-        #     )
-        # else:
-        #     layer_image.blend_rect(
-        #         viewport_image,
-        #         updated_region,
-        #         updated_region.position
-        #     )
 
         self.active_layer.texture.set_data(layer_image)
         self.brushmgr.current_brush.on_stroke_end()

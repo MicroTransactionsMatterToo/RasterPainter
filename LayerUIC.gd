@@ -81,6 +81,8 @@ class LayerPanel extends PanelContainer:
         # self.layer_add_dialog = NewLayerDialog.new()
         self.name = "LayerPanel"
 
+    func _process(delta):
+        $"Margins/Align/LayerControls/DeleteLayer".disabled = len(self.layer_tree.get_layer_items()) <= 1
     func _ready():
         logv("LayerUI ready")
         var panel_mat = ResourceLoader.load("res://materials/MenuBackground.material")
@@ -110,6 +112,12 @@ class LayerPanel extends PanelContainer:
             "pressed",
             self,
             "show_layer_dialog"
+        )
+
+        $"Margins/Align/LayerControls/DeleteLayer".connect(
+            "pressed",
+            self,
+            "delete_layers"
         )
         $"Margins/Align/LayerControls/MoveLayerDown".connect(
             "pressed",
@@ -154,6 +162,28 @@ class LayerPanel extends PanelContainer:
     # ===== MISC UI =====
     func show_layer_dialog():
         self.layer_add_dialog.popup_centered()
+
+    # ===== LAYER MANAGEMENT =====
+    func delete_layers():
+        var selected_items = self.layer_tree.current_selection
+        logv("deleting %d layers, %s" % [
+            selected_items.size(), 
+            selected_items
+        ])
+        
+        for item in selected_items:
+            self.delete_layer(item)
+
+        self.layer_tree.get_layer_items()[0].set_selected(true)
+    
+    func delete_layer(item: CanvasItem):
+        if (item == null or item.layer == null): return
+        
+        item.layer.delete()
+        item.layer = null
+        item.visible = false
+        
+
 
     # ===== LAYER MOVEMENT =====
     func move_layers(direction: bool):

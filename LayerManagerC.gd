@@ -85,6 +85,22 @@ class LayerManager extends Object:
 
         return true
 
+    func remove_layer(layer):
+        if layer == null:
+            logv("layer was null, not deleting")
+            return
+        
+        logv("remove_layer called: %s" % layer)
+        var is_layer_loaded = self.get_layer_by_uuid(layer.uuid) != null
+        if is_layer_loaded:
+            logv("layer was managed by layer_manager, removing from loaded layers")
+            var deleted = self.loaded_layers.erase(layer.uuid)
+            logv("layer removed: %s" % deleted)
+        
+        
+
+
+
     func load_layer(layer_key: String):
         logv("Loading layer with key: %s" % layer_key)
         

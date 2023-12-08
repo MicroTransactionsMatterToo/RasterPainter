@@ -81,6 +81,10 @@ class ShadowLayer extends Sprite:
         logd("queue_free called")
         .queue_free()
 
+    func delete():
+        Global.World.EmbeddedTextures[self.embedded_key] = null
+        self.queue_free()
+
     # ============= INSTANTIATION ================
 
     func create_new(level_id, z_index, layer_name):

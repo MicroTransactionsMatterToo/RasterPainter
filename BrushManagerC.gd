@@ -469,6 +469,7 @@ class EraserBrush extends LineBrush:
         self.stroke_line.material.shader = self.stroke_shader
 
     func paint(pen, mouse_pos, prev_mouse_pos):
+        mouse_pos = self
         .paint(pen, mouse_pos, prev_mouse_pos)
 
     func set_color(color):
