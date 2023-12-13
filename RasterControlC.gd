@@ -363,7 +363,6 @@ class RasterControl extends Control:
 
     # ===== INPUT =====
     func _process(delta):
-        logv("PROCESS")
         if Global.Header.data == null:
             if self.layerm.get_level_id(Global.World.Level) != self.curr_level_id:
                 self._on_level_change()

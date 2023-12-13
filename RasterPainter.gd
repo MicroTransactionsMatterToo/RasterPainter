@@ -120,7 +120,6 @@ func on_tool_enable(tool_id) -> void:
 	logv("RasterPainter enabled")
 	self._enabled = true
 	self.control.layerui.visible = true
-	# self.brush_manager.size = self.prefs.get_c_val("def_brush_size")
 	Global.World.UI.CursorMode = 5
 
 func on_tool_disable(tool_id) -> void:

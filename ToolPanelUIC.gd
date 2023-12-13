@@ -261,6 +261,7 @@ class RasterToolpanel extends VBoxContainer:
             var brush_button = Button.new()
             brush_button.set_meta("brush_name", brush.brush_name)
             brush_button.icon = brush.icon
+            brush_button.hint_tooltip = brush.tooltip
             brush_button.group = self.brush_buttons
             brush_button.toggle_mode = true
 
