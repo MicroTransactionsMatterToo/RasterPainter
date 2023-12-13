@@ -110,8 +110,8 @@ class ShadowToolpanel extends VBoxContainer:
 
         self.populate_brushes()
         logv("Brushes populated")
-        self.brushmgr.size = ($"BrushControls/BrushSettings/BSizeC/BSize/HSlider" as HSlider).value
-        self.brushmgr.color = self.palette_control.color
+        ($"BrushControls/BrushSettings/BSizeC/BSize/HSlider" as HSlider).value = self.brushmgr.size
+        self.palette_control.Color = self.brushmgr.color
 
 
     func _ready():

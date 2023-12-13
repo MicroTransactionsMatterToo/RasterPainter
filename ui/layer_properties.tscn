@@ -1,0 +1,38 @@
+[gd_scene format=2]
+
+[node name="Control" type="WindowDialog"]
+visible = true
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_right = -728.0
+margin_bottom = -387.0
+size_flags_vertical = 2
+window_title = "Layer Properties"
+
+[node name="Align" type="GridContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 5.0
+margin_top = 5.0
+margin_right = -5.0
+margin_bottom = -5.0
+size_flags_horizontal = 3
+columns = 2
+
+[node name="Label" type="Label" parent="Align"]
+margin_top = 5.0
+margin_right = 76.0
+margin_bottom = 19.0
+text = "Layer Name"
+
+[node name="Control" type="LineEdit" parent="Align"]
+margin_left = 80.0
+margin_right = 286.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+
+[node name="LayerTintLabel" type="Label" parent="Align"]
+margin_top = 28.0
+margin_right = 76.0
+margin_bottom = 42.0
+text = "Layer Tint"

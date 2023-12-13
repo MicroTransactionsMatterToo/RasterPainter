@@ -1,5 +1,5 @@
 shader_type canvas_item;
-render_mode blend_disabled;
+render_mode blend_mix;
 
 uniform float override_alpha = 1.0;
 

@@ -58,7 +58,6 @@ class BrushManager extends Node:
         logv("init")
         self.Global = global
 
-        print(self.available_brushes)
 
         for brush_class in self.available_brushes:
             logv("Adding brush %s to available brushes" % brush_class)
@@ -69,6 +68,11 @@ class BrushManager extends Node:
             self.add_child(instance)
 
         self._current_brush_name = self._brushes.values()[0].brush_name
+        
+        var prefs = Global.World.get_meta("painter_config")
+        self.set_size(int(prefs.get_c_val("def_size_val")))
+        self.set_color(Color(prefs.get_c_val("def_brush_col")))
+        
 
             
 
@@ -451,6 +455,8 @@ class EraserBrush extends LineBrush:
 
         self.stroke_line.texture_mode           = Line2D.LINE_TEXTURE_TILE
         self.stroke_line.joint_mode             = Line2D.LINE_JOINT_ROUND
+        self.stroke_line.end_cap_mode           = Line2D.LINE_CAP_ROUND
+        self.stroke_line.begin_cap_mode         = Line2D.LINE_CAP_ROUND
         self.stroke_line.antialiased            = false
         self.stroke_line.name                   = "EraserStroke"
 
@@ -469,7 +475,6 @@ class EraserBrush extends LineBrush:
         self.stroke_line.material.shader = self.stroke_shader
 
     func paint(pen, mouse_pos, prev_mouse_pos):
-        mouse_pos = self
         .paint(pen, mouse_pos, prev_mouse_pos)
 
     func set_color(color):

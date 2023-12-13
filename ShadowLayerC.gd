@@ -27,7 +27,7 @@ class ShadowLayer extends Sprite:
     signal layer_modified(obj)
 
     # Constant for scaling texture to correct size
-    const RENDER_SCALE = 2
+    var RENDER_SCALE = 2
     const LOG_LEVEL = 4
 
     func logv(msg):
@@ -56,6 +56,8 @@ class ShadowLayer extends Sprite:
     func _init(global).() -> void:
         logv("init")
         self.Global = global
+        var prefs = Global.World.get_meta("painter_config")
+        RENDER_SCALE = prefs.get_c_val("render_scale")
 
         # Set material to ensure correct rendering of transparency
         self.material = CanvasItemMaterial.new()
@@ -133,6 +135,12 @@ class ShadowLayer extends Sprite:
         .set_z_index(int(key_data[1]))
 
         .set_texture(Global.World.EmbeddedTextures[key])
+        self.texture.set_size_override(
+            Vector2(
+                Global.World.WorldRect.size.x / RENDER_SCALE,
+                Global.World.WorldRect.size.y / RENDER_SCALE
+            )
+        )
 
     # ======== GETTERS/SETTERS =========
 

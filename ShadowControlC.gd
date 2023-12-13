@@ -1,7 +1,8 @@
 class_name ShadowControlC
 var script_class = "tool"
 
-
+### ShadowControl
+# Class that serves as the backbone for the entire mod
 class ShadowControl extends Control:
     var Global
 
@@ -20,6 +21,7 @@ class ShadowControl extends Control:
 
     var brushmgr
     var layerm
+    var preferences
 
     # +++++ UI ++++++
     var layerui: PanelContainer
@@ -81,7 +83,7 @@ class ShadowControl extends Control:
     # +++++ Constants +++++
     const LOG_LEVEL = 4
     const NUM_UNDO_STATES = 10
-    const RENDER_SCALE = 2
+    var RENDER_SCALE = 2
 
 
     # ===== LOGGING =====
@@ -107,10 +109,13 @@ class ShadowControl extends Control:
             pass
 
     # ===== BUILTINS =====
-    func _init(global, layerm, brushmgr, toolpanel).():
+    func _init(global, layerm, brushmgr, toolpanel, prefs).():
         logv("ShadowControl _init")
         self.Global = global
         self.layerm = layerm
+        self.preferences = prefs
+
+        RENDER_SCALE = self.preferences.get_c_val("render_scale")
 
         self.brushmgr = brushmgr
         self.add_child(self.brushmgr)
@@ -445,7 +450,10 @@ class ShadowControl extends Control:
             self.active_layer = level_layers[0]
 
     # ===== RENDERING =====
-
+    
+    ### _on_stroke_finished()
+    # Called when a stroke is finished. Handles rendering and blending of the 
+    # brush into the current raster layer
     func _on_stroke_finished() -> void:
         logv("Appending to history and clearing redo queue")
         var current_state = self.active_layer.texture.duplicate()
@@ -456,8 +464,11 @@ class ShadowControl extends Control:
         logv("Blending stroke into layer %s" % self.active_layer)
 
         var layer_image = self.result_texture.get_data()
+        layer_image.fix_alpha_edges()
 
         self.active_layer.texture.set_data(layer_image)
+        if not Global.World.EmbeddedTextures.has(self.active_layer.embedded_key):
+            Global.World.EmbeddedTextures[self.active_layer.embedded_key] = self.active_layer.texture
         self.brushmgr.current_brush.on_stroke_end()
 
     # ===== GETTERS/SETTERS =====
@@ -488,7 +499,8 @@ class ShadowControl extends Control:
     func get_current_level_id():
         return self._curr_level_id
 
-
+### LevelLayerContainer
+# Node2D that acts as a container for raster layers other than the one currently being edited
 class LevelLayerContainer extends Node2D:
     var Global
     var layerm
@@ -528,12 +540,15 @@ class LevelLayerContainer extends Node2D:
         self.layerm.connect("layer_added", self, "on_layer_modified")
         self.scontrol.connect("active_layer_changed", self, "on_layer_modified")
 
+    ### on_layer_modified
+    # Waits for the next frame, then repopulates children
     func on_layer_modified(val):
         yield(get_tree(), "idle_frame")
         self.update_children()
 
+    ### update_children
+    # Updates children of this node to load in all raster layers from current level
     func update_children():
-        print("MEMES")
         for child in self.get_children():
             self.remove_child(child)
 
