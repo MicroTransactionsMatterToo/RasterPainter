@@ -6,7 +6,7 @@ var script_class = "tool"
 const LOG_LEVEL = 4
 
 
-class ShadowToolpanel extends VBoxContainer:
+class RasterToolpanel extends VBoxContainer:
     var Global
     var template
 
@@ -58,7 +58,7 @@ class ShadowToolpanel extends VBoxContainer:
         self.scontrol = scontrol
         self.brushmgr = brushmgr
 
-        self.name = "ShadowToolPanel"
+        self.name = "RasterToolPanel"
 
         ColorPalette = load("res://scripts/ui/elements/ColorPalette.cs")
 

@@ -18,8 +18,8 @@ class Preferences extends ScrollContainer:
 
     var config_nodes := []
 
-    const CONFIG_FILE_DIR = "user://ShadowPainter"
-    const CONFIG_FILE_PATH = "user://ShadowPainter/config.json"
+    const CONFIG_FILE_DIR = "user://RasterPainter"
+    const CONFIG_FILE_PATH = "user://RasterPainter/config.json"
 
     var config_dict := {}
     const config_defaults = {

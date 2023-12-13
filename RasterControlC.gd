@@ -1,18 +1,18 @@
-class_name ShadowControlC
+class_name RasterControlC
 var script_class = "tool"
 
-### ShadowControl
+### RasterControl
 # Class that serves as the backbone for the entire mod
-class ShadowControl extends Control:
+class RasterControl extends Control:
     var Global
 
     # +++++ External Classes +++++
 
-    var ShadowLayerC
-    var ShadowLayer
+    var RasterLayerC
+    var RasterLayer
 
     var ToolPanelUIC
-    var ShadowToolpanel
+    var RasterToolpanel
 
     var LayerUIC
     var LayerPanel
@@ -89,28 +89,28 @@ class ShadowControl extends Control:
     # ===== LOGGING =====
     func logv(msg):
         if LOG_LEVEL > 3:
-            printraw("(%d) [V] <ShadowControl>: " % OS.get_ticks_msec())
+            printraw("(%d) [V] <RasterControl>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
 
     func logd(msg):
         if LOG_LEVEL > 2:
-            printraw("(%d) [D] <ShadowControl>: " % OS.get_ticks_msec())
+            printraw("(%d) [D] <RasterControl>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
     
     func logi(msg):
         if LOG_LEVEL >= 1:
-            printraw("(%d) [I] <ShadowControl>: " % OS.get_ticks_msec())
+            printraw("(%d) [I] <RasterControl>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
 
     # ===== BUILTINS =====
     func _init(global, layerm, brushmgr, toolpanel, prefs).():
-        logv("ShadowControl _init")
+        logv("RasterControl _init")
         self.Global = global
         self.layerm = layerm
         self.preferences = prefs
@@ -139,11 +139,11 @@ class ShadowControl extends Control:
         self.transparent_image.fill(Color(1, 1, 1, 0))
 
         # Class Imports
-        ShadowLayerC    = ResourceLoader.load(Global.Root + "ShadowLayerC.gd", "GDScript", true)
-        ShadowLayer     = load(Global.Root + "ShadowLayerC.gd").ShadowLayer
+        RasterLayerC    = ResourceLoader.load(Global.Root + "RasterLayerC.gd", "GDScript", true)
+        RasterLayer     = load(Global.Root + "RasterLayerC.gd").RasterLayer
         ToolPanelUIC    = ResourceLoader.load(Global.Root + "ToolPanelUIC.gd", "GDScript", true)
-        ShadowToolpanel = load(Global.Root + "ToolPanelUIC.gd").ShadowToolpanel
-        print("TEST: " + str(ShadowToolpanel))
+        RasterToolpanel = load(Global.Root + "ToolPanelUIC.gd").RasterToolpanel
+        print("TEST: " + str(RasterToolpanel))
         LayerUIC        = ResourceLoader.load(Global.Root + "LayerUIC.gd", "GDScript", true)
         LayerPanel      = load(Global.Root + "LayerUIC.gd").LayerPanel
 
@@ -200,7 +200,7 @@ class ShadowControl extends Control:
         var new_active_layer
         if len(level_layers) == 0:
             logd("No layers found, creating a new one")
-            new_active_layer = ShadowLayer.new(Global)
+            new_active_layer = RasterLayer.new(Global)
             new_active_layer.create_new(
                 self.curr_level_id,
                 -1,
@@ -215,7 +215,7 @@ class ShadowControl extends Control:
         logv("active_layer bootstrapped")
 
     func _bootstrap_toolpanelui():
-        self.toolpanelui = ShadowToolpanel.new(
+        self.toolpanelui = RasterToolpanel.new(
             Global,
             self.layerm,
             self,
@@ -359,9 +359,11 @@ class ShadowControl extends Control:
         self.eraser_preview.mouse_filter = MOUSE_FILTER_IGNORE
         self.eraser_preview.rect_scale = Vector2(RENDER_SCALE, RENDER_SCALE)
         Global.World.add_child(self.eraser_preview)
+        logv("BUGINGi")
 
     # ===== INPUT =====
     func _process(delta):
+        logv("PROCESS")
         if Global.Header.data == null:
             if self.layerm.get_level_id(Global.World.Level) != self.curr_level_id:
                 self._on_level_change()
@@ -437,7 +439,7 @@ class ShadowControl extends Control:
 
         if new_active_layer == null and len(level_layers) == 0:
             logd("No layers found, creating a new one")
-            new_active_layer = ShadowLayer.new(Global)
+            new_active_layer = RasterLayer.new(Global)
             new_active_layer.create_new(
                 self.curr_level_id,
                 -1,

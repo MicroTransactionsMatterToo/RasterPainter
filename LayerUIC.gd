@@ -48,7 +48,7 @@ class LayerPanel extends PanelContainer:
 
     # Actual tree
     var layer_tree
-    # ShadowControl instance
+    # RasterControl instance
     var scontrol
     # LayerManager instance
     var layerm
@@ -323,7 +323,7 @@ class LayerTree extends Panel:
 
     func _ready():
         # Remove placeholder
-        self.tree.remove_child($"ShadowLayers/ShadowLayer")
+        self.tree.remove_child($"RasterLayers/RasterLayer")
 
         self.scontrol.connect("level_changed", self, "populate_tree", [self.scontrol.curr_level_id])
         self.layerm.connect("layer_added", self, "on_layer_added")
@@ -442,7 +442,7 @@ class LayerTree extends Panel:
 
     # ---- self.tree get
     func get_layer_tree() -> CanvasItem:
-        return $"ShadowLayers" as CanvasItem
+        return $"RasterLayers" as CanvasItem
 
     # ---- self.current_selection get
     func get_current_selection() -> Array:
@@ -670,8 +670,8 @@ class NewLayerDialog extends WindowDialog:
 
     var dropdown: OptionButton
 
-    var ShadowLayerC
-    var ShadowLayer
+    var RasterLayerC
+    var RasterLayer
 
     # ===== LOGGING =====
     func logv(msg):
@@ -705,8 +705,8 @@ class NewLayerDialog extends WindowDialog:
 
 
         # Load classes
-        ShadowLayerC =	ResourceLoader.load(Global.Root + "ShadowLayerC.gd", "GDScript", true)
-        ShadowLayer = 	load(Global.Root + "ShadowLayerC.gd").ShadowLayer
+        RasterLayerC =	ResourceLoader.load(Global.Root + "RasterLayerC.gd", "GDScript", true)
+        RasterLayer = 	load(Global.Root + "RasterLayerC.gd").RasterLayer
 
         self.window_title = "Create New Layer"
         self.name = "NewLayerDialog"
@@ -755,8 +755,8 @@ class NewLayerDialog extends WindowDialog:
         var layer_name = $"Margins/Align/LayerName/LayerNameEdit".text
         layer_name = layer_name if layer_name != "" else "New Layer"
         logv("layer_name is %s" % layer_name)
-        logv(ShadowLayer)
-        var new_layer = ShadowLayer.new(Global)
+        logv(RasterLayer)
+        var new_layer = RasterLayer.new(Global)
         logv("new_layer: %s" % new_layer)
         new_layer.create_new(self.scontrol.curr_level_id, new_layer_index, layer_name)
         logv("new_layer initialized: %s" % new_layer)
@@ -777,8 +777,8 @@ class ImportDialog extends WindowDialog:
 
     var import_file_path
 
-    var ShadowLayerC
-    var ShadowLayer
+    var RasterLayerC
+    var RasterLayer
 
     # ===== LOGGING =====
     func logv(msg):
@@ -812,8 +812,8 @@ class ImportDialog extends WindowDialog:
 
 
         # Load classes
-        ShadowLayerC =	ResourceLoader.load(Global.Root + "ShadowLayerC.gd", "GDScript", true)
-        ShadowLayer = 	load(Global.Root + "ShadowLayerC.gd").ShadowLayer
+        RasterLayerC =	ResourceLoader.load(Global.Root + "RasterLayerC.gd", "GDScript", true)
+        RasterLayer = 	load(Global.Root + "RasterLayerC.gd").RasterLayer
         logv("classes loaded")
 
         self.window_title = "Import Layer"
@@ -917,7 +917,7 @@ class ImportDialog extends WindowDialog:
         layer_name = layer_name if layer_name != "" else "New Layer"
         logv("layer_name is %s" % layer_name)
 
-        var new_layer = ShadowLayer.new(Global)
+        var new_layer = RasterLayer.new(Global)
         logv("new_layer: %s" % new_layer)
 
         new_layer.create_new(self.scontrol.curr_level_id, new_layer_index, layer_name)

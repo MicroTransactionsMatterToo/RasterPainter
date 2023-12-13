@@ -1,0 +1,8 @@
+{
+    "name": "RasterPainter",
+    "unique_id": "MBMM.raster_painter",
+    "version": "0.0.1",
+    "author": "MBMM",
+    "description": "Allows editing, importing and exporting raster layers",
+    "dd_version": "1.1.0.0",
+}

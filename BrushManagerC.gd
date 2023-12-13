@@ -20,7 +20,7 @@ class BrushManager extends Node:
     var available_brushes = [
         PencilBrush,
         TextureBrush,
-        ShadowBrush,
+        RasterBrush,
         EraserBrush
     ]
 
@@ -416,10 +416,10 @@ class TextureBrush extends LineBrush:
             "color": false
         }
 
-class ShadowBrush extends LineBrush:
+class RasterBrush extends LineBrush:
     func _init(global, brush_manager).(global, brush_manager) -> void:
         self.icon = load("res://ui/icons/tools/light_tool.png")
-        self.brush_name = "ShadowBrush"
+        self.brush_name = "RasterBrush"
 
         self.stroke_line.texture_mode           = Line2D.LINE_TEXTURE_STRETCH
         self.stroke_line.joint_mode             = Line2D.LINE_JOINT_ROUND
@@ -427,10 +427,10 @@ class ShadowBrush extends LineBrush:
         self.stroke_line.end_cap_mode           = Line2D.LINE_CAP_BOX
         self.stroke_line.round_precision        = 20
         self.stroke_line.antialiased            = false
-        self.stroke_line.name               = "ShadowBrushLine2D"
+        self.stroke_line.name               = "RasterBrushLine2D"
 
         self.stroke_shader = ResourceLoader.load(
-            Global.Root + SHADER_DIR + "ShadowBrush.shader", 
+            Global.Root + SHADER_DIR + "RasterBrush.shader", 
             "Shader", 
             true
         ).duplicate(false)

@@ -1,15 +1,15 @@
 class_name LayerManagerC
 var script_class = "tool"
 
-# Principal class in charge of retreiving and creating ShadowLayers
+# Principal class in charge of retreiving and creating RasterLayers
 # Does not hold state other than loaded layers
 class LayerManager extends Object:
     var loaded_layers := {}
     
 
     var Global
-    var ShadowLayerC
-    var ShadowLayer
+    var RasterLayerC
+    var RasterLayer
 
     signal layer_added(new_layer)
     signal layer_modified(layer)
@@ -41,8 +41,8 @@ class LayerManager extends Object:
         logv("init")
         self.Global = global
         # Load classes
-        ShadowLayerC =	ResourceLoader.load(Global.Root + "ShadowLayerC.gd", "GDScript", true)
-        ShadowLayer = 	load(Global.Root + "ShadowLayerC.gd").ShadowLayer
+        RasterLayerC =	ResourceLoader.load(Global.Root + "RasterLayerC.gd", "GDScript", true)
+        RasterLayer = 	load(Global.Root + "RasterLayerC.gd").RasterLayer
 
         self.name = "LayerManager"
     
@@ -116,7 +116,7 @@ class LayerManager extends Object:
                 Global.World.EmbeddedTextures[key] != null
             ):
                 logv("Found key in textures, loading")
-                var new_layer = ShadowLayer.new(Global)
+                var new_layer = RasterLayer.new(Global)
                 logv("instance created %s" % new_layer)
                 new_layer.create_from_key(key)
                 logv("created from key")

@@ -1,6 +1,8 @@
 var script_class = "tool"
 
-class ShadowLayer extends Sprite:
+### RasterLayer
+# Probably better called RasterLayer, this class handles rendering and storage of raster textures
+class RasterLayer extends Sprite:
     # Level UUID this layer is associated with
     var level_id: int setget set_level_id, get_level_id
     var _level_id
@@ -32,21 +34,21 @@ class ShadowLayer extends Sprite:
 
     func logv(msg):
         if LOG_LEVEL > 3:
-            printraw("(%d) [V] <ShadowLayer>: " % OS.get_ticks_msec())
+            printraw("(%d) [V] <RasterLayer>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
 
     func logd(msg):
         if LOG_LEVEL > 2:
-            printraw("(%d) [D] <ShadowLayer>: " % OS.get_ticks_msec())
+            printraw("(%d) [D] <RasterLayer>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
     
     func logi(msg):
         if LOG_LEVEL >= 1:
-            printraw("(%d) [I] <ShadowLayer>: " % OS.get_ticks_msec())
+            printraw("(%d) [I] <RasterLayer>: " % OS.get_ticks_msec())
             print(msg)
         else:
             pass
@@ -68,7 +70,7 @@ class ShadowLayer extends Sprite:
         self.rect_scale = Vector2(RENDER_SCALE, RENDER_SCALE)
 
     func _to_string() -> String:
-        return "[ShadowLayer \"{name}\" <Z: {z}, Level: {lvl}, UUID: {uuid}> @ id]".format({
+        return "[RasterLayer \"{name}\" <Z: {z}, Level: {lvl}, UUID: {uuid}> @ id]".format({
             "z": self.z_index,
             "lvl": self.level_id,
             "id": self.get_instance_id(),
@@ -88,9 +90,11 @@ class ShadowLayer extends Sprite:
         self.queue_free()
 
     # ============= INSTANTIATION ================
-
+    
+    ### create_new
+    # Creates an entirely new, empty RasterLayer with the given parameters
     func create_new(level_id, z_index, layer_name):
-        logv("Creating new ShadowLayer @ Level: %s, Z: %s, name: %s" % [
+        logv("Creating new RasterLayer @ Level: %s, Z: %s, name: %s" % [
             level_id, 
             z_index, 
             layer_name
@@ -123,9 +127,10 @@ class ShadowLayer extends Sprite:
 
         .set_texture(new_texture)
     
-    # Creates a new ShadowLayer from a key in EmbeddedTextures
+    ### create_from_key
+    # Creates a raster layer from a texture stored in `World.EmbeddedTextures`, using `key`
     func create_from_key(key: String):
-        logv("Creating ShadowLayer from key %s" % key)
+        logv("Creating RasterLayer from key %s" % key)
         var key_data = key.split("|")
 
         self._level_id      = int(key_data[0])
@@ -205,7 +210,6 @@ class ShadowLayer extends Sprite:
         return self._uuid
 
     # ---- self.embedded_key get
-
     func get_embedded_key() -> String:
         return "{level_id}|{layer_num}|{modcol}|{name}|{uuid}".format({
             "level_id": self._level_id,
