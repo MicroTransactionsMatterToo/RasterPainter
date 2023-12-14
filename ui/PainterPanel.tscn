@@ -1,73 +1,23 @@
-[gd_scene load_steps=7 format=2]
+[gd_scene load_steps=3 format=2]
 
-[ext_resource path="res://ShadowPainter/ShadowBrush.shader" type="Shader" id=1]
+[ext_resource path="res://ShadowPainter/shaders/brush_shaders/ShadowBrush.shader" type="Shader" id=1]
 
 [sub_resource type="ShaderMaterial" id=1]
 shader = ExtResource( 1 )
-
-[sub_resource type="ViewportTexture" id=3]
-viewport_path = NodePath("Node2D/Viewport2/Viewport")
-
-[sub_resource type="CanvasItemMaterial" id=5]
-blend_mode = 2
-
-[sub_resource type="ShaderMaterial" id=2]
-shader = ExtResource( 1 )
-
-[sub_resource type="Curve" id=4]
-_data = [ Vector2( 0.228571, 0.427273 ), 0.0, 0.0, 0, 0, Vector2( 0.48, 0.881818 ), 0.0, 0.0, 0, 0 ]
+shader_param/alpha_mult = 1.0
+shader_param/flip_y = false
+shader_param/invert_alpha = false
+shader_param/transition_in = true
+shader_param/transition_out = true
+shader_param/transition_in_start = 0.02
+shader_param/transition_out_start = 0.98
+shader_param/y_offset = 0.0
 
 [node name="Node2D" type="Control"]
 
-[node name="ColorRect" type="ColorRect" parent="."]
+[node name="Line2D" type="Line2D" parent="."]
 material = SubResource( 1 )
-margin_right = 404.0
-margin_bottom = 304.0
-color = Color( 0.67451, 0.109804, 0.109804, 1 )
-
-[node name="Node2D" type="PanelContainer" parent="."]
-visible = false
-anchor_right = 1.0
-anchor_bottom = 1.0
-margin_right = 839.0
-margin_bottom = 592.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
-
-[node name="Viewport2" type="Viewport" parent="Node2D"]
-size = Vector2( 500, 500 )
-transparent_bg = true
-disable_3d = true
-usage = 0
-
-[node name="TextureRect" type="TextureRect" parent="Node2D/Viewport2"]
-margin_left = 7.0
-margin_top = 7.0
-margin_right = 832.0
-margin_bottom = 585.0
-texture = SubResource( 3 )
-
-[node name="Line2D2" type="Line2D" parent="Node2D/Viewport2"]
-material = SubResource( 5 )
-position = Vector2( 0, 2 )
-points = PoolVector2Array( 109, 267, 218, 92, 537, 260, 491, 514, 414.291, 489.414, 179, 414 )
-default_color = Color( 0, 0, 0, 1 )
-
-[node name="Viewport" type="Viewport" parent="Node2D/Viewport2"]
-size = Vector2( 500, 250 )
-size_override_stretch = true
-transparent_bg = true
-disable_3d = true
-usage = 0
-render_target_v_flip = true
-
-[node name="Line2D" type="Line2D" parent="Node2D/Viewport2/Viewport"]
-material = SubResource( 2 )
-position = Vector2( -193, -92 )
-points = PoolVector2Array( 74, 461, 471, 424, 784, 229, 616, 76, 270, 337, 577, 418, 620, 425, 634, 423, 641, 418, 642, 415, 639, 401, 637, 399, 632, 395, 624, 394, 618, 393, 614, 392, 604, 392, 594, 391, 589, 391, 584, 396, 582, 401, 579, 408, 576, 425, 575, 432, 573, 440, 570, 448, 566, 454, 556, 460, 541, 461, 533, 459, 527, 454, 525, 446, 528, 441, 538, 437, 545, 437, 551, 440, 560, 447, 576, 452, 598, 458, 616, 461, 646, 459, 660, 453, 667, 446, 672, 438, 674, 428, 675, 421, 675, 415, 674, 408, 673, 404, 673, 399, 681, 395, 702, 336, 802, 369, 780, 409, 771, 439, 738, 477, 679, 489, 591, 496, 705, 422, 749, 399, 702, 431 )
-width = 40.0
-width_curve = SubResource( 4 )
-default_color = Color( 0.0352941, 0.196078, 1, 1 )
+points = PoolVector2Array( 53, 226, 205, 370, 508, 282, 528, 244, 538, 230, 546.426, 218.784, 550.577, 213.104, 558.726, 201.953, 565.421, 192.792, 570.296, 186.121, 576.914, 177.064, 587.542, 162.521, 592.907, 155.179, 599.019, 146.816, 604, 140, 619.12, 143.872, 626.667, 145.805, 634.285, 147.756, 644.064, 150.26, 657.262, 153.64, 668.364, 156.484, 676.82, 158.649, 686, 161, 691.441, 165.171, 698.344, 170.464, 705.522, 175.967, 710.858, 180.058, 716, 184, 717.727, 189.181, 720, 196, 719.613, 209.168, 719.42, 215.703, 719.194, 223.391, 719, 230, 715.813, 239.136, 711.973, 250.145, 708.969, 258.756, 706.801, 264.969, 704, 273, 699.337, 284.022, 695.685, 292.654, 693, 299, 687.837, 305.793, 683.844, 311.047, 678.55, 318.013, 674, 324, 664.847, 333.153, 655.779, 342.22, 644.779, 353.221, 637, 361, 630.589, 364.846, 622, 370, 608.348, 373.523, 591, 378, 584.282, 376.11, 567.373, 371.355, 559, 369, 557.366, 361.373, 556, 355, 556, 343, 563, 332, 565, 324, 579.483, 314.784, 587, 310, 596, 302, 604, 297, 594.177, 282.266, 587.133, 271.7, 578.26, 258.39, 574, 252, 554.488, 248.498, 540.641, 246.012, 513.759, 241.187, 506.3, 239.849, 496, 238, 480.457, 235.122, 469, 233, 454.614, 231.274, 444, 230, 434.89, 230.959, 425, 232, 411.213, 232.985, 397, 234, 385.288, 236.546, 374, 239, 361.427, 247.001, 352, 253, 344.323, 259.581, 338, 265, 325.599, 267.756, 313.574, 270.428, 302, 273, 295.349, 272.367, 286.636, 271.537, 281, 271, 273, 265, 266.859, 259.804, 260, 254, 256, 247, 255, 235, 262, 227, 266.358, 221.873, 271.661, 215.634, 279, 207 )
 texture_mode = 2
 joint_mode = 2
-round_precision = 32
+round_precision = 20
