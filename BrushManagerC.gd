@@ -444,6 +444,17 @@ class ShadowBrush extends LineBrush:
 
         self.shader_param = "alpha_mult"
 
+    func brush_ui():
+        logv("ShadowBrush UI called")
+        if self.ui == null:
+            var template = ResourceLoader.load(Global.Root + "ui/brushes/shadow_brush_ui.tscn", "", true)
+            var RangeSlider = load("res://scripts/ui/elements/RangeSlider.cs")
+            self.ui = template.instance()
+
+            
+
+        return self.ui
+
     func ui_config() -> Dictionary:
         return {
             "size": true,

@@ -14,7 +14,7 @@ margin_right = 308.0
 margin_bottom = 14.0
 text = "Transition"
 
-[node name="TransitionSlider" type="Control" parent="Transition"]
+[node name="Placeholder" type="Control" parent="Transition"]
 margin_top = 18.0
 margin_right = 308.0
 margin_bottom = 18.0
