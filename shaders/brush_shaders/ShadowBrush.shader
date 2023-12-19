@@ -2,10 +2,10 @@ shader_type canvas_item;
 render_mode blend_mix;
 
 uniform float alpha_mult = 1.0;
-uniform bool flip_y = true;
-uniform bool invert_alpha = true;
-uniform bool transition_in = true;
-uniform bool transition_out = true;
+uniform bool flip_y = false;
+uniform bool invert_alpha = false;
+uniform bool transition_in = false;
+uniform bool transition_out = false;
 
 uniform float transition_in_start = 0.02;
 uniform float transition_out_start = 0.98;

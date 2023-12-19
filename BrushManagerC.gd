@@ -13,8 +13,12 @@ class BrushManager extends Node:
     var size: float setget set_size, get_size
     var _size: float = 150
 
+    var endcap setget set_endcap, get_endcap
+    var _endcap = Line2D.LINE_CAP_NONE
+
     var current_brush setget set_brush, get_brush
     var _current_brush_name: String
+    
 
     var _brushes := {}
     var available_brushes = [
@@ -27,6 +31,7 @@ class BrushManager extends Node:
     signal brush_size_changed(new_size)
     signal brush_color_changed(new_color)
     signal brush_changed()
+    signal endcap_style_changed(mode)
 
     # ===== LOGGING =====
     const LOG_LEVEL = 4
@@ -126,6 +131,16 @@ class BrushManager extends Node:
 
     func get_size() -> float:
         return self._size
+
+    # ---- self.endcap set/get
+    func set_endcap(mode) -> void:
+        logv("set endcap to %s" % mode)
+        if mode == null: return
+        self._endcap = mode
+        self.emit_signal("endcap_style_changed", self._endcap)
+
+    func get_endcap():
+        return self._endcap
 
 class Brush extends Node2D:
     var Global
@@ -234,9 +249,17 @@ class LineBrush extends Brush:
 
     var previous_point_drawn: Vector2
 
+    var was_drawing_straight = false
+
     const STROKE_THRESHOLD: float = 60.0
+    const INTERPOLATE_THRESHOLD: float = 120.0
 
     func _init(global, brush_manager).(global, brush_manager):
+        self.brushmanager.connect(
+            "endcap_style_changed", 
+            self,
+            "set_endcap"
+        )
         return
 
     # ===== OVERRIDES =====
@@ -253,12 +276,17 @@ class LineBrush extends Brush:
             logv("SHIFT is pressed, making a straight line")
             if len(self.stroke_line.points) == 1: self.add_stroke_point(mouse_pos)
             else: 
-                self.stroke_line.set_point_position(self.stroke_line.points.size() - 1, mouse_pos)
+                self.stroke_line.set_point_position(self.stroke_line.points.size(), mouse_pos)
                 self.previous_point_drawn = mouse_pos
             
+            self.was_drawing_straight = true
             return
 
-        if self.should_add_point(mouse_pos):
+        if self.was_drawing_straight:
+            self.previous_point_drawn = self.stroke_line.points[-1]
+
+        if self.should_add_point(mouse_pos) or self.was_drawing_straight:
+            self.was_drawing_straight = false
             self.add_stroke_point(mouse_pos)
         else:
             self.stroke_line.set_point_position(self.stroke_line.points.size() -1, mouse_pos)
@@ -277,6 +305,12 @@ class LineBrush extends Brush:
     func set_size(size: float) -> void:
         if size < 1.0: return
         self.stroke_line.width = size * 2.0
+
+    func set_endcap(mode):
+        logv("endcap_set: %s" % mode)
+        if mode in [0, 1, 2]:
+            self.stroke_line.begin_cap_mode = mode
+            self.stroke_line.end_cap_mode = mode
 
     func on_stroke_end() -> void:
         self.stroke_line.clear_points()
@@ -305,6 +339,20 @@ class LineBrush extends Brush:
 
     # ===== BRUSH SPECIFIC =====
     func add_stroke_point(position: Vector2):
+        var points = []
+        var point_distance = self.previous_point_drawn.distance_to(position)
+        if point_distance > INTERPOLATE_THRESHOLD and self.stroke_line.points.size() != 0:
+            var num_interp_points = point_distance / INTERPOLATE_THRESHOLD
+            logv("distance too short, interpolating points: %d" % num_interp_points)
+            for i in range(0, num_interp_points):
+                var weight = (1.0 / (num_interp_points + 1)) * (i + 1)
+                var new_point = self.previous_point_drawn.linear_interpolate(
+                    position,
+                    weight
+                )
+                self.stroke_line.add_point(new_point)
+            
+                
         self.stroke_line.add_point(position)
         self.previous_point_drawn = position
 
@@ -420,6 +468,14 @@ class TextureBrush extends LineBrush:
         }
 
 class ShadowBrush extends LineBrush:
+    var transition_in: HSlider
+    var transition_out: HSlider
+    var offset: HSlider
+    var alpha_invert: CheckButton
+    var preview_control: Control
+    var preview_line: Line2D
+
+
     func _init(global, brush_manager).(global, brush_manager) -> void:
         self.icon = load("res://ui/icons/tools/light_tool.png")
         self.brush_name = "ShadowBrush"
@@ -427,8 +483,8 @@ class ShadowBrush extends LineBrush:
 
         self.stroke_line.texture_mode           = Line2D.LINE_TEXTURE_STRETCH
         self.stroke_line.joint_mode             = Line2D.LINE_JOINT_ROUND
-        self.stroke_line.begin_cap_mode         = Line2D.LINE_CAP_BOX
-        self.stroke_line.end_cap_mode           = Line2D.LINE_CAP_BOX
+        # self.stroke_line.begin_cap_mode         = Line2D.LINE_CAP_BOX
+        # self.stroke_line.end_cap_mode           = Line2D.LINE_CAP_BOX
         self.stroke_line.round_precision        = 20
         self.stroke_line.antialiased            = false
         self.stroke_line.name               = "ShadowBrushLine2D"
@@ -448,18 +504,90 @@ class ShadowBrush extends LineBrush:
         logv("ShadowBrush UI called")
         if self.ui == null:
             var template = ResourceLoader.load(Global.Root + "ui/brushes/shadow_brush_ui.tscn", "", true)
-            var RangeSlider = load("res://scripts/ui/elements/RangeSlider.cs")
+
             self.ui = template.instance()
 
-            
+            self.preview_control = self.ui.get_node("LinePreview")
+            self.preview_line = self.stroke_line.duplicate(true)
+            self.preview_line.width = 50
+            var preview_center = self.preview_control.rect_position.y + (self.preview_control.rect_size.y / 2)
+            var preview_transform = self.preview_control.get_canvas_transform()
+            var preview_coords = [
+                Vector2(1.0, 0.5),
+                Vector2(200, 0.5)
+            ]
+            self.preview_control.add_child(self.preview_line)
+            self.preview_line.add_point(preview_coords[0])
+            self.preview_line.add_point(preview_coords[1])
+
+            # self.preview_line.material = self.stroke_line.material
+
+
+            self.transition_in = self.ui.get_node("Transition/In/InSlider")
+            self.transition_in.connect(
+                "value_changed",
+                self,
+                "_on_transition_in_val"
+            )
+            self.ui.get_node("Transition/In/InBox").share(self.transition_in)
+
+            self.transition_out = self.ui.get_node("Transition/Out/OutSlider")
+            self.transition_out.connect(
+                "value_changed",
+                self,
+                "_on_transition_out_val"
+            )
+            self.ui.get_node("Transition/Out/OutBox").share(self.transition_out)
+
+            self.offset = self.ui.get_node("Offset/OffsetVal")
+            self.offset.connect(
+                "value_changed",
+                self,
+                "_on_y_offset_val"
+            )
+
+            self.alpha_invert = self.ui.get_node("FlipAlpha/CheckButton")
+            self.alpha_invert.connect(
+                "toggled",
+                self,
+                "_on_flip_alpha"
+            )
+
 
         return self.ui
+
+    func paint(pen, mouse_pos, prev_mouse_pos):
+        self.stroke_line.texture_mode           = Line2D.LINE_TEXTURE_STRETCH
+        .paint(pen, mouse_pos, prev_mouse_pos)
+
+    func on_stroke_end():
+        logv(self.stroke_line.points)
+        .on_stroke_end()
 
     func ui_config() -> Dictionary:
         return {
             "size": true,
             "color": true
         }
+
+    func _on_transition_in_val(val: float):
+        logv("transition_in val changed %d" % val)
+        self.stroke_line.material.set_shader_param("transition_in_start", val)
+        self.stroke_line.material.set_shader_param("transition_in", val != 0.0)
+
+    func _on_transition_out_val(val: float):
+        logv("transition_out val changed %d" % val)
+        self.stroke_line.material.set_shader_param("transition_out_start", val)
+        self.stroke_line.material.set_shader_param("transition_out", val != 1.0)
+
+    func _on_flip_alpha(val: bool):
+        logv("invert_alpha val changed: %d" % val)
+        self.stroke_line.material.set_shader_param("invert_alpha", val)
+    
+    func _on_y_offset_val(val: float):
+        logv("y_offset val changed: %d" % val)
+        self.stroke_line.material.set_shader_param("y_offset", val)
+
 
 class EraserBrush extends LineBrush:
     func _init(global, brush_manager).(global, brush_manager):

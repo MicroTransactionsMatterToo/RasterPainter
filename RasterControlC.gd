@@ -143,7 +143,6 @@ class RasterControl extends Control:
         RasterLayer     = load(Global.Root + "RasterLayerC.gd").RasterLayer
         ToolPanelUIC    = ResourceLoader.load(Global.Root + "ToolPanelUIC.gd", "GDScript", true)
         RasterToolpanel = load(Global.Root + "ToolPanelUIC.gd").RasterToolpanel
-        print("TEST: " + str(RasterToolpanel))
         LayerUIC        = ResourceLoader.load(Global.Root + "LayerUIC.gd", "GDScript", true)
         LayerPanel      = load(Global.Root + "LayerUIC.gd").LayerPanel
 

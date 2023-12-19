@@ -105,6 +105,13 @@ class RasterToolpanel extends VBoxContainer:
         )
         logv("ColorPalette added to UI")
 
+        for button in $"BrushControls/BrushSettings/BEndcapC/BEndcapB".get_children():
+            button.connect(
+                "pressed",
+                self,
+                "on_endcap_changed"
+            )
+
         $"LayerControls/HistoryB/Undo".icon = load("res://ui/icons/menu/undo.png")
         $"LayerControls/HistoryB/Redo".icon = load("res://ui/icons/menu/redo.png")
 
@@ -147,6 +154,17 @@ class RasterToolpanel extends VBoxContainer:
     func on_size_changed(size):
         logv("Size changed %d to %d" % [self.brushmgr.size, size])
         self.brushmgr.size = size
+
+    func on_endcap_changed():
+        logv("on_endcap_changed")
+        var first_button = $"BrushControls/BrushSettings/BEndcapC/BEndcapB/None"
+        logv(first_button)
+        var group = first_button.group
+        logv(group)
+        var pressed = group.get_pressed_button()
+        logv(pressed)
+        self.brushmgr.endcap = pressed.get_index()
+
 
     func on_brush_button_pressed(button):
         logv("brush_button pressed: %s" % button)
@@ -196,6 +214,8 @@ class RasterToolpanel extends VBoxContainer:
                     $"BrushControls/BrushSettings/BColorC".visible = config[key]
                 "palette":
                     self.set_palette(config[key])
+                "endcaps":
+                    $"BrushControls/BrushSettings/BEndcapC".visible = config[key]
                 _:
                     continue
 

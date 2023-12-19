@@ -14,6 +14,8 @@ var RasterControl
 var PreferencesC
 var Preferences
 
+var skig
+
 # +++++ State +++++
 var _enabled = false
 
@@ -86,6 +88,8 @@ func start() -> void:
 		self.toolpanel,
 		self.prefs
 	)
+
+	print("Target FPS: %s" % OS.is_debug_build())
 
 	Global.World.add_child(self.control)
 	self.toolpanel.size_flags_horizontal = Control.SIZE_EXPAND_FILL

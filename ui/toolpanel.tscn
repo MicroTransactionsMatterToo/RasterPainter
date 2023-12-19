@@ -1,4 +1,7 @@
-[gd_scene format=2]
+[gd_scene load_steps=2 format=2]
+
+[sub_resource type="ButtonGroup" id=1]
+resource_name = "endcap"
 
 [node name="PanelRoot" type="VBoxContainer"]
 anchor_right = 0.434
@@ -10,7 +13,7 @@ size_flags_vertical = 3
 
 [node name="BrushControls" type="VBoxContainer" parent="."]
 margin_right = 443.0
-margin_bottom = 64.0
+margin_bottom = 106.0
 size_flags_horizontal = 3
 size_flags_vertical = 2
 
@@ -22,7 +25,7 @@ size_flags_vertical = 3
 [node name="BrushSettings" type="VBoxContainer" parent="BrushControls"]
 margin_top = 4.0
 margin_right = 443.0
-margin_bottom = 64.0
+margin_bottom = 106.0
 
 [node name="BSizeC" type="VBoxContainer" parent="BrushControls/BrushSettings"]
 margin_right = 443.0
@@ -65,6 +68,49 @@ size_flags_vertical = 2
 margin_right = 443.0
 margin_bottom = 14.0
 text = "Brush Color"
+
+[node name="BEndcapC" type="VBoxContainer" parent="BrushControls/BrushSettings"]
+margin_top = 64.0
+margin_right = 443.0
+margin_bottom = 102.0
+
+[node name="Label" type="Label" parent="BrushControls/BrushSettings/BEndcapC"]
+margin_right = 443.0
+margin_bottom = 14.0
+text = "Endcaps"
+
+[node name="BEndcapB" type="HBoxContainer" parent="BrushControls/BrushSettings/BEndcapC"]
+margin_top = 18.0
+margin_right = 443.0
+margin_bottom = 38.0
+size_flags_horizontal = 3
+
+[node name="None" type="Button" parent="BrushControls/BrushSettings/BEndcapC/BEndcapB"]
+margin_right = 145.0
+margin_bottom = 20.0
+size_flags_horizontal = 3
+toggle_mode = true
+pressed = true
+group = SubResource( 1 )
+text = "None"
+
+[node name="Square" type="Button" parent="BrushControls/BrushSettings/BEndcapC/BEndcapB"]
+margin_left = 149.0
+margin_right = 294.0
+margin_bottom = 20.0
+size_flags_horizontal = 3
+toggle_mode = true
+group = SubResource( 1 )
+text = "Square"
+
+[node name="Round" type="Button" parent="BrushControls/BrushSettings/BEndcapC/BEndcapB"]
+margin_left = 298.0
+margin_right = 443.0
+margin_bottom = 20.0
+size_flags_horizontal = 3
+toggle_mode = true
+group = SubResource( 1 )
+text = "Round"
 
 [node name="BrushUI" type="VBoxContainer" parent="."]
 margin_top = 376.0
