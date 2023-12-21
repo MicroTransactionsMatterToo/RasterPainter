@@ -2,7 +2,7 @@
 
 [ext_resource path="res://icon.png" type="Texture" id=1]
 
-[node name="ShadowLayer" type="Panel"]
+[node name="RasterLayer" type="Panel"]
 margin_right = 256.0
 margin_bottom = 50.0
 size_flags_vertical = 3

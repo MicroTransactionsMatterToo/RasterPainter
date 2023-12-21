@@ -5,15 +5,23 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 margin_right = -716.0
 
-[node name="LinePreview" type="Control" parent="."]
+[node name="Label" type="Label" parent="."]
 margin_right = 308.0
-margin_bottom = 50.0
+margin_bottom = 14.0
+size_flags_horizontal = 3
+text = "Preview"
+
+[node name="LinePreview" type="HBoxContainer" parent="."]
+margin_top = 18.0
+margin_right = 308.0
+margin_bottom = 68.0
 rect_min_size = Vector2( 0, 50 )
+size_flags_horizontal = 3
 
 [node name="Transition" type="VBoxContainer" parent="."]
-margin_top = 54.0
+margin_top = 72.0
 margin_right = 308.0
-margin_bottom = 160.0
+margin_bottom = 178.0
 
 [node name="Label" type="Label" parent="Transition"]
 margin_right = 308.0
@@ -79,9 +87,9 @@ step = 0.01
 value = 1.0
 
 [node name="Offset" type="VBoxContainer" parent="."]
-margin_top = 164.0
+margin_top = 182.0
 margin_right = 308.0
-margin_bottom = 198.0
+margin_bottom = 216.0
 
 [node name="Label2" type="Label" parent="Offset"]
 margin_right = 308.0
@@ -97,9 +105,9 @@ step = 0.01
 tick_count = 2
 
 [node name="FlipAlpha" type="HBoxContainer" parent="."]
-margin_top = 202.0
+margin_top = 220.0
 margin_right = 308.0
-margin_bottom = 242.0
+margin_bottom = 260.0
 
 [node name="Label" type="Label" parent="FlipAlpha"]
 margin_top = 13.0

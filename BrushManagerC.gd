@@ -389,7 +389,8 @@ class PencilBrush extends LineBrush:
         return {
             "size": true,
             "color": true,
-            "palette": "pencilbrush_palette"
+            "palette": "pencilbrush_palette",
+            "endcaps": true
         }
 
 ### TextureBrush
@@ -464,7 +465,8 @@ class TextureBrush extends LineBrush:
     func ui_config() -> Dictionary:
         return {
             "size": true,
-            "color": false
+            "color": false,
+            "endcaps": true
         }
 
 class ShadowBrush extends LineBrush:
@@ -510,12 +512,14 @@ class ShadowBrush extends LineBrush:
             self.preview_control = self.ui.get_node("LinePreview")
             self.preview_line = self.stroke_line.duplicate(true)
             self.preview_line.width = 50
-            var preview_center = self.preview_control.rect_position.y + (self.preview_control.rect_size.y / 2)
+            var preview_center = self.preview_control.rect_size / 2
             var preview_transform = self.preview_control.get_canvas_transform()
             var preview_coords = [
-                Vector2(1.0, 0.5),
-                Vector2(200, 0.5)
+                Vector2(0.0, preview_center.y),
+                Vector2(self.preview_control.rect_size.x, preview_center.y)
             ]
+            logv("Container Size: %s" % self.preview_control.rect_size)
+            logv("Mid X,Y: %d, %d" % [preview_center, self.preview_control.rect_size.x / 2])
             self.preview_control.add_child(self.preview_line)
             self.preview_line.add_point(preview_coords[0])
             self.preview_line.add_point(preview_coords[1])
@@ -556,6 +560,16 @@ class ShadowBrush extends LineBrush:
 
         return self.ui
 
+    func show_ui():
+        .show_ui()
+        
+        yield(get_tree(), "idle_frame")
+        logv("updating shadow preview")
+        var updated_x_end = self.preview_control.rect_size.x
+        var updated_y_center = self.preview_control.rect_size.y / 2
+        self.preview_line.set_point_position(0, Vector2(0, updated_y_center))
+        self.preview_line.set_point_position(1, Vector2(updated_x_end, updated_y_center))
+
     func paint(pen, mouse_pos, prev_mouse_pos):
         self.stroke_line.texture_mode           = Line2D.LINE_TEXTURE_STRETCH
         .paint(pen, mouse_pos, prev_mouse_pos)
@@ -567,7 +581,8 @@ class ShadowBrush extends LineBrush:
     func ui_config() -> Dictionary:
         return {
             "size": true,
-            "color": true
+            "color": true,
+            "endcaps": false
         }
 
     func _on_transition_in_val(val: float):
@@ -626,5 +641,6 @@ class EraserBrush extends LineBrush:
     func ui_config() -> Dictionary:
         return {
             "size": true,
-            "color": false
+            "color": false,
+            "endcaps": true
         }

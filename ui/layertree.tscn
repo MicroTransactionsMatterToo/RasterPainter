@@ -6,7 +6,7 @@ margin_right = 234.0
 margin_bottom = 190.0
 size_flags_vertical = 3
 
-[node name="ShadowLayers" type="VBoxContainer" parent="."]
+[node name="RasterLayers" type="VBoxContainer" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_top = 4.0
@@ -15,7 +15,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_constants/separation = 0
 
-[node name="ShadowLayer" parent="ShadowLayers" instance_placeholder="res://ShadowPainter/ui/layertree_item.tscn"]
+[node name="RasterLayer" parent="RasterLayers" instance_placeholder="res://ShadowPainter/ui/layertree_item.tscn"]
 margin_right = 234.0
 margin_bottom = 164.0
 rect_min_size = Vector2( 25, 25 )
