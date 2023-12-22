@@ -89,7 +89,7 @@ func start() -> void:
 		self.prefs
 	)
 
-	print("Target FPS: %s" % OS.is_debug_build())
+	
 
 	Global.World.add_child(self.control)
 	self.toolpanel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -119,6 +119,16 @@ func start() -> void:
 			test,
 			"_save_config"
 		)
+
+	logv("master: %s" % Global.World.owner)
+	var master = Global.World.owner
+	var inst_id = GDNative
+	print(inst_id)
+	# print(JSON.print(master.get_script(), "\t"))
+	yield(Global.World.get_tree().create_timer(5.0), "timeout")
+	logv("IsComputing: %s" % master.IsComputing)
+	master.IsComputing = false
+	logv("IsComputing: %s" % master.IsComputing)
 
 func on_tool_enable(tool_id) -> void:
 	logv("RasterPainter enabled")

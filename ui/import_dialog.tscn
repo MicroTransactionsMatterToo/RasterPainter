@@ -1,25 +1,26 @@
 [gd_scene format=2]
 
-[node name="DialogRoot" type="WindowDialog"]
+[node name="DialogRoot" type="FileDialog"]
 visible = true
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_right = -724.0
-margin_bottom = -400.0
+margin_right = -370.0
+margin_bottom = -110.0
 
 [node name="Align" type="VBoxContainer" parent="."]
+visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_left = 5.0
-margin_top = 5.0
-margin_right = -5.0
-margin_bottom = -5.0
+margin_left = 8.0
+margin_top = 8.0
+margin_right = -8.0
+margin_bottom = -36.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_constants/separation = 4
 
 [node name="FileSelect" type="HBoxContainer" parent="Align"]
-margin_right = 290.0
+margin_right = 305.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 
@@ -31,13 +32,15 @@ text = "File Path"
 
 [node name="FilePath" type="LineEdit" parent="Align/FileSelect"]
 margin_left = 59.0
-margin_right = 262.0
+margin_right = 277.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
+caret_blink = true
+caret_blink_speed = 0.5
 
 [node name="FileSelect" type="Button" parent="Align/FileSelect"]
-margin_left = 266.0
-margin_right = 290.0
+margin_left = 281.0
+margin_right = 305.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 0.08
@@ -45,7 +48,7 @@ text = "..."
 
 [node name="LayerNum" type="HBoxContainer" parent="Align"]
 margin_top = 28.0
-margin_right = 290.0
+margin_right = 305.0
 margin_bottom = 48.0
 
 [node name="Label" type="Label" parent="Align/LayerNum"]
@@ -56,13 +59,13 @@ text = "Layer Number"
 
 [node name="LayerNumEdit" type="OptionButton" parent="Align/LayerNum"]
 margin_left = 94.0
-margin_right = 290.0
+margin_right = 305.0
 margin_bottom = 20.0
 size_flags_horizontal = 3
 
 [node name="LayerName" type="HBoxContainer" parent="Align"]
 margin_top = 52.0
-margin_right = 290.0
+margin_right = 305.0
 margin_bottom = 76.0
 
 [node name="Label" type="Label" parent="Align/LayerName"]
@@ -73,25 +76,27 @@ text = "Layer Name"
 
 [node name="LayerNameEdit" type="LineEdit" parent="Align/LayerName"]
 margin_left = 80.0
-margin_right = 290.0
+margin_right = 305.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 placeholder_text = "New Layer"
+caret_blink = true
+caret_blink_speed = 0.5
 
 [node name="Buttons" type="HBoxContainer" parent="Align"]
 margin_top = 80.0
-margin_right = 290.0
+margin_right = 305.0
 margin_bottom = 100.0
 
 [node name="Accept" type="Button" parent="Align/Buttons"]
-margin_right = 143.0
+margin_right = 150.0
 margin_bottom = 20.0
 size_flags_horizontal = 3
 text = "Accept"
 
 [node name="Cancel" type="Button" parent="Align/Buttons"]
-margin_left = 147.0
-margin_right = 290.0
+margin_left = 154.0
+margin_right = 305.0
 margin_bottom = 20.0
 size_flags_horizontal = 3
 text = "Cancel"

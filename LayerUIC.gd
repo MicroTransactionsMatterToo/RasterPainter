@@ -764,7 +764,7 @@ class NewLayerDialog extends WindowDialog:
 
         self.scontrol.set_active_layer(new_layer)
 
-class ImportDialog extends WindowDialog:
+class ImportDialog extends FileDialog:
     var Global
     var template
 
@@ -811,66 +811,6 @@ class ImportDialog extends WindowDialog:
         self.tree = tree
 
 
-        # Load classes
-        RasterLayerC =	ResourceLoader.load(Global.Root + "RasterLayerC.gd", "GDScript", true)
-        RasterLayer = 	load(Global.Root + "RasterLayerC.gd").RasterLayer
-        logv("classes loaded")
-
-        self.window_title = "Import Layer"
-        self.name = "ImportDialog"
-        logv("set name and title")
-
-        self.template = ResourceLoader.load(Global.Root + "ui/import_dialog.tscn", "", true)
-        var instance = self.template.instance()
-        self.add_child(instance)
-        instance.remove_and_skip()
-        logv("load template %s %s" % [instance, self])
-
-        self.set_anchor(0, 0.5, false, false)
-        self.rect_position = Vector2(135, -10)
-        self.rect_size = Vector2(300, 150)
-        logv("set sizes")
-
-        self.popup_exclusive = false
-        self.size_flags_horizontal = SIZE_FILL
-        self.size_flags_vertical = SIZE_FILL
-
-        $"Align/Buttons/Accept".connect(
-            "pressed",
-            self,
-            "import_layer"
-        )
-        logv('connect accept button')
-
-
-        self.dropdown = $"Align/LayerNum/LayerNumEdit"
-        logv("got dropdown %s" % self.dropdown)
-
-        for z_index in LOCKED_LAYERS.keys():
-            self.dropdown.add_item(LOCKED_LAYERS[z_index], z_index)
-
-        logv("added layers to dropdown")
-
-        self.filedialog = FileDialog.new()
-        logv("created filedialog %s" % self.filedialog)
-
-        self.filedialog.add_filter("*.png; PNG image")
-        self.filedialog.add_filter("*.webp; WebP image")
-        self.filedialog.mode = self.filedialog.MODE_OPEN_FILE
-        self.filedialog.access = FileDialog.ACCESS_FILESYSTEM
-
-        self.filedialog.resizable = true
-
-        self.filedialog.connect('file_selected', self, "on_file_selected")
-
-        $"Align/FileSelect/FileSelect".connect(
-            "pressed",
-            self.filedialog,
-            "popup_centered",
-            [Vector2(500, 600)]
-        )
-        logv("Connect file select")
-        Global.Editor.get_child("Windows").add_child(self.filedialog)
 
 
     func on_file_selected(path):
@@ -930,17 +870,50 @@ class ImportDialog extends WindowDialog:
         self.scontrol.set_active_layer(new_layer)
         self.import_file_path = null
 
-class ExportDialog extends WindowDialog:
+class ExportDialog extends FileDialog:
     var Global
     var template
 
     var tree
     var layerm
     var scontrol
-
-    var filedialog
+    var prefs
 
     var export_file_path
+
+    var quality = 100
+    var alpha
+
+    var tree_container
+    var align
+    var file_tree_c
+    var filter_button
+
+
+    var file_extension setget , _get_file_extension
+
+    const extension_indexes = ["invalid", "png", "webp", "jpeg", "invalid"]
+    const extension_config = {
+        "png": {
+            "alpha": true,
+            "quality": false
+        },
+        "webp": {
+            "alpha": true,
+            "quality": true
+        },
+        "jpeg": {
+            "alpha": false,
+            "quality": true
+        },
+        "invalid": {
+            "alpha": false,
+            "quality": false
+        }
+    }
+
+    signal progress(progress)
+    signal export_finished
 
     # ===== LOGGING =====
     func logv(msg):
@@ -971,6 +944,7 @@ class ExportDialog extends WindowDialog:
         self.layerm = layerm
         self.scontrol = scontrol
         self.tree = tree
+        self.prefs = Global.World.get_meta("painter_config")
 
         self.window_title = "Export Layer"
         self.name = "ExportDialog"
@@ -981,74 +955,223 @@ class ExportDialog extends WindowDialog:
         instance.remove_and_skip()
         logv("load template %s %s" % [instance, self])
 
+        self.align = $"Align"
+
         self.set_anchor(0, 0, false, false)
         self.rect_position = Vector2(135, -10)
-        self.rect_size = Vector2(300, 300)
+        self.rect_size = Vector2(800, 400)
+        self.resizable = true
         logv("set sizes")
+
+        self.mode = MODE_SAVE_FILE
 
         self.popup_exclusive = false
         self.size_flags_horizontal = SIZE_FILL
         self.size_flags_vertical = SIZE_FILL
 
-        $"Align/Buttons/Accept".connect(
-            "pressed",
+        self.add_filter("*.png ; PNG images")
+        self.add_filter("*.webp ; WebP images")
+        self.add_filter("*.jpeg ; JPEG images")
+
+        self.access = ACCESS_FILESYSTEM
+        # Get file type option button
+        self.filter_button = self.get_vbox().get_child(3).get_child(2)
+    
+        self._setup_split_tree()
+        self._setup_preview()
+       
+        self.connect("about_to_show", self, "_on_about_to_show")
+        self.connect("progress", self, "_on_progress")
+        self.connect("file_selected", self, "_on_file_selected")
+
+        # Disconnect default filter handler cause it's broken
+        self.filter_button.disconnect(
+            "item_selected",
+            self.filter_button.get_signal_connection_list("item_selected")[0].target,
+            "_filter_selected"
+        )
+        # Connect our own
+        self.filter_button.connect(
+            "item_selected",
             self,
-            "export_image"
+            "_on_filter_selected"
         )
-        logv('connect accept button')
+        self.filter_button.select(self.prefs.get_c_val("def_export_format") + 1)
 
-        self.filedialog = FileDialog.new()
-        logv("created filedialog %s" % self.filedialog)
-
-        self.filedialog.add_filter("*.png; PNG image")
-        self.filedialog.add_filter("*.webp; WebP image")
-        self.filedialog.mode = self.filedialog.MODE_SAVE_FILE
-        self.filedialog.access = FileDialog.ACCESS_FILESYSTEM
-
-        self.filedialog.resizable = true
-
-        self.filedialog.connect('file_selected', self, "_on_file_selected")
-
-        $"Align/FileSelect/FileSelect".connect(
-            "pressed",
-            self.filedialog,
-            "popup_centered",
-            [Vector2(500, 600)]
+        self.align.get_node("ExportSettings/AlphaC/Alpha").connect(
+            "toggled",
+            self,
+            "_on_alpha_changed"
         )
 
-        logv("Connect file select")
-        Global.Editor.get_child("Windows").add_child(self.filedialog)
+        self.align.get_node("ExportSettings/QualityC/Quality").connect(
+            "value_changed",
+            self,
+            "_on_quality_changed"
+        )
 
+        self.align.get_node("ExportSettings/AlphaC/Alpha").pressed = self.prefs.get_c_val("export_premultiplied")
+        self.align.get_node("ExportSettings/QualityC/Quality").value = 100
+
+        self._update_export_ui()
+
+    func _process(delta):
+        self._update_export_ui()
+        
+
+    func _setup_split_tree():
+        logv("split tree setup")
+        self.tree_container = HBoxContainer.new()
+        self.tree_container.name = "TreeContainer"
+        self.tree_container.visible = true
+        self.tree_container.size_flags_vertical = SIZE_EXPAND_FILL
+        self.tree_container.size_flags_horizontal = SIZE_EXPAND_FILL
+        logv("tree container")
+        
+        self.remove_child(self.align)
+        logv("align removed")
+        
+        self.file_tree_c = self.get_vbox().get_child(2)
+        self.get_vbox().add_child_below_node(self.file_tree_c, self.tree_container)
+        self.get_vbox().remove_child(self.file_tree_c)
+        self.tree_container.add_child(self.file_tree_c)
+        self.tree_container.add_child(self.align)
+        self.file_tree_c.size_flags_horizontal = SIZE_EXPAND_FILL
+        self.file_tree_c.get_children()[0].visible = true
+
+        self.align.visible = true
+        self.align.size_flags_stretch_ratio = 0.25
+    
+    func _setup_preview():
+        logv("preview setup")
         # Load chequered background for preview
         var background_texture := ImageTexture.new()
         background_texture.load(Global.Root + "icons/preview_background.png")
         background_texture.set_size_override(Vector2(50, 50))
-        $"Align/Preview/PrevBox/Background".texture = background_texture
-
-        self.connect("about_to_show", self, "_on_about_to_show")
+        self.align.get_node("Preview/PrevBox/Background").texture = background_texture
 
     func _on_about_to_show():
-        logv("About to show")
+        self.export_file_path = null
+
         var active_texture: ImageTexture = self.scontrol.active_layer.texture
-        ($"Align/Preview/PrevBox/PreviewRect" as TextureRect).texture = active_texture.duplicate(false)
-        ($"Align/Preview/PrevBox" as AspectRatioContainer).ratio = Global.World.WorldRect.size.x / Global.World.WorldRect.size.y
+        self.align.get_node("Preview/PrevBox/PreviewRect").texture = active_texture.duplicate(false)
+        self.align.get_node("Preview/PrevBox").ratio = (
+            Global.World.WorldRect.size.x / 
+            Global.World.WorldRect.size.y
+        )
         logv("preview_texture set to [%s, %s]" % [self.scontrol.active_layer.texture, active_texture])
 
-    func _on_file_selected(path):
-        logv("file_selected: %s" % path)
-        if path == null:
-            $"Align/Buttons/Accept".disabled = true
-            return
+        self.align.get_node("ProgressBar").visible = false
+        self.align.get_node("ProgressBar").self_modulate = Color.white
+        logv(
+            self.filter_button.get_item_text(
+                self.filter_button.get_selected_id()
+            )
+        )
+
+    func _update_export_ui():
+        var ui_config = self.extension_config[self.file_extension]
+        for key in ui_config.keys():
+            match key:
+                "alpha":
+                    self.align.get_node("ExportSettings/AlphaC").modulate = Color.white if ui_config[key] else Color(1.0, 1.0, 1.0, 0.5)
+                    self.align.get_node("ExportSettings/AlphaC/Alpha").editable = ui_config[key]
+                "quality":
+                    self.align.get_node("ExportSettings/QualityC").modulate = Color.white if ui_config[key] else Color(1.0, 1.0, 1.0, 0.5)
+                    self.align.get_node("ExportSettings/QualityC/Quality").editable = ui_config[key]
         
-        $"Align/Buttons/Accept".disabled = false
-        $"Align/FileSelect/FilePath".text = path
+        
+
+    func _on_file_selected(path):
+        self.export_file_path = path
+        # Prevent dialog from being hidden immediately
+        yield(get_tree(), "idle_frame")
+        self.visible = true
+        logv("file_selected: %s" % path)
+        self.export_image()
+
+    func _on_filter_selected(val):
+        self.invalidate()
+        self._update_export_ui()
+
+    func _on_alpha_changed(val):
+        logv("alpha changed")
+        self.alpha = val
+    
+    func _on_quality_changed(val):
+        logv("quality changed")
+        self.quality = val
     
     func export_image():
-        logv("exporting layer to %s" % $"Align/FileSelect/FilePath".text)
+        logv("exporting layer to %s" % self.align.get_node("FileSelect/FilePath").text)
         
-        var path = $"Align/FileSelect/FilePath".text
-        var image = $"Align/Preview/PrevBox/PreviewRect".texture.get_data()
-        image.premultiply_alpha()
-        logv("image is %s" % image)
-        logv("save_webp is %s" % image.has_method("save_webp"))
-        image.save_webp(path)
+        var path = self.align.get_node("FileSelect/FilePath").text
+        var image: Image = self.align.get_node("Preview/PrevBox/PreviewRect").texture.get_data()
+        var image_size = image.get_size()
+        var master = Global.Editor.owner
+
+        self.align.get_node("ProgressBar").visible = true
+        self.align.get_node("ProgressBar").self_modulate = Color(1.0, 1.0, 1.0, 1.0)
+
+        logv("reversing alpha premult")
+        logv("image resolution: %s" % image_size)
+        
+        var export_thread: Thread = Thread.new()
+        export_thread.start(self, "_export_thread", image)
+        
+        yield(self, "export_finished")
+        export_thread.wait_to_finish()
+
+        self.align.get_node("ProgressBar").self_modulate = Color.lightgreen
+
+
+    func _on_progress(progress):
+        logv("Export Progress %2.2f/100" % progress)
+        self.align.get_node("ProgressBar").value = progress
+
+    func _get_file_extension() -> String:
+        if self.current_file != "" and self.current_file.get_extension() != "":
+            if not self.current_file.get_extension().to_lower() in self.extension_indexes:
+                return "invalid"
+            else:
+                return self.current_file.get_extension().to_lower()
+        
+        return self.extension_indexes[self.filter_button.get_selected_id()]
+
+
+
+
+    func _export_thread(image: Image) -> int:
+        logv('Export Thread started, image is %s' % image)
+        var rows = image.get_size().y
+        var code = 0
+
+        if not self.alpha:
+            image.lock()
+            for row in range(0, rows):
+                for column in range(0, image.get_size().x):
+                    var pixel_color = image.get_pixel(row, column)
+                    if pixel_color.a != 0.0:
+                        pixel_color.r /= pixel_color.a
+                        pixel_color.g /= pixel_color.a
+                        pixel_color.b /= pixel_color.a
+                        
+                        image.set_pixel(row, column, pixel_color)
+                
+                self.emit_signal("progress", (100.0 / rows) * (row + 1))
+            image.unlock()
+
+        var export_extension = self.export_file_path.get_extension()
+        match export_extension:
+            "webp":
+                logv("saving webp to %s, at quality %s" % [self.export_file_path, self.quality / 100])
+                code = image.save_webp(self.export_file_path, self.quality)
+            "png":
+                logv("saving png to %s" % [self.export_file_path])
+                code = image.save_png(self.export_file_path)
+            "jpeg", "jpg":
+                logv("saving jpeg to %s, at quality %s" % [self.export_file_path, self.quality])
+                code = image.save_jpeg(self.export_file_path, self.quality)
+
+        self.emit_signal("export_finished")
+        return code
