@@ -562,7 +562,7 @@ class ShadowBrush extends LineBrush:
 
     func show_ui():
         .show_ui()
-        
+
         yield(get_tree(), "idle_frame")
         logv("updating shadow preview")
         var updated_x_end = self.preview_control.rect_size.x
@@ -582,7 +582,7 @@ class ShadowBrush extends LineBrush:
         return {
             "size": true,
             "color": true,
-            "endcaps": false
+            "endcaps": true
         }
 
     func _on_transition_in_val(val: float):
