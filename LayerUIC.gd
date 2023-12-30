@@ -554,7 +554,7 @@ class LayerTreeItem extends PanelContainer:
     func update_preview():
         if self._layer != null:
             $"HB/Preview/LayerPreview".texture = self._layer.texture
-            
+
     func _set_visibility_button_textures():
         var vis_button: CheckButton = $"HB/Visibility"
         
@@ -901,14 +901,6 @@ class ImportDialog extends ConfirmationDialog:
 
         if import_file != null:
             self.import_file_path = import_file
-
-        
-        
-
-
-    func _on_about_to_show():
-        self._import_file_path = ""
-
     
     # ---- self.import_file_path get/set
     func get_file_path():
@@ -954,6 +946,11 @@ class ImportDialog extends ConfirmationDialog:
         if error != OK:
             Global.Editor.Warn("Failed to import with code %d" % error)
 
+        # Convert JPEG imports to have alpha channel, otherwise they won't be imported correctly
+        if not (image_type in ["png", "webp"]):
+            import_image.convert(Image.FORMAT_RGBA8)
+        
+        # Handle premultiplication
         if self.premult.pressed:
             logv("premultiply")
             import_image.premultiply_alpha()
@@ -987,11 +984,6 @@ class ImportDialog extends ConfirmationDialog:
         var layer_name = self.layer_name.text if self.layer_name.text != "" else "New Layer"
         logv("imported layer name is %s" % layer_name)
 
-        # var temp_text = ImageTexture.new()
-        # temp_text.create_from_image(import_image)
-
-        # $"Align/TextureRect".texture = temp_text
-
         var new_layer = RasterLayer.new(Global)
         logv("RasterLayer instantiated: %s" % new_layer)
         new_layer.create_new(
@@ -1005,46 +997,6 @@ class ImportDialog extends ConfirmationDialog:
         logv("texture set")
         self.layerm.add_layer(new_layer)
         self.scontrol.set_active_layer(new_layer)
-
-
-
-
-        # logv("resized imported image")
-
-        # self.import_image = import_image
-        
-        # var new_layer_index: int
-        # var layer_group_z = self.dropdown.get_selected_id()
-        
-        # logv("layer_group_z is %s" % layer_group_z)
-
-        # var filtered_zs = self.tree.get_group_z_array(layer_group_z)
-
-        # logv("zs in group: %s" % [filtered_zs])
-
-        # if len(filtered_zs) == 0:
-        #     new_layer_index = layer_group_z + 1
-        #     logv("No existing layers in group, creating at group Z + 1")
-        # else:
-        #     new_layer_index = filtered_zs.max() + 1
-        #     logv("Existing layers in group, creating at Z: %d" % (filtered_zs.max() + 1))
-        
-        # var layer_name = $"LayerName/LayerNameEdit".text
-        # layer_name = layer_name if layer_name != "" else "New Layer"
-        # logv("layer_name is %s" % layer_name)
-
-        # var new_layer = RasterLayer.new(Global)
-        # logv("new_layer: %s" % new_layer)
-
-        # new_layer.create_new(self.scontrol.curr_level_id, new_layer_index, layer_name)
-        # logv("new_layer initialized: %s" % new_layer)
-        
-        # new_layer.texture.set_data(self.import_image)
-        # logv("new_layer texture set to imported image")
-        # self.layerm.add_layer(new_layer)
-
-        # self.scontrol.set_active_layer(new_layer)
-        # self.import_file_path = null
 
     func preprocess_actual_size(source: Image):
         logv('preprocess_actual_size')
@@ -1106,6 +1058,7 @@ class ImportDialog extends ConfirmationDialog:
         var resize_target = RESIZE_TARGET.EHH
         var resize_val
 
+
         if (layer_size.x / source_ratio) <= layer_size.y:
             resize_target = RESIZE_TARGET.X_MAX
             resize_val = layer_size.x / source_ratio
@@ -1117,21 +1070,23 @@ class ImportDialog extends ConfirmationDialog:
             resize_target = RESIZE_TARGET.Y_MAX
             resize_val = (layer_size.y * source_ratio)
 
+        logv('resize target: %s' % resize_target)
+
         match resize_target:
             RESIZE_TARGET.X_MAX:
                 source.resize(
                     layer_size.x,
-                    layer_size.x / source_ratio
+                    clamp(floor(layer_size.x / source_ratio), 1, layer_size.y)
                 )
             RESIZE_TARGET.Y_MAX:
                 source.resize(
-                    layer_size.y,
-                    layer_size.y * source_ratio
+                    clamp(floor(layer_size.y * source_ratio), 1, layer_size.x),
+                    layer_size.y
                 )
             RESIZE_TARGET.EHH:
                 logv("Unable to figure out how to resize image, giving up")
 
-        return source
+        return self.preprocess_actual_size(source)
 
 
 
