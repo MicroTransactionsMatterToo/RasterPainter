@@ -253,7 +253,9 @@ class LayerPanel extends PanelContainer:
         else:
             var new_z = item_next.layer.z_index
             item_next.layer.set_z_index(item.layer.z_index)
+            item_next.update_preview()
             item.layer.set_z_index(new_z)
+            item.update_preview()
 
     func get_group_z_array(layer_group_z):
         logv("get_group_z_array for %s" % layer_group_z)
@@ -549,6 +551,10 @@ class LayerTreeItem extends PanelContainer:
             self.tree.scontrol.set_active_layer(self._layer)
 
     # ===== UI =====
+    func update_preview():
+        if self._layer != null:
+            $"HB/Preview/LayerPreview".texture = self._layer.texture
+            
     func _set_visibility_button_textures():
         var vis_button: CheckButton = $"HB/Visibility"
         
