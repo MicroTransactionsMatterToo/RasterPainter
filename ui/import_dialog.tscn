@@ -1,14 +1,14 @@
 [gd_scene format=2]
 
-[node name="DialogRoot" type="FileDialog"]
+[node name="DialogRoot" type="ConfirmationDialog"]
 visible = true
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_right = -370.0
-margin_bottom = -110.0
+margin_right = -659.0
+margin_bottom = -254.0
+window_title = "Import Layer"
 
 [node name="Align" type="VBoxContainer" parent="."]
-visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_left = 8.0
@@ -16,87 +16,125 @@ margin_top = 8.0
 margin_right = -8.0
 margin_bottom = -36.0
 size_flags_horizontal = 3
-size_flags_vertical = 3
+size_flags_vertical = 2
 custom_constants/separation = 4
 
-[node name="FileSelect" type="HBoxContainer" parent="Align"]
-margin_right = 305.0
-margin_bottom = 24.0
-size_flags_horizontal = 3
-
-[node name="Label" type="Label" parent="Align/FileSelect"]
-margin_top = 5.0
-margin_right = 55.0
-margin_bottom = 19.0
-text = "File Path"
-
-[node name="FilePath" type="LineEdit" parent="Align/FileSelect"]
-margin_left = 59.0
-margin_right = 277.0
-margin_bottom = 24.0
-size_flags_horizontal = 3
-caret_blink = true
-caret_blink_speed = 0.5
-
-[node name="FileSelect" type="Button" parent="Align/FileSelect"]
-margin_left = 281.0
-margin_right = 305.0
-margin_bottom = 24.0
-size_flags_horizontal = 3
-size_flags_stretch_ratio = 0.08
-text = "..."
-
 [node name="LayerNum" type="HBoxContainer" parent="Align"]
-margin_top = 28.0
-margin_right = 305.0
-margin_bottom = 48.0
+margin_right = 349.0
+margin_bottom = 20.0
 
 [node name="Label" type="Label" parent="Align/LayerNum"]
 margin_top = 3.0
-margin_right = 90.0
+margin_right = 115.0
 margin_bottom = 17.0
-text = "Layer Number"
+size_flags_horizontal = 3
+text = "Layer Position"
 
 [node name="LayerNumEdit" type="OptionButton" parent="Align/LayerNum"]
-margin_left = 94.0
-margin_right = 305.0
+margin_left = 119.0
+margin_right = 349.0
 margin_bottom = 20.0
-size_flags_horizontal = 3
+hint_tooltip = "The imported image will be inserted below the selected layer"
+size_flags_horizontal = 11
+size_flags_stretch_ratio = 1.99
 
 [node name="LayerName" type="HBoxContainer" parent="Align"]
-margin_top = 52.0
-margin_right = 305.0
-margin_bottom = 76.0
+margin_top = 24.0
+margin_right = 349.0
+margin_bottom = 48.0
 
 [node name="Label" type="Label" parent="Align/LayerName"]
 margin_top = 5.0
-margin_right = 76.0
+margin_right = 115.0
 margin_bottom = 19.0
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.5
 text = "Layer Name"
 
 [node name="LayerNameEdit" type="LineEdit" parent="Align/LayerName"]
-margin_left = 80.0
-margin_right = 305.0
+margin_left = 119.0
+margin_right = 349.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 placeholder_text = "New Layer"
 caret_blink = true
 caret_blink_speed = 0.5
 
-[node name="Buttons" type="HBoxContainer" parent="Align"]
-margin_top = 80.0
-margin_right = 305.0
-margin_bottom = 100.0
+[node name="HSeparator" type="HSeparator" parent="Align"]
+margin_top = 52.0
+margin_right = 349.0
+margin_bottom = 56.0
 
-[node name="Accept" type="Button" parent="Align/Buttons"]
-margin_right = 150.0
+[node name="SizeSettings" type="HBoxContainer" parent="Align"]
+margin_top = 60.0
+margin_right = 349.0
+margin_bottom = 80.0
+
+[node name="Label" type="Label" parent="Align/SizeSettings"]
+margin_top = 3.0
+margin_right = 115.0
+margin_bottom = 17.0
+size_flags_horizontal = 3
+text = "Image Scaling"
+
+[node name="OptionButton" type="OptionButton" parent="Align/SizeSettings"]
+margin_left = 119.0
+margin_right = 349.0
 margin_bottom = 20.0
 size_flags_horizontal = 3
-text = "Accept"
+size_flags_stretch_ratio = 2.0
+text = "Actual Size"
+items = [ "Actual Size", null, false, 0, null, "Stretch to Fit", null, false, 1, null, "Scale to Fit", null, false, 2, null ]
+selected = 0
 
-[node name="Cancel" type="Button" parent="Align/Buttons"]
-margin_left = 154.0
-margin_right = 305.0
-margin_bottom = 20.0
+[node name="HBoxContainer" type="HBoxContainer" parent="Align"]
+margin_top = 84.0
+margin_right = 349.0
+margin_bottom = 108.0
+
+[node name="FileLabel" type="Label" parent="Align/HBoxContainer"]
+margin_top = 5.0
+margin_right = 115.0
+margin_bottom = 19.0
 size_flags_horizontal = 3
-text = "Cancel"
+text = "Image File"
+
+[node name="FilePathC" type="HBoxContainer" parent="Align/HBoxContainer"]
+margin_left = 119.0
+margin_right = 349.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.0
+
+[node name="FilePath" type="LineEdit" parent="Align/HBoxContainer/FilePathC"]
+margin_right = 202.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+placeholder_text = "File Path"
+
+[node name="Browse" type="Button" parent="Align/HBoxContainer/FilePathC"]
+margin_left = 206.0
+margin_right = 230.0
+margin_bottom = 24.0
+size_flags_horizontal = 0
+text = "..."
+
+[node name="PremultAlpha" type="HBoxContainer" parent="Align"]
+margin_top = 112.0
+margin_right = 349.0
+margin_bottom = 136.0
+
+[node name="Label" type="Label" parent="Align/PremultAlpha"]
+margin_top = 5.0
+margin_right = 114.0
+margin_bottom = 19.0
+text = "Premultiply Alpha"
+
+[node name="CheckBox" type="CheckBox" parent="Align/PremultAlpha"]
+margin_left = 325.0
+margin_right = 349.0
+margin_bottom = 24.0
+hint_tooltip = "Premultiplies alpha of image on import. Leave this checked unless you know what you're doing"
+size_flags_horizontal = 10
+size_flags_vertical = 0
+pressed = true

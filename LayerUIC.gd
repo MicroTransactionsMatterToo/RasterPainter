@@ -363,11 +363,13 @@ class LayerTree extends Panel:
         logv("group set, result was %s (%s)" % [group, self.separators[group]])
         return self.separators[group] if group != null else null
 
-    func get_layer_items(show_hidden = false) -> Array:
+    func get_layer_items(show_hidden = false, include_separators = false) -> Array:
         var rval := []
 
         for item in self.tree.get_children():
             if show_hidden and item.magic == null:
+                rval.append(item)
+            if include_separators and item.magic == "LTSP":
                 rval.append(item)
             elif item.visible == (!show_hidden) and item.magic == null:
                 rval.append(item)
@@ -629,6 +631,7 @@ class LayerTreeSep extends HBoxContainer:
 
     var layerm
     var scontrol
+    var sep_name setget , _get_sep_name
 
     var magic = "LTSP"
 
@@ -654,6 +657,9 @@ class LayerTreeSep extends HBoxContainer:
     func get_layer_z() -> int:
         return int($"HB/LockedLayerIndex".text)
 
+    func _get_sep_name():
+        return $"HB/LockedLayerName".text
+        
     func _to_string() -> String:
         return "[LayerTreeSep <Name: {n}, Z-Level: {z}]".format({
             "n": $"HB/LockedLayerName".text,
@@ -764,18 +770,28 @@ class NewLayerDialog extends WindowDialog:
 
         self.scontrol.set_active_layer(new_layer)
 
-class ImportDialog extends FileDialog:
+class ImportDialog extends ConfirmationDialog:
     var Global
     var template
 
     var tree
     var layerm
     var scontrol
+    var prefs
 
-    var dropdown: OptionButton
-    var filedialog
+    var align
+    
+    var insert_layer: OptionButton
+    var layer_name: LineEdit
+    var size_mode: OptionButton
+    var file_lineedit: LineEdit
+    var browse_button: Button
+    var premult: CheckBox
 
-    var import_file_path
+    var import_file_path setget set_file_path, get_file_path
+    var _import_file_path
+
+    var image_filter setget , _get_image_filter
 
     var RasterLayerC
     var RasterLayer
@@ -809,9 +825,106 @@ class ImportDialog extends FileDialog:
         self.layerm = layerm
         self.scontrol = scontrol
         self.tree = tree
+        self.prefs = Global.World.get_meta("painter_config")
+
+        RasterLayerC    = ResourceLoader.load(Global.Root + "RasterLayerC.gd", "GDScript", true)
+        RasterLayer     = load(Global.Root + "RasterLayerC.gd").RasterLayer
+
+
+        self.window_title = "Import Layer"
+        self.name = "ImportDialog"
+
+        self.template = ResourceLoader.load(Global.Root + "ui/import_dialog.tscn", "", true)
+        var instance = self.template.instance()
+        self.add_child(instance)
+        instance.remove_and_skip()
+        logv("load template %s %s" % [instance, self])
+
+        
+        self.resizable = true
+        self.rect_size = Vector2(500, 200)
+        
+        self.align = $"Align"
+        self.insert_layer = $"Align/LayerNum/LayerNumEdit"
+        self.layer_name = $"Align/LayerName/LayerNameEdit"
+        self.size_mode = $"Align/SizeSettings/OptionButton"
+        self.premult = $"Align/PremultAlpha/CheckBox"
+        
+        self.file_lineedit = $"Align/HBoxContainer/FilePathC/FilePath"
+        self.browse_button = $"Align/HBoxContainer/FilePathC/Browse"
+    
+        
+        for z_index in LOCKED_LAYERS.keys():
+            self.insert_layer.add_item(LOCKED_LAYERS[z_index], z_index)
+
+        self.connect("about_to_show", self, "_on_about_to_show")
+        
+        self._setup_connections()
+
+    func _setup_connections():
+        self.browse_button.connect(
+            "pressed",
+            self,
+            "_show_filedialog"
+        )
+
+        self.connect("confirmed", self, "import_layer")
+
+    func _show_filedialog():
+        logv("browse pressed")
+
+        var last_map_dir = Global.Editor.CurrentMapFile
+        last_map_dir = last_map_dir.get_base_dir() if last_map_dir != null else OS.get_system_dir(OS.SYSTEM_DIR_DOCUMENTS)
+
+        var import_file
+
+        # Linux needs special handling cause `show_open_dialog` isn't implemented on Linux for whatever reason
+        if Global.World.get_node("/root/Global").IsLinux:
+            var dialog_output = []
+            var exit_code = OS.execute("zenity", [
+                "--file-selection",
+                "--modal",
+                "--title", "Import image",
+                "--file-filter", self.image_filter,
+                "--filename", last_map_dir
+            ], true, dialog_output, false)
+            import_file = dialog_output[0]
+        
+        else:
+            import_file = OS.show_open_dialog("Import image", self.image_filter, last_map_dir)
+
+        if import_file != null:
+            self.import_file_path = import_file
+
+        
+        
+
+
+    func _on_about_to_show():
+        self._import_file_path = ""
+
+    
+    # ---- self.import_file_path get/set
+    func get_file_path():
+        return self._import_file_path
+
+    func set_file_path(path: String):
+        logv('attempt to set image path to %s' % path)
+        if path != null:
+            logv('setting image path to %s' % path)
+            self._import_file_path = path.strip_edges()
+            self.file_lineedit.text = self._import_file_path
 
 
 
+    func _get_image_filter():
+        match OS.get_name():
+            "OSX":
+                return "webp,jpeg,jpg,png"
+            "X11":
+                return "*.webp *.png *.jpeg *.jpg"
+            _:
+                return "All Images,*.png;*.jpg;*jpeg,PNG (*.png),*.png,JPEG (*.jpg),*.jpg;*jpeg,WebP (*.webp)"
 
     func on_file_selected(path):
         logv("file for import selected: %s" % path)
@@ -820,55 +933,208 @@ class ImportDialog extends FileDialog:
 
     func import_layer():
         logv("import_layer called")
+        if self.import_file_path == null:
+            return
 
         var import_image = Image.new()
-        var err = import_image.load(self.import_file_path)
-        if err != OK:
-            logd("Failed to import, error code was: %d" % err)
-            return
+        var image_type = self.import_file_path.get_extension().to_lower().strip_edges()
+        logv("image type is %s" % image_type)
+        if not (image_type.to_lower() in ["png", "webp", "jpeg", "jpg"]):
+            Global.Editor.Warn("Layer Import Error", "The file you selected is not a supported format.")
+        
+        var error = import_image.load(self.import_file_path)
         logv("imported %s" % self.import_file_path)
-        
-        import_image.resize(
-            Global.World.WorldRect.size.x / self.scontrol.RENDER_SCALE,
-            Global.World.WorldRect.size.y / self.scontrol.RENDER_SCALE
-        )
+        logv("image is %s " % import_image)
+        if error != OK:
+            Global.Editor.Warn("Failed to import with code %d" % error)
 
-        logv("resized imported image")
-
-        self.import_image = import_image
+        if self.premult.pressed:
+            logv("premultiply")
+            import_image.premultiply_alpha()
         
+        import_image.fix_alpha_edges()
+        
+        logv("resizing")
+        match self.size_mode.get_selected_id():
+            -1:
+                logv("Invalid size mode, aborting")
+                return
+            # Actual Size
+            0:  import_image = self.preprocess_actual_size(import_image)
+            1:  import_image = self.preprocess_stretch(import_image)
+            2:  import_image = self.preprocess_scale(import_image)
+
+        logv("resized import image to %s" % import_image.get_size())
+
         var new_layer_index: int
-        var layer_group_z = self.dropdown.get_selected_id()
-        
-        logv("layer_group_z is %s" % layer_group_z)
+        var layer_group_z = self.insert_layer.get_selected_id()
+        logv("insertion layer group is %s" % layer_group_z)
 
         var filtered_zs = self.tree.get_group_z_array(layer_group_z)
-
-        logv("zs in group: %s" % [filtered_zs])
-
         if len(filtered_zs) == 0:
             new_layer_index = layer_group_z + 1
-            logv("No existing layers in group, creating at group Z + 1")
+            logv("no existing layers in group, creating at group Z + 1 (%d)" % new_layer_index)
         else:
             new_layer_index = filtered_zs.max() + 1
             logv("Existing layers in group, creating at Z: %d" % (filtered_zs.max() + 1))
-        
-        var layer_name = $"LayerName/LayerNameEdit".text
-        layer_name = layer_name if layer_name != "" else "New Layer"
-        logv("layer_name is %s" % layer_name)
+
+        var layer_name = self.layer_name.text if self.layer_name.text != "" else "New Layer"
+        logv("imported layer name is %s" % layer_name)
+
+        # var temp_text = ImageTexture.new()
+        # temp_text.create_from_image(import_image)
+
+        # $"Align/TextureRect".texture = temp_text
 
         var new_layer = RasterLayer.new(Global)
-        logv("new_layer: %s" % new_layer)
+        logv("RasterLayer instantiated: %s" % new_layer)
+        new_layer.create_new(
+            self.scontrol.curr_level_id, 
+            new_layer_index,
+            layer_name
+        )
+        logv("RasterLayer create_new called")
 
-        new_layer.create_new(self.scontrol.curr_level_id, new_layer_index, layer_name)
-        logv("new_layer initialized: %s" % new_layer)
-        
-        new_layer.texture.set_data(self.import_image)
-        logv("new_layer texture set to imported image")
+        new_layer.texture.set_data(import_image)
+        logv("texture set")
         self.layerm.add_layer(new_layer)
-
         self.scontrol.set_active_layer(new_layer)
-        self.import_file_path = null
+
+
+
+
+        # logv("resized imported image")
+
+        # self.import_image = import_image
+        
+        # var new_layer_index: int
+        # var layer_group_z = self.dropdown.get_selected_id()
+        
+        # logv("layer_group_z is %s" % layer_group_z)
+
+        # var filtered_zs = self.tree.get_group_z_array(layer_group_z)
+
+        # logv("zs in group: %s" % [filtered_zs])
+
+        # if len(filtered_zs) == 0:
+        #     new_layer_index = layer_group_z + 1
+        #     logv("No existing layers in group, creating at group Z + 1")
+        # else:
+        #     new_layer_index = filtered_zs.max() + 1
+        #     logv("Existing layers in group, creating at Z: %d" % (filtered_zs.max() + 1))
+        
+        # var layer_name = $"LayerName/LayerNameEdit".text
+        # layer_name = layer_name if layer_name != "" else "New Layer"
+        # logv("layer_name is %s" % layer_name)
+
+        # var new_layer = RasterLayer.new(Global)
+        # logv("new_layer: %s" % new_layer)
+
+        # new_layer.create_new(self.scontrol.curr_level_id, new_layer_index, layer_name)
+        # logv("new_layer initialized: %s" % new_layer)
+        
+        # new_layer.texture.set_data(self.import_image)
+        # logv("new_layer texture set to imported image")
+        # self.layerm.add_layer(new_layer)
+
+        # self.scontrol.set_active_layer(new_layer)
+        # self.import_file_path = null
+
+    func preprocess_actual_size(source: Image):
+        logv('preprocess_actual_size')
+        var layer_size = Global.World.WorldRect.size / self.scontrol.RENDER_SCALE
+        logv("D: %s" % layer_size)
+        var source_size = source.get_size()
+        logv("W: %s" % source_size)
+
+        var output_image
+
+        if source_size.x < layer_size.x or source_size.y < layer_size.y:
+            logv("source is smaller than target, blitting into output")
+            output_image = Image.new()
+            output_image.create(layer_size.x, layer_size.y, false, Image.FORMAT_RGBA8)
+            var blit_pos = Vector2(
+                    (layer_size.x / 2) - (source_size.x / 2), 
+                    (layer_size.y / 2) - (source_size.y / 2)
+                )
+
+            output_image.blit_rect(
+                source,
+                Rect2(Vector2(0, 0), source_size),
+                blit_pos
+            )
+
+            return output_image
+           
+
+        if (source_size > layer_size) or source_size == layer_size:
+            logv("source is larger than target, cropping")
+            source.crop(layer_size.x, layer_size.y)
+            output_image = source
+
+            return output_image
+
+    func preprocess_stretch(source: Image):
+        logv('preprocess_stretch')
+        var layer_size = Global.World.WorldRect.size / self.scontrol.RENDER_SCALE
+        source.resize(
+            layer_size.x,
+            layer_size.y
+        )
+        return source
+
+    func preprocess_scale(source: Image):
+        logv('preprocess_scale')
+        var RESIZE_TARGET = {
+            X_MAX = 0,
+            Y_MAX = 1,
+            EHH = 2
+        }
+
+
+        var layer_size = Global.World.WorldRect.size / self.scontrol.RENDER_SCALE
+        var source_size = source.get_size()
+        # Get aspect ratio
+        var source_ratio = source_size.x / source_size.y
+
+        var resize_target = RESIZE_TARGET.EHH
+        var resize_val
+
+        if (layer_size.x / source_ratio) <= layer_size.y:
+            resize_target = RESIZE_TARGET.X_MAX
+            resize_val = layer_size.x / source_ratio
+        
+        if (
+            (layer_size.y * source_ratio) <= layer_size.x and 
+            (layer_size.y * source_ratio) > resize_val
+        ):
+            resize_target = RESIZE_TARGET.Y_MAX
+            resize_val = (layer_size.y * source_ratio)
+
+        match resize_target:
+            RESIZE_TARGET.X_MAX:
+                source.resize(
+                    layer_size.x,
+                    layer_size.x / source_ratio
+                )
+            RESIZE_TARGET.Y_MAX:
+                source.resize(
+                    layer_size.y,
+                    layer_size.y * source_ratio
+                )
+            RESIZE_TARGET.EHH:
+                logv("Unable to figure out how to resize image, giving up")
+
+        return source
+
+
+
+
+
+        
+        
+        
+
 
 class ExportDialog extends FileDialog:
     var Global

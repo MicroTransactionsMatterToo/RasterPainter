@@ -577,6 +577,7 @@ class ShadowBrush extends LineBrush:
     func on_stroke_end():
         logv(self.stroke_line.points)
         .on_stroke_end()
+        
 
     func ui_config() -> Dictionary:
         return {

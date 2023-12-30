@@ -95,6 +95,9 @@ func start() -> void:
 	self.toolpanel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	self.toolpanel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	Global.World.has_method("set_meta")
+	Global.World.set_meta("GlobalSingleton", Global.World.get_node("/root/Global"))
+
+
 	
 
 	# ===== _Lib =====
@@ -103,10 +106,9 @@ func start() -> void:
 	else:
 		Engine.emit_signal("_lib_register_mod", self)
 		
-		var test = self.prefs
-		test.hide()
-		self.Global.API.ModConfigApi._mod_config_api._mod_menu.add_child(test)
-		self.Global.API.ModConfigApi._mod_config_api._mod_config_panels["MBMM.raster_painter"] = test
+		self.prefs.hide()
+		self.Global.API.ModConfigApi._mod_config_api._mod_menu.add_child(self.prefs)
+		self.Global.API.ModConfigApi._mod_config_api._mod_config_panels["MBMM.raster_painter"] = self.prefs
 		self.Global.API.ModConfigApi._mod_config_api._mod_config_buttons["MBMM.raster_painter"].connect(
 			"pressed", 
 			self.Global.API.ModConfigApi._mod_config_api,
@@ -116,19 +118,10 @@ func start() -> void:
 		self.Global.API.ModConfigApi._mod_config_api._mod_config_buttons["MBMM.raster_painter"].disabled = false
 		self.Global.API.ModConfigApi._mod_config_api._preferences_window_api.connect(
 			"apply_pressed",
-			test,
+			self.prefs,
 			"_save_config"
 		)
 
-	logv("master: %s" % Global.World.owner)
-	var master = Global.World.owner
-	var inst_id = GDNative
-	print(inst_id)
-	# print(JSON.print(master.get_script(), "\t"))
-	yield(Global.World.get_tree().create_timer(5.0), "timeout")
-	logv("IsComputing: %s" % master.IsComputing)
-	master.IsComputing = false
-	logv("IsComputing: %s" % master.IsComputing)
 
 func on_tool_enable(tool_id) -> void:
 	logv("RasterPainter enabled")
