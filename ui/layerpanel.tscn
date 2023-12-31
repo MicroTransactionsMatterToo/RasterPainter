@@ -35,9 +35,9 @@ text = "Layers"
 margin_bottom = 239.0
 
 [node name="LayerControls" type="HBoxContainer" parent="Margins/Align"]
-margin_left = 63.0
+margin_left = 51.0
 margin_top = 243.0
-margin_right = 171.0
+margin_right = 183.0
 margin_bottom = 263.0
 hint_tooltip = "Test	"
 size_flags_horizontal = 4
@@ -73,6 +73,7 @@ icon_align = 1
 margin_left = 56.0
 margin_right = 68.0
 margin_bottom = 20.0
+hint_tooltip = "Delete Selected Layer"
 size_flags_horizontal = 3
 icon_align = 1
 
@@ -85,8 +86,21 @@ margin_bottom = 20.0
 margin_left = 80.0
 margin_right = 92.0
 margin_bottom = 20.0
+hint_tooltip = "Import Layer"
 
 [node name="Export" type="Button" parent="Margins/Align/LayerControls"]
 margin_left = 96.0
 margin_right = 108.0
 margin_bottom = 20.0
+hint_tooltip = "Export Layer"
+
+[node name="VSeparator3" type="VSeparator" parent="Margins/Align/LayerControls"]
+margin_left = 112.0
+margin_right = 116.0
+margin_bottom = 20.0
+
+[node name="LayerProps" type="Button" parent="Margins/Align/LayerControls"]
+margin_left = 120.0
+margin_right = 132.0
+margin_bottom = 20.0
+hint_tooltip = "Layer Properties"

@@ -5,17 +5,17 @@ visible = true
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_right = -728.0
-margin_bottom = -387.0
+margin_bottom = -486.0
 size_flags_vertical = 2
 window_title = "Layer Properties"
 
 [node name="Align" type="GridContainer" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_left = 5.0
-margin_top = 5.0
-margin_right = -5.0
-margin_bottom = -5.0
+margin_left = 8.0
+margin_top = 8.0
+margin_right = -8.0
+margin_bottom = -36.0
 size_flags_horizontal = 3
 size_flags_vertical = 2
 columns = 2
@@ -29,7 +29,7 @@ align = 2
 
 [node name="NameEdit" type="LineEdit" parent="Align"]
 margin_left = 57.0
-margin_right = 286.0
+margin_right = 280.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 caret_blink = true
@@ -45,7 +45,7 @@ align = 2
 [node name="TintEdit" type="Control" parent="Align"]
 margin_left = 57.0
 margin_top = 28.0
-margin_right = 286.0
+margin_right = 280.0
 margin_bottom = 42.0
 
 [node name="Label" type="Label" parent="Align"]
@@ -58,17 +58,17 @@ align = 2
 [node name="HBoxContainer" type="HBoxContainer" parent="Align"]
 margin_left = 57.0
 margin_top = 46.0
-margin_right = 286.0
+margin_right = 280.0
 margin_bottom = 70.0
 
 [node name="HSlider" type="HSlider" parent="Align/HBoxContainer"]
 margin_top = 4.0
-margin_right = 151.0
+margin_right = 145.0
 margin_bottom = 20.0
 size_flags_horizontal = 3
 size_flags_vertical = 4
 
 [node name="SpinBox" type="SpinBox" parent="Align/HBoxContainer"]
-margin_left = 155.0
-margin_right = 229.0
+margin_left = 149.0
+margin_right = 223.0
 margin_bottom = 24.0

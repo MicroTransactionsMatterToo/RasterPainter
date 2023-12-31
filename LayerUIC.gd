@@ -172,6 +172,7 @@ class LayerPanel extends PanelContainer:
         $"Margins/Align/LayerControls/DeleteLayer".icon = load("res://ui/icons/misc/delete.png")
         $"Margins/Align/LayerControls/Import".icon = load("res://ui/icons/menu/open.png")
         $"Margins/Align/LayerControls/Export".icon = load("res://ui/icons/menu/export.png")
+        $"Margins/Align/LayerControls/LayerProps".icon = load("res://ui/icons/misc/level.png")
 
     # ===== MISC UI =====
     func show_layer_dialog():
@@ -327,7 +328,7 @@ class LayerTree extends Panel:
         # Remove placeholder
         self.tree.remove_child($"RasterLayers/RasterLayer")
 
-        self.scontrol.connect("level_changed", self, "populate_tree", [self.scontrol.curr_level_id])
+        self.scontrol.connect("level_changed", self, "populate_tree")
         self.layerm.connect("layer_added", self, "on_layer_added")
         self.layerm.connect("layer_modified", self, "on_layer_modified")
 
@@ -396,7 +397,7 @@ class LayerTree extends Panel:
         var level_layers = self.layerm.get_layers_in_level(level_id)
         level_layers.sort_custom(self.layerm, "sort_layers_desc")
 
-        logv("sorted level_layers")
+        logv("sorted level_layers: %s" % [level_layers])
 
         var tree_items = self.get_layer_items(true)
         logv('got tree_items: %s' % [tree_items])
@@ -462,6 +463,7 @@ class LayerTree extends Panel:
             self.order_tree()
 
     func on_layer_added(layer):
+        logv("layer added")
         self.populate_tree(self.scontrol.curr_level_id)
 
     # ===== SORTING =====
@@ -775,6 +777,7 @@ class NewLayerDialog extends WindowDialog:
         self.layerm.add_layer(new_layer)
 
         self.scontrol.set_active_layer(new_layer)
+        self.tree.layer_tree.populate_tree(self.scontrol.curr_level_id)
 
 class ImportDialog extends ConfirmationDialog:
     var Global

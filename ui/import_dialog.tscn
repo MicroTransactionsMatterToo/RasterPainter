@@ -4,8 +4,9 @@
 visible = true
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_right = -659.0
-margin_bottom = -254.0
+margin_right = -622.0
+margin_bottom = -420.0
+rect_min_size = Vector2( 400, 180 )
 window_title = "Import Layer"
 
 [node name="Align" type="VBoxContainer" parent="."]
@@ -20,19 +21,19 @@ size_flags_vertical = 2
 custom_constants/separation = 4
 
 [node name="LayerNum" type="HBoxContainer" parent="Align"]
-margin_right = 349.0
+margin_right = 386.0
 margin_bottom = 20.0
 
 [node name="Label" type="Label" parent="Align/LayerNum"]
 margin_top = 3.0
-margin_right = 115.0
+margin_right = 127.0
 margin_bottom = 17.0
 size_flags_horizontal = 3
 text = "Layer Position"
 
 [node name="LayerNumEdit" type="OptionButton" parent="Align/LayerNum"]
-margin_left = 119.0
-margin_right = 349.0
+margin_left = 131.0
+margin_right = 386.0
 margin_bottom = 20.0
 hint_tooltip = "The imported image will be inserted below the selected layer"
 size_flags_horizontal = 11
@@ -40,20 +41,20 @@ size_flags_stretch_ratio = 1.99
 
 [node name="LayerName" type="HBoxContainer" parent="Align"]
 margin_top = 24.0
-margin_right = 349.0
+margin_right = 386.0
 margin_bottom = 48.0
 
 [node name="Label" type="Label" parent="Align/LayerName"]
 margin_top = 5.0
-margin_right = 115.0
+margin_right = 127.0
 margin_bottom = 19.0
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 0.5
 text = "Layer Name"
 
 [node name="LayerNameEdit" type="LineEdit" parent="Align/LayerName"]
-margin_left = 119.0
-margin_right = 349.0
+margin_left = 131.0
+margin_right = 386.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 placeholder_text = "New Layer"
@@ -62,24 +63,24 @@ caret_blink_speed = 0.5
 
 [node name="HSeparator" type="HSeparator" parent="Align"]
 margin_top = 52.0
-margin_right = 349.0
+margin_right = 386.0
 margin_bottom = 56.0
 
 [node name="SizeSettings" type="HBoxContainer" parent="Align"]
 margin_top = 60.0
-margin_right = 349.0
+margin_right = 386.0
 margin_bottom = 80.0
 
 [node name="Label" type="Label" parent="Align/SizeSettings"]
 margin_top = 3.0
-margin_right = 115.0
+margin_right = 127.0
 margin_bottom = 17.0
 size_flags_horizontal = 3
 text = "Image Scaling"
 
 [node name="OptionButton" type="OptionButton" parent="Align/SizeSettings"]
-margin_left = 119.0
-margin_right = 349.0
+margin_left = 131.0
+margin_right = 386.0
 margin_bottom = 20.0
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 2.0
@@ -89,39 +90,39 @@ selected = 0
 
 [node name="HBoxContainer" type="HBoxContainer" parent="Align"]
 margin_top = 84.0
-margin_right = 349.0
+margin_right = 386.0
 margin_bottom = 108.0
 
 [node name="FileLabel" type="Label" parent="Align/HBoxContainer"]
 margin_top = 5.0
-margin_right = 115.0
+margin_right = 127.0
 margin_bottom = 19.0
 size_flags_horizontal = 3
 text = "Image File"
 
 [node name="FilePathC" type="HBoxContainer" parent="Align/HBoxContainer"]
-margin_left = 119.0
-margin_right = 349.0
+margin_left = 131.0
+margin_right = 386.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 2.0
 
 [node name="FilePath" type="LineEdit" parent="Align/HBoxContainer/FilePathC"]
-margin_right = 202.0
+margin_right = 227.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 placeholder_text = "File Path"
 
 [node name="Browse" type="Button" parent="Align/HBoxContainer/FilePathC"]
-margin_left = 206.0
-margin_right = 230.0
+margin_left = 231.0
+margin_right = 255.0
 margin_bottom = 24.0
 size_flags_horizontal = 0
 text = "..."
 
 [node name="PremultAlpha" type="HBoxContainer" parent="Align"]
 margin_top = 112.0
-margin_right = 349.0
+margin_right = 386.0
 margin_bottom = 136.0
 
 [node name="Label" type="Label" parent="Align/PremultAlpha"]
@@ -131,8 +132,8 @@ margin_bottom = 19.0
 text = "Premultiply Alpha"
 
 [node name="CheckBox" type="CheckBox" parent="Align/PremultAlpha"]
-margin_left = 325.0
-margin_right = 349.0
+margin_left = 362.0
+margin_right = 386.0
 margin_bottom = 24.0
 hint_tooltip = "Premultiplies alpha of image on import. Leave this unchecked unless you know what you're doing"
 size_flags_horizontal = 10

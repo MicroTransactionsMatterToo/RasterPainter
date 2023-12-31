@@ -420,7 +420,7 @@ class RasterControl extends Control:
 
     # ===== SIGNAL/EVENT HANDLERS =====
     func _on_level_change():
-        logd("Layer changed from %s to %s" % [
+        logd("Level changed from %s to %s" % [
             self.curr_level_id,
             self.layerm.get_level_id(Global.World.Level)
         ])
@@ -448,6 +448,8 @@ class RasterControl extends Control:
         else:
             logd("No layers flagged as active found, setting active to first one")
             self.active_layer = level_layers[0]
+
+        self.emit_signal("level_changed", self._curr_level_id)
 
     # ===== RENDERING =====
     
