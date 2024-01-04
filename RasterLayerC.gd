@@ -17,6 +17,8 @@ class RasterLayer extends Sprite:
 
     var embedded_key: String setget , get_embedded_key
 
+    var change_count = 0
+
     var Global
 
     # Emitted when `z_index` is changed
@@ -68,6 +70,17 @@ class RasterLayer extends Sprite:
         self.centered = false
         self.scale = Vector2(RENDER_SCALE, RENDER_SCALE)
         self.rect_scale = Vector2(RENDER_SCALE, RENDER_SCALE)
+
+    func _process(delta):
+        if self.change_count > 0:
+            logv("RasterLayer changed")
+            for key in Global.World.EmbeddedTextures.keys():
+                var key_info = self.decode_key(key)
+                if key_info.uuid == self.uuid and key != self.embedded_key:
+                    logv("Found matching UUID, key was %s" % key)
+                    Global.World.EmbeddedTextures[key] = null
+
+        self.change_count = 0
 
     func _to_string() -> String:
         return "[RasterLayer \"{name}\" <Z: {z}, Level: {lvl}, UUID: {uuid}> @ id]".format({
@@ -164,6 +177,8 @@ class RasterLayer extends Sprite:
         Global.World.EmbeddedTextures[old_key] = null
         Global.World.EmbeddedTextures[self.embedded_key] = self.texture
 
+        self.change_count += 1
+
         self.emit_signal("level_change", old_level, new_id, self)
         self.emit_signal("layer_modified", self)
 
@@ -178,9 +193,11 @@ class RasterLayer extends Sprite:
         var old_key = self.embedded_key
         var old_name = self._layer_name
         self._layer_name = new_name
-
+        
         Global.World.EmbeddedTextures[old_key] = null
         Global.World.EmbeddedTextures[self.embedded_key] = self.texture
+
+        self.change_count += 1
 
         self.emit_signal("name_change", old_name, new_name, self)
         self.emit_signal("layer_modified", self)
@@ -200,9 +217,24 @@ class RasterLayer extends Sprite:
         Global.World.EmbeddedTextures[old_key] = null
         Global.World.EmbeddedTextures[self.embedded_key] = self.texture
 
+        self.change_count += 1
+
         self.emit_signal("z_index_change", old_z, value, self)
         self.emit_signal("layer_modified", self)
 
+    # ---- self.modulate set/get
+    func set_modulate(color: Color):
+        logv("Setting layer modulate to %s" % color)
+
+        var old_key = self.embedded_key
+        .set_modulate(color)
+
+        Global.World.EmbeddedTextures[old_key] = null
+        Global.World.EmbeddedTextures[self.embedded_key] = self.texture
+
+        self.change_count += 1
+
+        self.emit_signal("layer_modified", self)
 
     # ---- self.uuid get
 
@@ -218,3 +250,17 @@ class RasterLayer extends Sprite:
             "name": self.layer_name,
             "uuid": self.uuid
         })
+
+    #
+    func decode_key(key):
+        var key_data = key.split("|")
+
+        var data = {
+            "level_id": int(key_data[0]),
+            "modulate": Color(key_data[2]),
+            "layer_name": key_data[3],
+            "uuid": key_data[4],
+            "z_index": int(key_data[1])
+        }
+        
+        return data

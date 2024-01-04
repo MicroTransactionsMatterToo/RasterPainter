@@ -4,8 +4,9 @@
 visible = true
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_right = -728.0
+margin_right = -724.0
 margin_bottom = -486.0
+rect_min_size = Vector2( 300, 150 )
 size_flags_vertical = 2
 window_title = "Layer Properties"
 
@@ -29,7 +30,7 @@ align = 2
 
 [node name="NameEdit" type="LineEdit" parent="Align"]
 margin_left = 57.0
-margin_right = 280.0
+margin_right = 284.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 caret_blink = true
@@ -45,7 +46,7 @@ align = 2
 [node name="TintEdit" type="Control" parent="Align"]
 margin_left = 57.0
 margin_top = 28.0
-margin_right = 280.0
+margin_right = 284.0
 margin_bottom = 42.0
 
 [node name="Label" type="Label" parent="Align"]
@@ -55,20 +56,21 @@ margin_bottom = 65.0
 text = "Opacity:"
 align = 2
 
-[node name="HBoxContainer" type="HBoxContainer" parent="Align"]
+[node name="Opacity" type="HBoxContainer" parent="Align"]
 margin_left = 57.0
 margin_top = 46.0
-margin_right = 280.0
+margin_right = 284.0
 margin_bottom = 70.0
 
-[node name="HSlider" type="HSlider" parent="Align/HBoxContainer"]
+[node name="HSlider" type="HSlider" parent="Align/Opacity"]
 margin_top = 4.0
-margin_right = 145.0
+margin_right = 149.0
 margin_bottom = 20.0
 size_flags_horizontal = 3
 size_flags_vertical = 4
+rounded = true
 
-[node name="SpinBox" type="SpinBox" parent="Align/HBoxContainer"]
-margin_left = 149.0
-margin_right = 223.0
+[node name="SpinBox" type="SpinBox" parent="Align/Opacity"]
+margin_left = 153.0
+margin_right = 227.0
 margin_bottom = 24.0

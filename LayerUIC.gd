@@ -53,9 +53,10 @@ class LayerPanel extends PanelContainer:
     # LayerManager instance
     var layerm
 
-    var layer_add_dialog: WindowDialog
-    var import_dialog: WindowDialog
-    var export_dialog: WindowDialog
+    var layer_add_dialog
+    var import_dialog
+    var export_dialog
+    var layer_properties_dialog
 
     signal layer_order_changed()
 
@@ -111,6 +112,7 @@ class LayerPanel extends PanelContainer:
         self.layer_add_dialog = NewLayerDialog.new(Global, self.layerm, self.scontrol, self)
         self.export_dialog = ExportDialog.new(Global, self.layerm, self.scontrol, self)
         self.import_dialog = ImportDialog.new(Global, self.layerm, self.scontrol, self)
+        self.layer_properties_dialog = LayerPropertiesDialog.new(Global, self.layerm, self.scontrol, self)
 
         self.rect_min_size.x = 256
         self.rect_position = Vector2(651, 0)
@@ -121,6 +123,7 @@ class LayerPanel extends PanelContainer:
         Global.Editor.get_child("Windows").add_child(self.layer_add_dialog)
         Global.Editor.get_child("Windows").add_child(self.import_dialog)
         Global.Editor.get_child("Windows").add_child(self.export_dialog)
+        Global.Editor.get_child("Windows").add_child(self.layer_properties_dialog)
 
         $"Margins/Align/LayerControls/AddLayer".connect(
             "pressed",
@@ -157,6 +160,12 @@ class LayerPanel extends PanelContainer:
             "popup_centered"
         )
 
+        $"Margins/Align/LayerControls/LayerProps".connect(
+            "pressed",
+            self.layer_properties_dialog,
+            "popup_centered"
+        )
+
         self._set_icons()
 
     func _exit_tree():
@@ -166,13 +175,13 @@ class LayerPanel extends PanelContainer:
     # ===== PRIVATE =====
 
     func _set_icons():
-        $"Margins/Align/LayerControls/MoveLayerUp".icon = load("res://ui/icons/misc/up.png")
-        $"Margins/Align/LayerControls/MoveLayerDown".icon = load("res://ui/icons/misc/down.png")
-        $"Margins/Align/LayerControls/AddLayer".icon = load("res://ui/icons/buttons/add.png")
-        $"Margins/Align/LayerControls/DeleteLayer".icon = load("res://ui/icons/misc/delete.png")
-        $"Margins/Align/LayerControls/Import".icon = load("res://ui/icons/menu/open.png")
-        $"Margins/Align/LayerControls/Export".icon = load("res://ui/icons/menu/export.png")
-        $"Margins/Align/LayerControls/LayerProps".icon = load("res://ui/icons/misc/level.png")
+        $"Margins/Align/LayerControls/MoveLayerUp".icon     = load("res://ui/icons/misc/up.png")
+        $"Margins/Align/LayerControls/MoveLayerDown".icon   = load("res://ui/icons/misc/down.png")
+        $"Margins/Align/LayerControls/AddLayer".icon        = load("res://ui/icons/buttons/add.png")
+        $"Margins/Align/LayerControls/DeleteLayer".icon     = load("res://ui/icons/misc/delete.png")
+        $"Margins/Align/LayerControls/Import".icon          = load("res://ui/icons/menu/open.png")
+        $"Margins/Align/LayerControls/Export".icon          = load("res://ui/icons/menu/export.png")
+        $"Margins/Align/LayerControls/LayerProps".icon      = load("res://ui/icons/misc/level.png")
 
     # ===== MISC UI =====
     func show_layer_dialog():
@@ -287,6 +296,7 @@ class LayerTree extends Panel:
     var separators := {}
     
     var current_selection setget , get_current_selection
+    var active_item setget , get_active_item
     var tree setget , get_layer_tree
 
     # ===== LOGGING =====
@@ -456,6 +466,12 @@ class LayerTree extends Panel:
             if entry.selected:
                 selected.append(entry)
         return selected
+
+    # ---- self.active_item get
+    func get_active_item():
+        for entry in self.get_layer_items():
+            if entry.active:
+                return entry
 
     # ===== SIGNAL HANDLERS =====
     func on_layer_modified(layer):
@@ -674,7 +690,7 @@ class LayerTreeSep extends HBoxContainer:
             "z": self.layer_z
         })
 
-class NewLayerDialog extends WindowDialog:
+class NewLayerDialog extends AcceptDialog:
     var Global
     var template
     
@@ -734,15 +750,11 @@ class NewLayerDialog extends WindowDialog:
         self.rect_position = Vector2(135, -10)
         self.rect_size = Vector2(300, 150)
 
-        self.popup_exclusive = true
+        self.popup_exclusive = false
         self.size_flags_horizontal = SIZE_FILL
         self.size_flags_vertical = SIZE_FILL
 
-        $"Margins/Align/AcceptButton".connect(
-            "pressed",
-            self,
-            "create_layer"
-        )
+        self.connect("confirmed", self, "create_layer")
         self.dropdown = $"Margins/Align/LayerNum/LayerNumEdit"
 
         for z_index in LOCKED_LAYERS.keys():
@@ -1092,14 +1104,6 @@ class ImportDialog extends ConfirmationDialog:
         return self.preprocess_actual_size(source)
 
 
-
-
-
-        
-        
-        
-
-
 class ExportDialog extends FileDialog:
     var Global
     var template
@@ -1405,3 +1409,118 @@ class ExportDialog extends FileDialog:
 
         self.emit_signal("export_finished")
         return code
+
+class LayerPropertiesDialog extends AcceptDialog:
+    var Global
+    var template 
+
+    var tree
+    var layerm
+    var scontrol
+
+    var ColorPalette
+
+    var name_field: LineEdit
+    var opacity_slider: HSlider
+    var opacity_spinbox: SpinBox
+    var tint
+
+    var tint_color
+
+    # ===== LOGGING =====
+    func logv(msg):
+        if LOG_LEVEL > 3:
+            printraw("(%d) [V] <LayerPropertiesDialog>: " % OS.get_ticks_msec())
+            print(msg)
+        else:
+            pass
+
+    func logd(msg):
+        if LOG_LEVEL > 2:
+            printraw("(%d) [D] <LayerPropertiesDialog>: " % OS.get_ticks_msec())
+            print(msg)
+        else:
+            pass
+    
+    func logi(msg):
+        if LOG_LEVEL >= 1:
+            printraw("(%d) [I] <LayerPropertiesDialog>: " % OS.get_ticks_msec())
+            print(msg)
+        else:
+            pass
+    
+    # ===== BUILTIN =====
+    
+
+    func _init(global, layerm, scontrol, tree).():
+        logv('init called')
+        self.Global = global
+        self.layerm = layerm
+        self.scontrol = scontrol
+        self.tree = tree
+
+
+        ColorPalette = load("res://scripts/ui/elements/ColorPalette.cs")
+
+        self.template = ResourceLoader.load(Global.Root + "ui/layer_properties.tscn", "", true)
+        var instance = template.instance()
+        self.add_child(instance)
+        self.window_title = instance.window_title
+        self.rect_min_size = instance.rect_min_size
+        self.size_flags_horizontal = SIZE_EXPAND_FILL
+        self.size_flags_horizontal = SIZE_EXPAND_FILL
+        instance.remove_and_skip()
+        logv("template loaded")
+
+        self.name_field = $"Align/NameEdit"
+        self.tint = $"Align/TintEdit"
+        self.opacity_slider = $"Align/Opacity/HSlider"
+        self.opacity_spinbox = $"Align/Opacity/SpinBox"
+
+        self.opacity_slider.share(self.opacity_spinbox)
+
+        var palette_instance = ColorPalette.new(false)
+        palette_instance.SetColor(Color(1, 1, 1, 1), false)
+        self.tint.replace_by(palette_instance)
+        self.tint = palette_instance
+        self.tint.name = "TintEdit"
+        self.tint.colorPicker.edit_alpha = false
+
+        self.connect("about_to_show", self, "_about_to_show")
+        self.connect("confirmed", self, "confirm")
+        self.tint.connect("color_changed", self, "_on_color_set")
+
+    
+    func _about_to_show():
+        logv("about to show")
+        var item = self.tree.layer_tree.active_item
+        if item == null:
+            return
+        
+        logv("setting name field to %s" % item.layer.layer_name)
+        self.name_field.text = item.layer.layer_name
+        self.tint.SetColor(item.layer.modulate)
+        self.tint_color = item.layer.modulate
+
+        self.opacity_slider.value = (item.layer.modulate.a * 100)
+
+    func _on_color_set(color):
+        logv("OIN")
+        logv("new tint color set: %s" % color.to_html())
+        self.tint_color = color
+
+    func confirm():
+        var item = self.tree.layer_tree.active_item
+        if item == null:
+            return
+
+        self.tint_color.a = (self.opacity_slider.value / 100) 
+        logv("new color is %s" % self.tint_color)
+
+        if item.layer.layer_name != self.name_field.text:
+            item.layer.layer_name = self.name_field.text
+
+        if item.layer.modulate != self.tint_color:
+            item.layer.set_modulate(self.tint_color)
+
+        item.layer.change_count += 1
