@@ -197,8 +197,10 @@ class LayerPanel extends PanelContainer:
         
         for item in selected_items:
             self.delete_layer(item)
-
+                
         self.layer_tree.get_layer_items()[0].set_selected(true)
+        yield(get_tree(), "idle_frame")
+        self.layer_tree.populate_tree(self.scontrol.curr_level_id)
     
     func delete_layer(item: CanvasItem):
         if (item == null or item.layer == null): return
@@ -206,6 +208,7 @@ class LayerPanel extends PanelContainer:
         item.layer.delete()
         item.layer = null
         item.visible = false
+        item.queue_free()
         
 
 
@@ -261,12 +264,14 @@ class LayerPanel extends PanelContainer:
             item.layer.set_z_index(new_z)
         
         else:
-            var new_z = item_next.layer.z_index
-            item_next.layer.set_z_index(item.layer.z_index)
-            item_next.update_preview()
-            item.layer.set_z_index(new_z)
-            item.update_preview()
-
+            if is_instance_valid(item_next.layer):
+                var new_z = item_next.layer.z_index
+                item_next.layer.set_z_index(item.layer.z_index)
+                item_next.update_preview()
+                item.layer.set_z_index(new_z)
+                item.update_preview()
+            else:
+                item_next.queue_free()
     func get_group_z_array(layer_group_z):
         logv("get_group_z_array for %s" % layer_group_z)
         var locked_zs = LOCKED_LAYERS.keys()
@@ -570,7 +575,7 @@ class LayerTreeItem extends PanelContainer:
 
     # ===== UI =====
     func update_preview():
-        if self._layer != null:
+        if self._layer != null and is_instance_valid(self._layer):
             $"HB/Preview/LayerPreview".texture = self._layer.texture
 
     func _set_visibility_button_textures():
