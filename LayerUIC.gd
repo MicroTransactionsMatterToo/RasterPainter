@@ -194,13 +194,16 @@ class LayerPanel extends PanelContainer:
             selected_items.size(), 
             selected_items
         ])
-        
+        var delete_records = []
         for item in selected_items:
+            if item.layer != null and is_instance_valid(item.layer):
+                delete_records.append(self.scontrol.history_manager.record_layer_delete(item.layer))
             self.delete_layer(item)
                 
         self.layer_tree.get_layer_items()[0].set_selected(true)
         yield(get_tree(), "idle_frame")
         self.layer_tree.populate_tree(self.scontrol.curr_level_id)
+        self.scontrol.history_manager.record_bulk_layer_delete(delete_records)
     
     func delete_layer(item: CanvasItem):
         if (item == null or item.layer == null): return
@@ -225,10 +228,17 @@ class LayerPanel extends PanelContainer:
             return
         
         logd("Moving layers")
+        var move_entries = []
         for item in selected_items:
             logv("moving item %s" % item)
+            var old_z = item.layer.z_index
             self.move_layer(item, direction)
-
+            var move_entry = [item.layer.uuid, old_z, item.layer.z_index]
+            logv("add move_entry: %s" % [move_entry])
+            move_entries.append(move_entry)
+        
+        logv("Moved layers")
+        self.scontrol.history_manager.record_layer_move(move_entries)
         self.emit_signal("layer_order_changed")
         
     func move_layer(item: CanvasItem, direction: bool = DIR_DOWN):
@@ -1518,6 +1528,8 @@ class LayerPropertiesDialog extends AcceptDialog:
         var item = self.tree.layer_tree.active_item
         if item == null:
             return
+            
+        var old_layer_key = item.layer.embedded_key
 
         self.tint_color.a = (self.opacity_slider.value / 100) 
         logv("new color is %s" % self.tint_color)
@@ -1529,3 +1541,6 @@ class LayerPropertiesDialog extends AcceptDialog:
             item.layer.set_modulate(self.tint_color)
 
         item.layer.change_count += 1
+        
+        if old_layer_key != item.layer.embedded_key:
+            self.scontrol.history_manager.record_layer_edit(old_layer_key, item.layer)

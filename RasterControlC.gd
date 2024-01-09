@@ -17,6 +17,9 @@ class RasterControl extends Control:
     var LayerUIC
     var LayerPanel
 
+    var HistoryC
+    var HistoryManager
+
     # +++++ Other Components +++++
 
     var brushmgr
@@ -41,6 +44,7 @@ class RasterControl extends Control:
     var eraser_pen: Node2D
 
     # +++++ State ++++++
+    var history_manager
     var history_queue: FIFOQueue
     var redo_queue: FIFOQueue
     
@@ -146,6 +150,9 @@ class RasterControl extends Control:
         LayerUIC        = ResourceLoader.load(Global.Root + "LayerUIC.gd", "GDScript", true)
         LayerPanel      = load(Global.Root + "LayerUIC.gd").LayerPanel
 
+        HistoryC 		= ResourceLoader.load(Global.Root + "HistoryC.gd", "GDScript", true)
+        HistoryManager	= load(Global.Root + "HistoryC.gd").HistoryManager
+
         logv("_init finished")
     
     func _ready():
@@ -178,6 +185,8 @@ class RasterControl extends Control:
 
         self._bootstrap_blending()
         self._bootstrap_eraser()
+
+        self.history_manager = HistoryManager.new(self.Global, self, self.layerm)
     
     func _exit_tree():
         self.queue_free()
@@ -460,8 +469,12 @@ class RasterControl extends Control:
         logv("Appending to history and clearing redo queue")
         var current_state = self.active_layer.texture.duplicate()
         current_state.set_meta("layer_id", self.active_layer.uuid)
-        self.history_queue.push(current_state)
-        self.redo_queue.clear()
+        if Global.API == null:
+            logv("_Lib not detected, using built-in undo/redo")
+            self.history_queue.push(current_state)
+            self.redo_queue.clear()
+        else:
+            self.history_manager.record_paint(self.active_layer)
 
         logv("Blending stroke into layer %s" % self.active_layer)
 

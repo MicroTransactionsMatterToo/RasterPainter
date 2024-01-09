@@ -14,6 +14,8 @@ var RasterControl
 var PreferencesC
 var Preferences
 
+
+
 var skig
 
 # +++++ State +++++
@@ -24,6 +26,8 @@ var layer_manager
 var control
 var toolpanel
 var prefs
+
+var _lib_present = false
 
 # ===== LOGGING =====
 const LOG_LEVEL = 4
@@ -53,6 +57,12 @@ func logi(msg):
 func start() -> void:
 	logi("RasterPainter loaded")
 
+	# ===== _Lib =====
+	if not Engine.has_signal("_lib_register_mod"):
+		logi("_Lib not installed")
+	else:
+		Engine.emit_signal("_lib_register_mod", self)
+
 	# Class loading
 	BrushManagerC 	= ResourceLoader.load(Global.Root + "BrushManagerC.gd", "GDScript", true)
 	BrushManager 	= load(Global.Root + "BrushManagerC.gd").BrushManager
@@ -65,6 +75,8 @@ func start() -> void:
 
 	PreferencesC 	= ResourceLoader.load(Global.Root + "PreferencesC.gd", "GDScript", true)
 	Preferences	= load(Global.Root + "PreferencesC.gd").Preferences
+
+
 
 	# Setup
 	self.name = "RasterPainter"
@@ -97,15 +109,7 @@ func start() -> void:
 	Global.World.has_method("set_meta")
 	Global.World.set_meta("GlobalSingleton", Global.World.get_node("/root/Global"))
 
-
-	
-
-	# ===== _Lib =====
-	if not Engine.has_signal("_lib_register_mod"):
-		logi("_Lib not installed")
-	else:
-		Engine.emit_signal("_lib_register_mod", self)
-		
+	if Global.API != null:
 		self.prefs.hide()
 		self.Global.API.ModConfigApi._mod_config_api._mod_menu.add_child(self.prefs)
 		self.Global.API.ModConfigApi._mod_config_api._mod_config_panels["MBMM.raster_painter"] = self.prefs
