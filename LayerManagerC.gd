@@ -91,7 +91,7 @@ class LayerManager extends Object:
             return
         
         logv("remove_layer called: %s" % layer)
-        var is_layer_loaded = self.get_layer_by_uuid(layer.uuid) != null
+        var is_layer_loaded = self.loaded_layers.has(layer.uuid)
         if is_layer_loaded:
             logv("layer was managed by layer_manager, removing from loaded layers")
             var deleted = self.loaded_layers.erase(layer.uuid)

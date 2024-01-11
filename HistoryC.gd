@@ -61,6 +61,11 @@ class HistoryManager:
         logv("record_bulk_layer_deletes called")
         var record = LayerDeleteRecords.new(records, self.scontrol)
         self.Global.API.HistoryApi.record(record)
+
+    func record_layer_add(layer, params):
+        logv('record_layer_add called')
+        var record = LayerAddRecord.new(layer, params, self.scontrol)
+        self.Global.API.HistoryApi.record(record)
     
 
 
@@ -298,9 +303,16 @@ class LayerDeleteRecords:
 
 
 class LayerDeleteRecord:
+    var Global
+
     var texture
+    var old_key
+    var layer_uuid
     var layer_params
     var scontrol
+    
+    var RasterLayerC
+    var RasterLayer
 
     # ===== LOGGING =====
     func logv(msg):
@@ -326,27 +338,48 @@ class LayerDeleteRecord:
     
 
     func _init(layer, scontrol):
-        self.layer = layer.duplicate(
-            Node.DUPLICATE_SCRIPTS +
-            Node.DUPLICATE_SIGNALS +
-            Node.DUPLICATE_USE_INSTANCING
-        )
+        self.old_key = layer.embedded_key
+        self.layer_uuid = layer.uuid
+        self.texture = layer.texture.duplicate(false)
         self.scontrol = scontrol
+        self.Global = scontrol.Global
+
+        RasterLayerC    = ResourceLoader.load(Global.Root + "RasterLayerC.gd", "GDScript", true)
+        RasterLayer     = load(Global.Root + "RasterLayerC.gd").RasterLayer
 
     func undo() -> bool:
-        logv("undoing deletion of layer: %s, texture is %s" % [self.layer, self.layer.texture])
-        self.scontrol.layerm.add_layer(self.layer)
+        logv("managed_layers: %s" % JSON.print(self.scontrol.layerm.loaded_layers, "\t"))
+        Global.World.EmbeddedTextures[self.old_key] = self.texture
+        logv("set global texture to %s" % [self.texture])
 
-        self.scontrol.Global.World.EmbeddedTextures[self.layer.embedded_key] = self.layer.texture
+        var new_layer = RasterLayer.new(Global)
+        logv("created new layer")
+        new_layer.create_from_key(
+            self.old_key
+        )
+        logv("instantianted it using old key: %s" % self.old_key)
+
+        
+        logv("idled")
+        self.scontrol.layerm.add_layer(new_layer)
+        logv("managed_layers: %s" % JSON.print(self.scontrol.layerm.loaded_layers, "\t"))
+        logv("added layer: %s" % new_layer)
+
+        self.scontrol.set_active_layer(new_layer)
+        self.scontrol.layerui.layer_tree.populate_tree(self.scontrol.curr_level_id)
 
         return true
     
     func redo() -> bool:
-        self.scontrol.layerm.remove_layer(self.layer)
-        return true
+        var layer = self.scontrol.layerm.get_layer_by_uuid(self.layer_uuid)
 
-    func dropped(type):
-        self.layer.queue_free()
+        self.scontrol.layerm.remove_layer(layer)
+        layer.delete()
+
+        yield(self.scontrol.get_tree(), "idle_frame")
+        self.scontrol.layerui.layer_tree.populate_tree(self.scontrol.curr_level_id)
+        
+        return true
 
     func max_count() -> int: return 10
 
@@ -370,7 +403,14 @@ class LayerAddRecord:
         RasterLayer     = load(Global.Root + "RasterLayerC.gd").RasterLayer
 
     func undo() -> bool:
-        self.scontrol.layerm.remove_layer(self.layer)
+        print("undoing layer add")
+        var layer = self.scontrol.layerm.get_layer_by_uuid(self.added_uuid)
+        self.scontrol.layerm.remove_layer(layer)
+        layer.delete()
+
+        yield(self.scontrol.get_tree(), "idle_frame")
+        self.scontrol.layerui.layer_tree.populate_tree(self.scontrol.curr_level_id)
+
         return true
 
     func redo() -> bool:

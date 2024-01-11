@@ -197,7 +197,10 @@ class LayerPanel extends PanelContainer:
         var delete_records = []
         for item in selected_items:
             if item.layer != null and is_instance_valid(item.layer):
-                delete_records.append(self.scontrol.history_manager.record_layer_delete(item.layer))
+                delete_records.append(
+                    self.scontrol.history_manager.record_layer_delete(
+                        item.layer
+                    ))
             self.delete_layer(item)
                 
         self.layer_tree.get_layer_items()[0].set_selected(true)
@@ -208,6 +211,7 @@ class LayerPanel extends PanelContainer:
     func delete_layer(item: CanvasItem):
         if (item == null or item.layer == null): return
         
+        self.scontrol.layerm.remove_layer(item.layer)
         item.layer.delete()
         item.layer = null
         item.visible = false
@@ -802,6 +806,14 @@ class NewLayerDialog extends AcceptDialog:
         new_layer.create_new(self.scontrol.curr_level_id, new_layer_index, layer_name)
         logv("new_layer initialized: %s" % new_layer)
         self.layerm.add_layer(new_layer)
+        self.scontrol.history_manager.record_layer_add(
+            new_layer, 
+            {
+                "level_id": self.scontrol.curr_level_id,
+                "z_index": new_layer_index,
+                "name": layer_name
+            }
+        )
 
         self.scontrol.set_active_layer(new_layer)
         self.tree.layer_tree.populate_tree(self.scontrol.curr_level_id)

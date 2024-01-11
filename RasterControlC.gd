@@ -490,22 +490,32 @@ class RasterControl extends Control:
     # ---- self.active_layer setter/getter
     func set_active_layer(layer) -> void:
         logv("setting _active_layer from %s to %s" % [self._active_layer, layer])
-        self._active_layer.remove_meta("active_layer")
-        self.remove_child(self._active_layer)
+        logv("IUOQOUIBE")
+        if is_instance_valid(self._active_layer):
+            logv("Removing meta shit")
+            self._active_layer.remove_meta("active_layer")
+            self.remove_child(self._active_layer)
 
-        
+        logv("moving layer")
         layer.get_parent().remove_child(layer)
+        logv("removed parent")
         layer.set_meta("active_layer", true)
+        logv("set meta")
         self.add_child(layer)
+        logv("added child")
         self._active_layer = layer
 
         self.blending_rectangle.material.set_shader_param("base_texture", self.active_layer.texture)
+        logv("set blending material")
 
         self.pen.z_index = self._active_layer.z_index
+        logv("set pen z")
         self.viewport_cont.z_index = self._active_layer.z_index + 1
+        logv("set viewport z")
 
 
         self.emit_signal("active_layer_changed", self._active_layer)
+        logv("emit layer change")
 
     func get_active_layer():
         return self._active_layer

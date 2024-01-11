@@ -106,30 +106,14 @@ class RasterLayer extends Sprite:
     
     ### create_new
     # Creates an entirely new, empty RasterLayer with the given parameters
-    func create_new(level_id, z_index, layer_name):
+    func create_new(level_id, z_index, layer_name, skip_texture = false):
         logv("Creating new RasterLayer @ Level: %s, Z: %s, name: %s" % [
             level_id, 
             z_index, 
             layer_name
         ])
 
-        # Create a new texture
-        var texture_size = Vector2(
-            Global.World.WorldRect.size.x / RENDER_SCALE,
-            Global.World.WorldRect.size.y / RENDER_SCALE
-        )
-
-        var empty_image = Image.new()
-        empty_image.create(
-            texture_size.x,
-            texture_size.y,
-            false,
-            Image.FORMAT_RGBA8
-        )
-
-        var new_texture = ImageTexture.new()
-        new_texture.create_from_image(empty_image)
-        if new_texture != null: logv("New texture created")
+        
 
         # Set attributes
         self._level_id = level_id
@@ -138,7 +122,26 @@ class RasterLayer extends Sprite:
 
         self._uuid = "%x" % (200000 + (randi() % 100000))
 
-        .set_texture(new_texture)
+        if !skip_texture:
+            # Create a new texture
+            var texture_size = Vector2(
+                Global.World.WorldRect.size.x / RENDER_SCALE,
+                Global.World.WorldRect.size.y / RENDER_SCALE
+            )
+
+            var empty_image = Image.new()
+            empty_image.create(
+                texture_size.x,
+                texture_size.y,
+                false,
+                Image.FORMAT_RGBA8
+            )
+
+            var new_texture = ImageTexture.new()
+            new_texture.create_from_image(empty_image)
+            if new_texture != null: logv("New texture created")
+                
+            .set_texture(new_texture)
     
     ### create_from_key
     # Creates a raster layer from a texture stored in `World.EmbeddedTextures`, using `key`
