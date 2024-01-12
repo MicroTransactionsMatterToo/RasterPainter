@@ -359,24 +359,6 @@ class LineBrush extends Brush:
                     )
 
         
-
-        
-        # # Handle SHIFT key for straight lines
-        # if Input.is_key_pressed(KEY_SHIFT):
-        #     logv("SHIFT is pressed, making a straight line")
-        #     if len(self.stroke_line.points) == 1: self.add_stroke_point(mouse_pos)
-        #     else: 
-        #         self.stroke_line.set_point_position(self.stroke_line.points.size() - 1, mouse_pos)
-        #         self.previous_point_drawn = mouse_pos
-            
-        #     self.was_drawing_straight = true
-        # else:
-        #     if self.should_add_point(mouse_pos):
-        #         self.was_drawing_straight = false
-        #         self.add_stroke_point(mouse_pos)
-        #     else:
-        #         self.stroke_line.set_point_position(self.stroke_line.points.size() -1, mouse_pos)
-        
     func set_color(color: Color) -> void:
         self.stroke_line.default_color = Color(
             color.r,

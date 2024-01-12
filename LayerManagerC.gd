@@ -16,6 +16,8 @@ class LayerManager extends Object:
 
     const LOG_LEVEL = 4
 
+    # ===== LOGGING =====
+
     func logv(msg):
         if LOG_LEVEL > 3:
             printraw("(%d) [V] <LayerManager>: " % OS.get_ticks_msec())
@@ -37,6 +39,7 @@ class LayerManager extends Object:
         else:
             pass
 
+    # ===== BUILTIN =====
     func _init(global).() -> void:
         logv("init")
         self.Global = global
@@ -54,7 +57,8 @@ class LayerManager extends Object:
         logv("Layers freed, freeing self")
         self.free()
 
-    # Utility function that splits key from Global.World.EmbeddedTextures into it's parts
+    ## get_key_info
+    # Converts the given RasterLayer key into a dictionary
     func get_key_info(key: String):
         var split_key = key.split("|")
         if len(split_key) < 3:
@@ -71,7 +75,8 @@ class LayerManager extends Object:
     
     # ===== LAYERS =====
 
-    # Adds the provided layer to loaded_layers
+    ## add_layer
+    # Attempts to add the given layer to managed layers. 
     func add_layer(new_layer):
         logv("Adding layer %s to managed layers" % new_layer)
 
@@ -84,7 +89,10 @@ class LayerManager extends Object:
         new_layer.connect("layer_modified", self, "on_layer_changes")
 
         return true
-
+    
+    ## remove_layer
+    # Attempts to remove the given layer, removing it from managed layers
+    # and then freeing the memory used
     func remove_layer(layer):
         if layer == null:
             logv("layer was null, not deleting")
@@ -97,10 +105,9 @@ class LayerManager extends Object:
             var deleted = self.loaded_layers.erase(layer.uuid)
             logv("layer removed: %s" % deleted)
         
-        
-
-
-
+    ## load_layer
+    # Attempts to load a RasterLayer from EmbeddedTextures using the given key.
+    # Returns the loaded layer, or null if loading failed
     func load_layer(layer_key: String):
         logv("Loading layer with key: %s" % layer_key)
         
@@ -128,6 +135,9 @@ class LayerManager extends Object:
         logv("Unable to load key %s" % layer_key)
         return null
 
+    ## get_layers_in_level
+    # Returns an array of all RasterLayers with their `level_id` set to the
+    # given ID
     func get_layers_in_level(level_id):
         logv("Fetching layers for level %s" % level_id)
         var level_layers := []
@@ -153,7 +163,8 @@ class LayerManager extends Object:
     func get_layer_by_uuid(layer_uuid):
         return self.layer_filter(self, "uuid_lambda", [layer_uuid])[0]
 
-
+    ## layer_map
+    # `map` implementation for layers
     func layer_map(instance: Object, funcname: String, extra_args = []):
         var map_result := []
         var map_func = funcref(instance, funcname)
@@ -166,6 +177,8 @@ class LayerManager extends Object:
         
         return map_result
 
+    ## layer_filter
+    # `filter` implementation for layers
     func layer_filter(instance: Object, funcname: String, extra_args = []):
         var filter_result := []
         var filter_func = funcref(instance, funcname)
@@ -177,7 +190,10 @@ class LayerManager extends Object:
                 filter_result.append(layer)
         
         return filter_result
-
+    
+    ## layer_z_indexes
+    # Returns a sorted array containing the Z-indexes of all raster layers in the 
+    # level identified by the level_id
     func layer_z_indexes(level_id) -> Array:
         var z_idxs := []
         for layer in self.layer_filter(self, "lid_lambda", [level_id]):
@@ -189,6 +205,7 @@ class LayerManager extends Object:
         return z_idxs
 
     # ====== LEVELS ======
+    ## create_level_id
     # Creates an invisible text object with a unique node_id on the given level
     func create_level_id(level: Object):
         logv("Generated new level ID for %s" %level.Label)
@@ -200,7 +217,7 @@ class LayerManager extends Object:
         var text_id = 100000 + (randi() % 100000)
         new_text.set_meta("node_id", text_id)
         return text_id
-
+    
     func get_level_id(level: Object, create_if_missing = true):
         var level_ids := self.get_level_ids()
 
@@ -213,6 +230,8 @@ class LayerManager extends Object:
             var key = self.create_level_id(level)
             return key
 
+    ## get_level_ids
+    # Returns a dictionary with levels mapped to their IDs
     func get_level_ids() -> Dictionary:
         var id_nodes = {}
         for level in Global.World.AllLevels:

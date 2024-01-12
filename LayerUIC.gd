@@ -31,17 +31,6 @@ const USER_LOCKED_LAYERS = {
 const DIR_UP = true
 const DIR_DOWN = false
 
-
-class Utils extends Object:
-    # Loads a `PackedScene`, adds it to the provided object as a child, the removes the 
-    # scenes root node
-    static func load_scene_inplace(obj, scene_file: String):
-        obj.template = ResourceLoader.load(Global.Root + scene_file, "", true)
-        var instance = obj.template.instance()
-        obj.add_child(instance)
-        instance.remove_and_skip()
-
-
 class LayerPanel extends PanelContainer:
     var Global
     var template
@@ -121,7 +110,7 @@ class LayerPanel extends PanelContainer:
         self.size_flags_vertical = SIZE_FILL
 
         Global.Editor.get_child("Windows").add_child(self.layer_add_dialog)
-        Global.Editor.get_child("Windows").add_child(self.import_dialog)
+        Global.Editor.get_child("Windows").add_childw(self.import_dialog)
         Global.Editor.get_child("Windows").add_child(self.export_dialog)
         Global.Editor.get_child("Windows").add_child(self.layer_properties_dialog)
 
@@ -244,7 +233,9 @@ class LayerPanel extends PanelContainer:
         logv("Moved layers")
         self.scontrol.history_manager.record_layer_move(move_entries)
         self.emit_signal("layer_order_changed")
-        
+    
+    ## move_layer
+    # Handles moving an individual layer in the given direction
     func move_layer(item: CanvasItem, direction: bool = DIR_DOWN):
         logv("move_layer called, item: %s, direction: %s" % [item, direction])
         var item_index = item.get_index()
@@ -263,7 +254,6 @@ class LayerPanel extends PanelContainer:
 
             var new_z = self.layer_tree.get_group_for_z(min_new_z, direction).layer_z
             logv("got new_z: %d" % new_z)
-            logv(self.layer_add_dialog)
             var group_zs = self.get_group_z_array(new_z)
             logv("got group_zs: %s" % [group_zs])
 
@@ -286,6 +276,9 @@ class LayerPanel extends PanelContainer:
                 item.update_preview()
             else:
                 item_next.queue_free()
+
+    ## get_group_z_array
+    # Returns array of RasterLayer z-indexes within given layer group
     func get_group_z_array(layer_group_z):
         logv("get_group_z_array for %s" % layer_group_z)
         var locked_zs = LOCKED_LAYERS.keys()
@@ -607,23 +600,22 @@ class LayerTreeItem extends PanelContainer:
 
         vis_button.rect_scale = Vector2(0.75, 0.75)
 
+    # ===== SIGNAL HANDLERS =====
     func on_toggle(val):
-        if Input.is_key_pressed(KEY_SHIFT):
+        if Input.is_key_pressed(KEY_SHIFT) or Input.is_key_pressed(KEY_CONTROL):
             self._selected = !self._selected
-            return
+        else:
+            var toggle_val = val if self.tree.current_selection.size() == 1 else true
+            for item in self.tree.get_layer_items():
+                item.selected = false
 
-        var toggle_val = val if self.tree.current_selection.size() == 1 else true
-        for item in self.tree.get_layer_items():
-            item.selected = false
-
-        self.selected = true
+            self.selected = toggle_val
 
     func on_visibility_toggle(val):
         if self._layer != null:
             self._layer.visible = val
             self._layer.set_meta("visibility", val)
 
-    # ==== SIGNAL HANDLERS =====
     func on_layer_modified(layer):
         if layer == null or self._layer == null: return
         $"HB/Preview/LayerPreview".texture = self.tree.scontrol.result_texture
@@ -779,6 +771,8 @@ class NewLayerDialog extends AcceptDialog:
         for z_index in LOCKED_LAYERS.keys():
             self.dropdown.add_item(LOCKED_LAYERS[z_index], z_index)
 
+    ## create_layer
+    # Instantiates a RasterLayer, adds it to the layer manager, then updates the UI
     func create_layer():
         logv("UI create new layer called")
         var new_layer_index: int
@@ -956,7 +950,7 @@ class ImportDialog extends ConfirmationDialog:
             self.file_lineedit.text = self._import_file_path
 
 
-
+    # ---- self.image_filter get
     func _get_image_filter():
         match OS.get_name():
             "OSX":
@@ -966,11 +960,13 @@ class ImportDialog extends ConfirmationDialog:
             _:
                 return "All Images,*.png;*.jpg;*jpeg,PNG (*.png),*.png,JPEG (*.jpg),*.jpg;*jpeg,WebP (*.webp)"
 
+    # ===== SIGNAL HANDLERS =====
+
     func on_file_selected(path):
         logv("file for import selected: %s" % path)
         self.import_file_path = path
         
-
+    # ===== IMPORTING ======
     func import_layer():
         logv("import_layer called")
         if self.import_file_path == null:
@@ -1026,31 +1022,32 @@ class ImportDialog extends ConfirmationDialog:
         var layer_name = self.layer_name.text if self.layer_name.text != "" else "New Layer"
         logv("imported layer name is %s" % layer_name)
 
+        
+
         var new_layer = RasterLayer.new(Global)
-        logv("RasterLayer instantiated: %s" % new_layer)
         new_layer.create_new(
             self.scontrol.curr_level_id, 
             new_layer_index,
             layer_name
         )
-        logv("RasterLayer create_new called")
+        logi("Importing layer from image file %s to layer %s" % [self.import_file_path, new_layer])
 
         new_layer.texture.set_data(import_image)
         logv("texture set")
         self.layerm.add_layer(new_layer)
         self.scontrol.set_active_layer(new_layer)
 
+    # ===== IMAGE PROCESSING =====
+
     func preprocess_actual_size(source: Image):
         logv('preprocess_actual_size')
         var layer_size = Global.World.WorldRect.size / self.scontrol.RENDER_SCALE
-        logv("D: %s" % layer_size)
         var source_size = source.get_size()
-        logv("W: %s" % source_size)
 
         var output_image
 
         if source_size.x < layer_size.x or source_size.y < layer_size.y:
-            logv("source is smaller than target, blitting into output")
+            logi("source is smaller than target, blitting into output")
             output_image = Image.new()
             output_image.create(layer_size.x, layer_size.y, false, Image.FORMAT_RGBA8)
             var blit_pos = Vector2(
@@ -1068,7 +1065,7 @@ class ImportDialog extends ConfirmationDialog:
            
 
         if (source_size > layer_size) or source_size == layer_size:
-            logv("source is larger than target, cropping")
+            logi("source is larger than target, cropping")
             source.crop(layer_size.x, layer_size.y)
             output_image = source
 
@@ -1279,7 +1276,6 @@ class ExportDialog extends FileDialog:
     func _process(delta):
         self._update_export_ui()
         
-
     func _setup_split_tree():
         logv("split tree setup")
         self.tree_container = HBoxContainer.new()
@@ -1311,6 +1307,42 @@ class ExportDialog extends FileDialog:
         background_texture.set_size_override(Vector2(50, 50))
         self.align.get_node("Preview/PrevBox/Background").texture = background_texture
 
+    func _update_export_ui():
+        var ui_config = self.extension_config[self.file_extension]
+        for key in ui_config.keys():
+            match key:
+                "alpha":
+                    self.align.get_node("ExportSettings/AlphaC").modulate = Color.white if ui_config[key] else Color(1.0, 1.0, 1.0, 0.5)
+                    self.align.get_node("ExportSettings/AlphaC/Alpha").editable = ui_config[key]
+                "quality":
+                    self.align.get_node("ExportSettings/QualityC").modulate = Color.white if ui_config[key] else Color(1.0, 1.0, 1.0, 0.5)
+                    self.align.get_node("ExportSettings/QualityC/Quality").editable = ui_config[key]
+        
+    # ===== SIGNAL HANDLERS =====
+    func _on_file_selected(path):
+        self.export_file_path = path
+        # Prevent dialog from being hidden immediately
+        yield(get_tree(), "idle_frame")
+        self.visible = true
+        logv("file_selected: %s" % path)
+        self.export_image()
+
+    func _on_filter_selected(_val):
+        self.invalidate()
+        self._update_export_ui()
+
+    func _on_alpha_changed(val):
+        logv("alpha changed")
+        self.alpha = val
+    
+    func _on_quality_changed(val):
+        logv("quality changed")
+        self.quality = val
+
+    func _on_progress(progress):
+        logv("Export Progress %2.2f/100" % progress)
+        self.align.get_node("ProgressBar").value = progress
+
     func _on_about_to_show():
         self.export_file_path = null
 
@@ -1330,39 +1362,7 @@ class ExportDialog extends FileDialog:
             )
         )
 
-    func _update_export_ui():
-        var ui_config = self.extension_config[self.file_extension]
-        for key in ui_config.keys():
-            match key:
-                "alpha":
-                    self.align.get_node("ExportSettings/AlphaC").modulate = Color.white if ui_config[key] else Color(1.0, 1.0, 1.0, 0.5)
-                    self.align.get_node("ExportSettings/AlphaC/Alpha").editable = ui_config[key]
-                "quality":
-                    self.align.get_node("ExportSettings/QualityC").modulate = Color.white if ui_config[key] else Color(1.0, 1.0, 1.0, 0.5)
-                    self.align.get_node("ExportSettings/QualityC/Quality").editable = ui_config[key]
-        
-        
-
-    func _on_file_selected(path):
-        self.export_file_path = path
-        # Prevent dialog from being hidden immediately
-        yield(get_tree(), "idle_frame")
-        self.visible = true
-        logv("file_selected: %s" % path)
-        self.export_image()
-
-    func _on_filter_selected(val):
-        self.invalidate()
-        self._update_export_ui()
-
-    func _on_alpha_changed(val):
-        logv("alpha changed")
-        self.alpha = val
-    
-    func _on_quality_changed(val):
-        logv("quality changed")
-        self.quality = val
-    
+    # ===== EXPORT ======
     func export_image():
         logv("exporting layer to %s" % self.align.get_node("FileSelect/FilePath").text)
         
@@ -1385,11 +1385,6 @@ class ExportDialog extends FileDialog:
 
         self.align.get_node("ProgressBar").self_modulate = Color.lightgreen
 
-
-    func _on_progress(progress):
-        logv("Export Progress %2.2f/100" % progress)
-        self.align.get_node("ProgressBar").value = progress
-
     func _get_file_extension() -> String:
         if self.current_file != "" and self.current_file.get_extension() != "":
             if not self.current_file.get_extension().to_lower() in self.extension_indexes:
@@ -1398,10 +1393,10 @@ class ExportDialog extends FileDialog:
                 return self.current_file.get_extension().to_lower()
         
         return self.extension_indexes[self.filter_button.get_selected_id()]
-
-
-
-
+    
+    ## _export_thread
+    # Run in a separate thread to prevent the rather lengthy process of undoing Godot's
+    # premultiplication from locking everything up
     func _export_thread(image: Image) -> int:
         logv('Export Thread started, image is %s' % image)
         var rows = image.get_size().y
@@ -1513,12 +1508,12 @@ class LayerPropertiesDialog extends AcceptDialog:
         self.tint.name = "TintEdit"
         self.tint.colorPicker.edit_alpha = false
 
-        self.connect("about_to_show", self, "_about_to_show")
-        self.connect("confirmed", self, "confirm")
+        self.connect("about_to_show", self, "_on_about_to_show")
+        self.connect("confirmed", self, "_on_confirm")
         self.tint.connect("color_changed", self, "_on_color_set")
-
     
-    func _about_to_show():
+    # ===== SIGNAL HANDLERS =====
+    func _on_about_to_show():
         logv("about to show")
         var item = self.tree.layer_tree.active_item
         if item == null:
@@ -1536,7 +1531,7 @@ class LayerPropertiesDialog extends AcceptDialog:
         logv("new tint color set: %s" % color.to_html())
         self.tint_color = color
 
-    func confirm():
+    func _on_confirm():
         var item = self.tree.layer_tree.active_item
         if item == null:
             return
