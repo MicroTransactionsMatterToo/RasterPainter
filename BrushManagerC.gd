@@ -58,11 +58,9 @@ class BrushManager extends Node:
             pass
 
     # ===== BUILTINS =====
-
     func _init(global).() -> void:
         logv("init")
         self.Global = global
-
 
         for brush_class in self.available_brushes:
             logv("Adding brush %s to available brushes" % brush_class)
@@ -77,9 +75,6 @@ class BrushManager extends Node:
         var prefs = Global.World.get_meta("painter_config")
         self.set_size(int(prefs.get_c_val("def_size_val")))
         self.set_color(Color(prefs.get_c_val("def_brush_col")))
-        
-
-            
 
     func name() -> String:
         return "BrushManager"
@@ -142,6 +137,8 @@ class BrushManager extends Node:
     func get_endcap():
         return self._endcap
 
+## Brush
+# Base class for all brushes
 class Brush extends Node2D:
     var Global
     var brushmanager
@@ -207,7 +204,6 @@ class Brush extends Node2D:
         pass
 
     # ===== BRUSH UI =====
-
     func brush_ui():
         logv("Brush default brush_ui called")
         return null
@@ -252,7 +248,7 @@ class LineBrush extends Brush:
     var was_drawing_straight = false
     var painting_state = PaintState.FIRST_POINT
 
-    var debug_line2d = true
+    var debug_line2d = false
 
     const STROKE_THRESHOLD: float = 60.0
     const INTERPOLATE_THRESHOLD: float = 120.0
@@ -408,7 +404,6 @@ class LineBrush extends Brush:
 
     # ===== BRUSH SPECIFIC =====
     func add_stroke_point(position: Vector2):
-        var points = []
         var point_distance = self.previous_point_drawn.distance_to(position)
         if point_distance > INTERPOLATE_THRESHOLD and self.stroke_line.points.size() != 0:
             var num_interp_points = point_distance / INTERPOLATE_THRESHOLD
@@ -546,7 +541,7 @@ class ShadowBrush extends LineBrush:
     var preview_control: Control
     var preview_line: Line2D
 
-
+    # ===== BUILTINS =====
     func _init(global, brush_manager).(global, brush_manager) -> void:
         self.icon = load("res://ui/icons/tools/light_tool.png")
         self.brush_name = "ShadowBrush"
@@ -569,6 +564,7 @@ class ShadowBrush extends LineBrush:
 
         self.shader_param = "alpha_mult"
 
+    # ===== BRUSH UI =====
     func brush_ui():
         logv("ShadowBrush UI called")
         if self.ui == null:
@@ -624,9 +620,9 @@ class ShadowBrush extends LineBrush:
                 "_on_flip_alpha"
             )
 
-
         return self.ui
 
+    # ===== OVERRIDES =====
     func show_ui():
         .show_ui()
 
@@ -641,17 +637,17 @@ class ShadowBrush extends LineBrush:
         self.stroke_line.texture_mode           = Line2D.LINE_TEXTURE_STRETCH
         .paint(pen, mouse_pos, prev_mouse_pos)
 
-    func on_stroke_end():
-        logv(self.stroke_line.points)
-        .on_stroke_end()
-        
-
     func ui_config() -> Dictionary:
         return {
             "size": true,
             "color": true,
             "endcaps": true
         }
+    
+    # ===== SIGNAL HANDLERS =====
+    func on_stroke_end():
+        logv(self.stroke_line.points)
+        .on_stroke_end()
 
     func set_color(color: Color) -> void:
         .set_color(color)
