@@ -250,9 +250,20 @@ class LineBrush extends Brush:
     var previous_point_drawn: Vector2
 
     var was_drawing_straight = false
+    var painting_state = PaintState.FIRST_POINT
+
+    var debug_line2d = true
 
     const STROKE_THRESHOLD: float = 60.0
     const INTERPOLATE_THRESHOLD: float = 120.0
+
+    enum PaintState {
+        FIRST_POINT = 0,
+        PAINTING,
+        STRAIGHT_STROKE_STARTED,
+        STRAIGHT_STROKE,
+        STRAIGHT_STROKE_END
+    }
 
     func _init(global, brush_manager).(global, brush_manager):
         self.brushmanager.connect(
@@ -267,29 +278,104 @@ class LineBrush extends Brush:
         if !self.stroke_line.get_parent() == pen:
             logv("Added stroke_line to pen")
             pen.add_child(self.stroke_line)
-        
-        if len(self.stroke_line.points) == 0:
-            logv("No points in stroke line, ignoring any modifiers")
-            self.add_stroke_point(mouse_pos)
-        
-        if Input.is_key_pressed(KEY_SHIFT):
-            logv("SHIFT is pressed, making a straight line")
-            if len(self.stroke_line.points) == 1: self.add_stroke_point(mouse_pos)
-            else: 
-                self.stroke_line.set_point_position(self.stroke_line.points.size(), mouse_pos)
+
+        # Paint state machine
+        match self.painting_state:
+            PaintState.FIRST_POINT:
+                logv("Drawing first point, ignoring modifiers")
+                self.add_stroke_point(mouse_pos)
+
+                if Input.is_key_pressed(KEY_SHIFT): 
+                    self.painting_state = PaintState.STRAIGHT_STROKE_STARTED
+                else:
+                    self.painting_state = PaintState.PAINTING
+            PaintState.PAINTING:
+                var debug_points = Array(self.stroke_line.points)
+                logv("on stroke end, the last 4 points were: %s" % [debug_points.slice(-4, -1)])
+                if self.should_add_point(mouse_pos):
+                    self.add_stroke_point(mouse_pos)
+                
+                if Input.is_key_pressed(KEY_SHIFT): self.painting_state = PaintState.STRAIGHT_STROKE_STARTED
+            PaintState.STRAIGHT_STROKE_STARTED:
+                logv("STRAIGHT STROKE STARTED")
+                if len(self.stroke_line.points) == 1:
+                    self.add_stroke_point(mouse_pos)
+                
+                self.stroke_line.set_point_position(self.stroke_line.points.size() - 1, mouse_pos)
+                
+                if Input.is_key_pressed(KEY_SHIFT):
+                    self.painting_state = PaintState.STRAIGHT_STROKE
+                else:
+                    self.painting_state = PaintState.STRAIGHT_STROKE_END
+            PaintState.STRAIGHT_STROKE:
+                self.stroke_line.set_point_position(self.stroke_line.points.size() - 1, mouse_pos)
                 self.previous_point_drawn = mouse_pos
+
+                if Input.is_key_pressed(KEY_SHIFT):
+                    self.painting_state = PaintState.STRAIGHT_STROKE
+                else:
+                    self.painting_state = PaintState.STRAIGHT_STROKE_END
+                    self.paint(pen, mouse_pos, prev_mouse_pos)
+            PaintState.STRAIGHT_STROKE_END:
+                var debug_points = Array(self.stroke_line.points)
+                logv("on straight end, the last 4 points were: %s" % [debug_points.slice(-4, -1)])
+                # This stuff is necessary cause Line2D rendering breaks if point are too far apart
+                var straight_start = self.stroke_line.points[-2]
+                var straight_end = self.stroke_line.points[-1]
+                var straight_dist = straight_start.distance_to(straight_end)
+                var num_segments = floor(straight_dist / STROKE_THRESHOLD)
+                var increment = 1.0 / num_segments
+
+                self.stroke_line.remove_point(self.stroke_line.points.size() - 1)
+
+                for i in range(num_segments):
+                    self.stroke_line.add_point(
+                        straight_start.linear_interpolate(straight_end, increment * (i + 1))
+                    )
+                
+
+                self.stroke_line.set_point_position(self.stroke_line.points.size() - 1, mouse_pos)
+                self.previous_point_drawn = mouse_pos
+
+                self.painting_state = PaintState.PAINTING
+            _:
+                self.painting_state = PaintState.PAINTING
+
+        if self.debug_line2d:
+            self.stroke_line.antialiased = true
+            logv("drawing debug widgets for line2d")
+            for index in range(self.stroke_line.points.size()):
+                var curr_point = self.stroke_line.points[index]
+                pen.draw_circle(curr_point, 15, Color.red)
+                if self.stroke_line.points[index + 1] != null:
+                    var next_point = self.stroke_line.points[index + 1]
+                    var line_dir = curr_point.direction_to(next_point)
+                    var line_color = Color(line_dir.x, line_dir.y, 0.0, 1.0)
+                    pen.draw_line(
+                        curr_point, 
+                        next_point,
+                        line_color,
+                        20
+                    )
+
+        
+
+        
+        # # Handle SHIFT key for straight lines
+        # if Input.is_key_pressed(KEY_SHIFT):
+        #     logv("SHIFT is pressed, making a straight line")
+        #     if len(self.stroke_line.points) == 1: self.add_stroke_point(mouse_pos)
+        #     else: 
+        #         self.stroke_line.set_point_position(self.stroke_line.points.size() - 1, mouse_pos)
+        #         self.previous_point_drawn = mouse_pos
             
-            self.was_drawing_straight = true
-            return
-
-        if self.was_drawing_straight:
-            self.previous_point_drawn = self.stroke_line.points[-1]
-
-        if self.should_add_point(mouse_pos) or self.was_drawing_straight:
-            self.was_drawing_straight = false
-            self.add_stroke_point(mouse_pos)
-        else:
-            self.stroke_line.set_point_position(self.stroke_line.points.size() -1, mouse_pos)
+        #     self.was_drawing_straight = true
+        # else:
+        #     if self.should_add_point(mouse_pos):
+        #         self.was_drawing_straight = false
+        #         self.add_stroke_point(mouse_pos)
+        #     else:
+        #         self.stroke_line.set_point_position(self.stroke_line.points.size() -1, mouse_pos)
         
     func set_color(color: Color) -> void:
         self.stroke_line.default_color = Color(
@@ -314,6 +400,7 @@ class LineBrush extends Brush:
 
     func on_stroke_end() -> void:
         self.stroke_line.clear_points()
+        self.painting_state = PaintState.FIRST_POINT
 
     # ===== BRUSH UI =====
 
@@ -485,8 +572,6 @@ class ShadowBrush extends LineBrush:
 
         self.stroke_line.texture_mode           = Line2D.LINE_TEXTURE_STRETCH
         self.stroke_line.joint_mode             = Line2D.LINE_JOINT_ROUND
-        # self.stroke_line.begin_cap_mode         = Line2D.LINE_CAP_BOX
-        # self.stroke_line.end_cap_mode           = Line2D.LINE_CAP_BOX
         self.stroke_line.round_precision        = 20
         self.stroke_line.antialiased            = false
         self.stroke_line.name               = "ShadowBrushLine2D"
@@ -510,7 +595,7 @@ class ShadowBrush extends LineBrush:
             self.ui = template.instance()
 
             self.preview_control = self.ui.get_node("LinePreview")
-            self.preview_line = self.stroke_line.duplicate(true)
+            self.preview_line = self.stroke_line.duplicate()
             self.preview_line.width = 50
             var preview_center = self.preview_control.rect_size / 2
             var preview_transform = self.preview_control.get_canvas_transform()
@@ -585,6 +670,10 @@ class ShadowBrush extends LineBrush:
             "color": true,
             "endcaps": true
         }
+
+    func set_color(color: Color) -> void:
+        .set_color(color)
+        self.preview_line.default_color = color
 
     func _on_transition_in_val(val: float):
         logv("transition_in val changed %d" % val)

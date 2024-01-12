@@ -395,7 +395,7 @@ class RasterControl extends Control:
             self.pen.update()
 
     func _on_draw() -> void:
-        var mouse_pos = Global.World.UI.MousePosition
+        var mouse_pos = Global.World.UI.HalfSnappedPosition if Global.Editor.IsSnapping else Global.World.UI.MousePosition
 
         if self.brushmgr.current_brush == null: return
 

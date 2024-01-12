@@ -132,6 +132,7 @@ func on_tool_enable(tool_id) -> void:
 	self._enabled = true
 	self.control.layerui.visible = true
 	Global.World.UI.CursorMode = 5
+	Global.World.UI.UseHalfSnap = true
 
 func on_tool_disable(tool_id) -> void:
 	logv("RasterPainter disabled")
