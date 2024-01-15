@@ -103,7 +103,7 @@ class LayerPanel extends PanelContainer:
         self.size_flags_vertical = SIZE_FILL
 
         Global.Editor.get_child("Windows").add_child(self.layer_add_dialog)
-        Global.Editor.get_child("Windows").add_childw(self.import_dialog)
+        Global.Editor.get_child("Windows").add_child(self.import_dialog)
         Global.Editor.get_child("Windows").add_child(self.export_dialog)
         Global.Editor.get_child("Windows").add_child(self.layer_properties_dialog)
 
