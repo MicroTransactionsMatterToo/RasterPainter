@@ -25,6 +25,7 @@ class BrushManager extends Node:
         PencilBrush,
         TextureBrush,
         ShadowBrush,
+        TerrainBrush,
         EraserBrush
     ]
 
@@ -675,6 +676,35 @@ class ShadowBrush extends LineBrush:
         logv("y_offset val changed: %d" % val)
         self.stroke_line.material.set_shader_param("y_offset", val)
 
+class TerrainBrush extends LineBrush:
+    func _init(global, brush_manager).(global, brush_manager):
+        self.icon = load("res://ui/icons/tools/terrain_brush.png")
+        self.brush_name = "TerrainBrush"
+        self.tooltip = "Terrain Brush"
+
+        self.stroke_line.texture_mode           = Line2D.LINE_TEXTURE_TILE
+        self.stroke_line.joint_mode             = Line2D.LINE_JOINT_ROUND
+        self.stroke_line.end_cap_mode           = Line2D.LINE_CAP_ROUND
+        self.stroke_line.begin_cap_mode         = Line2D.LINE_CAP_ROUND
+        self.stroke_line.antialiased            = false
+        self.stroke_line.name                   = "TerrainStroke"
+
+        self.stroke_line.default_color = Color(1, 1, 1, 1.0)
+
+        self.shader_param = "alpha_mult"
+
+
+        self.stroke_shader = ResourceLoader.load(
+            Global.Root + SHADER_DIR + "TerrainBrush.shader", 
+            "Shader", 
+            true
+        ).duplicate(false)
+        self.stroke_line.material = ShaderMaterial.new()
+        self.stroke_line.material.shader = self.stroke_shader
+        self.stroke_line.material.set_shader_param(
+            "terrain_tex",
+            Global.World.Level.Terrain.Textures[1]
+        )
 
 class EraserBrush extends LineBrush:
     func _init(global, brush_manager).(global, brush_manager):
@@ -682,6 +712,7 @@ class EraserBrush extends LineBrush:
         icon.load(Global.Root + "icons/eraser.png")
         self.icon = icon
         self.brush_name = "EraserBrush"
+        self.tooltip = "Eraser"
 
         self.stroke_line.texture_mode           = Line2D.LINE_TEXTURE_TILE
         self.stroke_line.joint_mode             = Line2D.LINE_JOINT_ROUND
