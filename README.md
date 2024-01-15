@@ -17,6 +17,14 @@ RasterPainter is a mod for Dungeondraft that implements basic raster graphics ca
 - Multiple brushes (Solid Line, Path and Dynamic Shadow)
 
 
+### Tips
+- Hold SHIFT to draw straight lines
+- Check that Snap to Grid is turned off if you want smooth lines
+
 
 #### IMPORTANT!
 Due to limitations of Dungeondrafts modding API, layers are stored in your `.dungeondraft_map` file, which will increase file sizes, save and load times. This can be mitigated to an extent by modifying the *Render Scale* in settings **(requires _Lib to be installed)**
+
+
+#### Donations
+If this mod has been useful to you, feel free to drop me 5 bucks on my Ko-Fi. It's much appreciated
