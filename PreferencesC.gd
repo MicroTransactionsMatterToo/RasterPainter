@@ -71,12 +71,12 @@ class Preferences extends ScrollContainer:
         self.size_flags_horizontal = SIZE_EXPAND_FILL
         self.size_flags_vertical = SIZE_EXPAND_FILL
 
-        if (Global.World.WorldRect.size.x / RENDER_SCALE > 16384 or
-            Global.World.WorldRect.size.y / RENDER_SCALE > 16384):
+        if (Global.World.WorldRect.size.x / self.get_c_val("render_scale") > 16384 or
+            Global.World.WorldRect.size.y / self.get_c_val("render_scale") > 16384):
             for i in range(3, 10):
                 logv("Trying render scale of %d" % i)
-                if (Global.World.WorldRect.size.x / RENDER_SCALE < 16384 and
-                    Global.World.WorldRect.size.y / RENDER_SCALE < 16384)
+                if (Global.World.WorldRect.size.x / i < 16384 and
+                    Global.World.WorldRect.size.y / i < 16384):
                     logv("Found one! %d" % i)
                     self.config_defaults["render_scale"] = i
 
