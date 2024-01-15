@@ -14,19 +14,6 @@ const LOCKED_LAYERS = {
         -500: "Terrain",
     }
     
-const USER_LOCKED_LAYERS = {
-    800: "Roofs",
-    600: "Walls",
-    500: "Portals",
-    400: "User Layer 4",
-    300: "User Layer 3",
-    200: "User Layer 2",
-    100: "User Layer 1",
-    0: "Water",
-    -200: "Floor",
-    -300: "Caves",
-    -500: "Terrain",
-}
 
 const DIR_UP = true
 const DIR_DOWN = false
@@ -46,6 +33,8 @@ class LayerPanel extends PanelContainer:
     var import_dialog
     var export_dialog
     var layer_properties_dialog
+
+    var LAYER_DICT setget _, get_layer_dict
 
     signal layer_order_changed()
 

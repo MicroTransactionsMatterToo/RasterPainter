@@ -70,7 +70,7 @@ class BrushManager extends Node:
             self._brushes[instance.brush_name] = instance
             self.add_child(instance)
 
-        self._current_brush_name = self._brushes.values()[0].brush_name
+        self._current_brush_name = "PencilBrush"
         
         var prefs = Global.World.get_meta("painter_config")
         self.set_size(int(prefs.get_c_val("def_size_val")))
@@ -85,7 +85,11 @@ class BrushManager extends Node:
             len(self.available_brushes)
         ]
 
+    func _enter_tree():
+        self._current_brush_name = "PencilBrush"
+
     func _exit_tree():
+        self._current_brush_name = "PencilBrush"
         self.queue_free()
 
     func queue_free() -> void:

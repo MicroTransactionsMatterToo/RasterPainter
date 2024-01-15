@@ -112,19 +112,30 @@ toggle_mode = true
 group = SubResource( 1 )
 text = "Round"
 
-[node name="BrushUI" type="VBoxContainer" parent="."]
-margin_top = 376.0
+[node name="HSeparator" type="HSeparator" parent="."]
+margin_top = 110.0
 margin_right = 443.0
-margin_bottom = 748.0
+margin_bottom = 114.0
+
+[node name="BrushUI" type="VBoxContainer" parent="."]
+margin_top = 118.0
+margin_right = 443.0
+margin_bottom = 653.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
+size_flags_stretch_ratio = 5.0
+
+[node name="HSeparator2" type="HSeparator" parent="."]
+margin_top = 657.0
+margin_right = 443.0
+margin_bottom = 661.0
 
 [node name="LayerControls" type="VBoxContainer" parent="."]
 margin_top = 752.0
 margin_right = 443.0
 margin_bottom = 772.0
 size_flags_horizontal = 3
-size_flags_stretch_ratio = 0.5
+size_flags_vertical = 10
 
 [node name="HistoryB" type="HBoxContainer" parent="LayerControls"]
 margin_left = 174.0

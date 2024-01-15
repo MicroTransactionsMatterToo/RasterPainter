@@ -287,4 +287,6 @@ class RasterToolpanel extends VBoxContainer:
 
             $"BrushControls/BrushSelector".add_child(brush_button)
         
-        self.brush_buttons.get_buttons()[0].set_pressed_no_signal(true)
+        for button in self.brush_buttons.get_buttons():
+            if button.get_meta("brush_name") == self.brushmgr._current_brush_name:
+                button.set_pressed_no_signal(true)
