@@ -103,6 +103,15 @@ class RasterToolpanel extends VBoxContainer:
         $"BrushControls/BrushSettings/BSizeC/BSize/HSlider".share(
             $"BrushControls/BrushSettings/BSizeC/BSize/SpinBox"
         )
+
+        $"BrushControls/BrushSettings/BOpacityC/BOpacity/HSlider".connect(
+            "value_changed",
+            self,
+            "on_opacity_changed"
+        )
+        $"BrushControls/BrushSettings/BOpacityC/BOpacity/HSlider".share(
+            $"BrushControls/BrushSettings/BOpacityC/BOpacity/SpinBox"
+        )
         logv("ColorPalette added to UI")
 
         for button in $"BrushControls/BrushSettings/BEndcapC/BEndcapB".get_children():
@@ -142,6 +151,11 @@ class RasterToolpanel extends VBoxContainer:
             [HistoryOperation.REDO]
         )
 
+        if Global.API != null:
+            ($"LayerControls/HistoryB/Redo" as Button).visible = false
+            ($"LayerControls/HistoryB/Undo" as Button).visible = false
+
+
     func _process(delta):
         ($"LayerControls/HistoryB/Redo" as Button).disabled = self.scontrol.redo_queue.empty()
         ($"LayerControls/HistoryB/Undo" as Button).disabled = self.scontrol.history_queue.empty()
@@ -150,6 +164,19 @@ class RasterToolpanel extends VBoxContainer:
     func on_color_changed(color):
         logv("Color changed %s to %s" % [self.brushmgr.color, color])
         self.brushmgr.color = color
+        $"BrushControls/BrushSettings/BOpacityC/BOpacity/HSlider".set_block_signals(true)
+        $"BrushControls/BrushSettings/BOpacityC/BOpacity/SpinBox".value = color.a
+        $"BrushControls/BrushSettings/BOpacityC/BOpacity/HSlider".set_block_signals(false)
+
+    func on_opacity_changed(opacity):
+        logv("opacity changed to %d" % opacity)
+        var n_color = self.brushmgr.color
+        n_color.a = opacity
+        self.brushmgr.color = n_color
+
+        self.palette_control.set_block_signals(true)
+        self.palette_control.Color = n_color
+        self.palette_control.set_block_signals(false)
 
     func on_size_changed(size):
         logv("Size changed %d to %d" % [self.brushmgr.size, size])
@@ -212,6 +239,8 @@ class RasterToolpanel extends VBoxContainer:
                     $"BrushControls/BrushSettings/BSizeC/BSize".visible = config[key]
                 "color":
                     $"BrushControls/BrushSettings/BColorC".visible = config[key]
+                "opacity":
+                    $"BrushControls/BrushSettings/BOpacityC".visible = config[key]
                 "palette":
                     self.set_palette(config[key])
                 "endcaps":

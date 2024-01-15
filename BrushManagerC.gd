@@ -745,5 +745,6 @@ class EraserBrush extends LineBrush:
         return {
             "size": true,
             "color": false,
-            "endcaps": true
+            "endcaps": true,
+            "opacity": false
         }
