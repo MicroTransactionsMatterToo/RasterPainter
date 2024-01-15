@@ -22,7 +22,7 @@ class Preferences extends ScrollContainer:
     const CONFIG_FILE_PATH = "user://RasterPainter/config.json"
 
     var config_dict := {}
-    const config_defaults = {
+    var config_defaults = {
         "def_brush_col": Color(1, 1, 1, 1),
         "def_size_val": 200,
         "def_export_format": 0,
@@ -70,6 +70,15 @@ class Preferences extends ScrollContainer:
 
         self.size_flags_horizontal = SIZE_EXPAND_FILL
         self.size_flags_vertical = SIZE_EXPAND_FILL
+
+        if (Global.World.WorldRect.size.x / RENDER_SCALE > 16384 or
+            Global.World.WorldRect.size.y / RENDER_SCALE > 16384):
+            for i in range(3, 10):
+                logv("Trying render scale of %d" % i)
+                if (Global.World.WorldRect.size.x / RENDER_SCALE < 16384 and
+                    Global.World.WorldRect.size.y / RENDER_SCALE < 16384)
+                    logv("Found one! %d" % i)
+                    self.config_defaults["render_scale"] = i
 
         self._load_config()
 
