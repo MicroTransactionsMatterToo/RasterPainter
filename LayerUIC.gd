@@ -29,12 +29,14 @@ class LayerPanel extends PanelContainer:
     # LayerManager instance
     var layerm
 
+    var prefs
+
     var layer_add_dialog
     var import_dialog
     var export_dialog
     var layer_properties_dialog
 
-    var LAYER_DICT setget _, get_layer_dict
+    var LAYER_DICT setget , get_layer_dict
 
     signal layer_order_changed()
 
@@ -70,6 +72,8 @@ class LayerPanel extends PanelContainer:
         var instance = self.template.instance()
         self.add_child(instance)
         instance.remove_and_skip()
+
+        self.prefs = Global.World.get_meta("painter_config")
 
         # self.layer_add_dialog = NewLayerDialog.new()
         self.name = "LayerPanel"
@@ -151,6 +155,28 @@ class LayerPanel extends PanelContainer:
         self.queue_free()
     
     # ===== PRIVATE =====
+    func get_layer_dict() -> Dictionary:
+        if self.prefs == null:
+            return LOCKED_LAYERS
+        else:
+            if self.prefs.get_c_val("use_user_layers"):
+                var layers =  Global.World.Level.SaveLayers()
+                var keys = layers.keys()
+                keys.append_array(LOCKED_LAYERS.keys())
+                keys.sort()
+                keys.invert()
+                var real_layers = {}
+                for key in keys:
+                    if layers[key] != null:
+                        var layer_name = layers[key]
+                        if not "Below " in layer_name and not "Above " in layer_name:
+                            real_layers[key] = layers[key]
+                    else:
+                        real_layers[key] = LOCKED_LAYERS[key]
+
+                return real_layers
+            else:
+                return LOCKED_LAYERS
 
     func _set_icons():
         $"Margins/Align/LayerControls/MoveLayerUp".icon     = load("res://ui/icons/misc/up.png")
@@ -270,7 +296,7 @@ class LayerPanel extends PanelContainer:
     # Returns array of RasterLayer z-indexes within given layer group
     func get_group_z_array(layer_group_z):
         logv("get_group_z_array for %s" % layer_group_z)
-        var locked_zs = LOCKED_LAYERS.keys()
+        var locked_zs = self.scontrol.layerui.LAYER_DICT.keys()
         locked_zs.sort()
 
         var layer_group_index = locked_zs.find(layer_group_z)
@@ -344,9 +370,9 @@ class LayerTree extends Panel:
         self.layerm.connect("layer_modified", self, "on_layer_modified")
 
         # Populate group separators
-        for key in LOCKED_LAYERS.keys():
+        for key in self.scontrol.layerui.LAYER_DICT.keys():
             var separator = LayerTreeSep.new(
-                [key, LOCKED_LAYERS[key]],
+                [key, self.scontrol.layerui.LAYER_DICT[key]],
                 Global,
                 self.layerm,
                 self.scontrol
@@ -360,7 +386,7 @@ class LayerTree extends Panel:
     func get_group_for_z(z_index: int, direction: bool = DIR_UP):
         logv("Get group for %d" % z_index)
         var group
-        var locked_keys = LOCKED_LAYERS.keys()
+        var locked_keys = self.scontrol.layerui.LAYER_DICT.keys()
         locked_keys.sort()
 
         logv("keys sorted")
@@ -757,8 +783,8 @@ class NewLayerDialog extends AcceptDialog:
         self.connect("confirmed", self, "create_layer")
         self.dropdown = $"Margins/Align/LayerNum/LayerNumEdit"
 
-        for z_index in LOCKED_LAYERS.keys():
-            self.dropdown.add_item(LOCKED_LAYERS[z_index], z_index)
+        for z_index in self.scontrol.layerui.LAYER_DICT.keys():
+            self.dropdown.add_item(self.scontrol.layerui.LAYER_DICT[z_index], z_index)
 
     ## create_layer
     # Instantiates a RasterLayer, adds it to the layer manager, then updates the UI
@@ -885,8 +911,8 @@ class ImportDialog extends ConfirmationDialog:
         self.browse_button = $"Align/HBoxContainer/FilePathC/Browse"
     
         
-        for z_index in LOCKED_LAYERS.keys():
-            self.insert_layer.add_item(LOCKED_LAYERS[z_index], z_index)
+        for z_index in self.scontrol.layerui.LAYER_DICT.keys():
+            self.insert_layer.add_item(self.scontrol.layerui.LAYER_DICT[z_index], z_index)
 
         self.connect("about_to_show", self, "_on_about_to_show")
         

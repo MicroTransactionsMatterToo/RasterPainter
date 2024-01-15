@@ -28,7 +28,8 @@ class Preferences extends ScrollContainer:
         "def_export_format": 0,
         "export_premultiplied": false,
         "num_undo_states": 10,
-        "render_scale": 2
+        "render_scale": 2,
+        "use_user_layers": true
     }
 
     # ===== LOGGING =====
@@ -75,6 +76,7 @@ class Preferences extends ScrollContainer:
         self._setup_brush_settings()
         self._setup_export_settings()
         self._setup_memory_settings()
+        self._setup_ui_settings()
 
     func _process(delta):
         self._update_estimates()
@@ -140,6 +142,18 @@ class Preferences extends ScrollContainer:
 
 
     # ===== UI SETUP =====
+    func _setup_ui_settings():
+        logv("Setting up UI settings UI")
+        var cat_root = ($"Align/UISettings" as GridContainer)
+        var config_val
+
+        var user_layer_check = (cat_root.get_node("UseUserLayers") as CheckBox)
+        user_layer_check.set_meta("config_key", "use_user_layers")
+        config_val = self.get_c_val("use_user_layers")
+        user_layer_check.pressed = config_val
+        self.config_nodes.append(user_layer_check)
+
+
     func _setup_brush_settings():
         logv("Setting up brush settings UI")
         var cat_root = ($"Align/BrushSettings" as GridContainer)

@@ -383,6 +383,9 @@ class LayerDeleteRecord:
 
     func max_count() -> int: return 10
 
+    func record_type() -> String:
+        return "LayerPaintRecord"
+
 class LayerAddRecord:
     var Global
 

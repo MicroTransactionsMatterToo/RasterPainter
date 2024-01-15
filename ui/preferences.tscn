@@ -11,9 +11,46 @@ margin_bottom = 600.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="BrushHeading" type="HBoxContainer" parent="Align"]
+[node name="UIHeading" type="HBoxContainer" parent="Align"]
 margin_right = 365.0
 margin_bottom = 14.0
+
+[node name="Label" type="Label" parent="Align/UIHeading"]
+margin_right = 70.0
+margin_bottom = 14.0
+text = "UI Settings"
+
+[node name="HSeparator" type="HSeparator" parent="Align/UIHeading"]
+margin_left = 74.0
+margin_right = 365.0
+margin_bottom = 14.0
+size_flags_horizontal = 3
+
+[node name="UISettings" type="GridContainer" parent="Align"]
+margin_top = 18.0
+margin_right = 365.0
+margin_bottom = 42.0
+columns = 2
+
+[node name="UseUserLayersLbl" type="Label" parent="Align/UISettings"]
+margin_top = 5.0
+margin_right = 337.0
+margin_bottom = 19.0
+hint_tooltip = "The size all brushes will be set to on startup"
+size_flags_horizontal = 3
+text = "Default Brush Size"
+
+[node name="UseUserLayers" type="CheckBox" parent="Align/UISettings"]
+margin_left = 341.0
+margin_right = 365.0
+margin_bottom = 24.0
+hint_tooltip = "Whether to display user layers or only locked layers. Requires restart!"
+size_flags_horizontal = 9
+
+[node name="BrushHeading" type="HBoxContainer" parent="Align"]
+margin_top = 46.0
+margin_right = 365.0
+margin_bottom = 60.0
 
 [node name="Label" type="Label" parent="Align/BrushHeading"]
 margin_right = 92.0
@@ -27,9 +64,9 @@ margin_bottom = 14.0
 size_flags_horizontal = 3
 
 [node name="BrushSettings" type="GridContainer" parent="Align"]
-margin_top = 18.0
+margin_top = 64.0
 margin_right = 365.0
-margin_bottom = 60.0
+margin_bottom = 106.0
 columns = 2
 
 [node name="DefSize" type="Label" parent="Align/BrushSettings"]
@@ -60,9 +97,9 @@ hint_tooltip = "The default color used brushes are set to on startup"
 text = "Default Color"
 
 [node name="ExportHeading" type="HBoxContainer" parent="Align"]
-margin_top = 64.0
+margin_top = 110.0
 margin_right = 365.0
-margin_bottom = 78.0
+margin_bottom = 124.0
 
 [node name="Label" type="Label" parent="Align/ExportHeading"]
 margin_right = 95.0
@@ -76,9 +113,9 @@ margin_bottom = 14.0
 size_flags_horizontal = 3
 
 [node name="ExportSettings" type="GridContainer" parent="Align"]
-margin_top = 82.0
+margin_top = 128.0
 margin_right = 365.0
-margin_bottom = 130.0
+margin_bottom = 176.0
 columns = 2
 
 [node name="Format" type="Label" parent="Align/ExportSettings"]
@@ -114,9 +151,9 @@ margin_bottom = 48.0
 size_flags_horizontal = 10
 
 [node name="Memory" type="HBoxContainer" parent="Align"]
-margin_top = 134.0
+margin_top = 180.0
 margin_right = 365.0
-margin_bottom = 148.0
+margin_bottom = 194.0
 
 [node name="Label" type="Label" parent="Align/Memory"]
 margin_right = 53.0
@@ -130,9 +167,9 @@ margin_bottom = 14.0
 size_flags_horizontal = 3
 
 [node name="MemorySettings" type="VBoxContainer" parent="Align"]
-margin_top = 152.0
+margin_top = 198.0
 margin_right = 365.0
-margin_bottom = 258.0
+margin_bottom = 304.0
 
 [node name="Undo" type="GridContainer" parent="Align/MemorySettings"]
 margin_right = 365.0
@@ -160,7 +197,7 @@ margin_top = 28.0
 margin_right = 181.0
 margin_bottom = 42.0
 custom_colors/font_color = Color( 0.478431, 0.466667, 0.466667, 1 )
-text = "  Max Memory Usage:"
+text = "  Est Max Memory Usage:"
 align = 2
 
 [node name="UndoMemoryUsage" type="Label" parent="Align/MemorySettings/Undo"]
@@ -225,9 +262,9 @@ margin_bottom = 60.0
 size_flags_horizontal = 10
 
 [node name="RichTextLabel" type="RichTextLabel" parent="Align"]
-margin_top = 262.0
+margin_top = 308.0
 margin_right = 365.0
-margin_bottom = 337.0
+margin_bottom = 383.0
 size_flags_horizontal = 3
 bbcode_enabled = true
 bbcode_text = "[color=yellow]NOTE: [/color] Settings will not apply until the map is reloaded or a new map is created.
