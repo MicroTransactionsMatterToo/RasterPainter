@@ -16,6 +16,9 @@ RasterPainter is a mod for Dungeondraft that implements basic raster graphics ca
 - Full Undo and Redo Support (Requires [_Lib](https://cartographyassets.com/assets/31828/_lib/))
 - Multiple brushes (Solid Line, Path and Dynamic Shadow)
 
+### Installation
+Download the zip of the repo from [here](https://codeload.github.com/MicroTransactionsMatterToo/RasterPainter/zip/refs/heads/main) or using the green Code button, and unzip it into your mod directory
+
 
 ### Tips
 - Hold SHIFT to draw straight lines
