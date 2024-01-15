@@ -161,6 +161,12 @@ class RasterToolpanel extends VBoxContainer:
         ($"LayerControls/HistoryB/Undo" as Button).disabled = self.scontrol.history_queue.empty()
         self.brushmgr.current_brush = self.brush_buttons.get_pressed_button().get_meta("brush_name")
 
+    func on_tool_enable():
+        logv("Updating tools")
+        self.on_brush_button_pressed(
+            self.brush_buttons.get_pressed_button()
+        )
+
     func on_color_changed(color):
         logv("Color changed %s to %s" % [self.brushmgr.color, color])
         self.brushmgr.color = color

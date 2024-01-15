@@ -646,7 +646,8 @@ class ShadowBrush extends LineBrush:
         return {
             "size": true,
             "color": true,
-            "endcaps": true
+            "endcaps": true,
+            "opacity": true
         }
     
     # ===== SIGNAL HANDLERS =====
@@ -677,6 +678,10 @@ class ShadowBrush extends LineBrush:
         self.stroke_line.material.set_shader_param("y_offset", val)
 
 class TerrainBrush extends LineBrush:
+    var terrain_list
+    var selected_index = 0
+    var terrain_initialised = false
+
     func _init(global, brush_manager).(global, brush_manager):
         self.icon = load("res://ui/icons/tools/terrain_brush.png")
         self.brush_name = "TerrainBrush"
@@ -705,6 +710,70 @@ class TerrainBrush extends LineBrush:
             "terrain_tex",
             Global.World.Level.Terrain.Textures[1]
         )
+
+    func brush_ui():
+        if self.ui == null:
+            self.ui = VBoxContainer.new()
+            (self.ui as VBoxContainer).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+            (self.ui as VBoxContainer).size_flags_vertical = Control.SIZE_EXPAND_FILL
+            
+            self.terrain_list = ItemList.new()
+            self.terrain_list.fixed_icon_size = Vector2(50, 50)
+            self.terrain_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
+            self.terrain_list.size_flags_horizontal = Control.SIZE_FILL
+            self.ui.add_child(self.terrain_list)
+
+            self.terrain_list.connect("item_selected", self, "_on_item_select")
+
+        return self.ui
+
+    func show_ui():
+        logv("Showing ui, texture list: %s" % [Global.World.Level.Terrain.Textures])
+        Global.Editor.Tools["TerrainBrush"].SetControlsForExpandedSlots(
+            Global.Editor.Tools["TerrainBrush"].extendedTerrainTypes
+        )
+        self.terrain_list.clear()
+        
+        # Janky workaround because this is the only good way to get the name of the current terrain textures
+        if Global.Editor.Tools["TerrainBrush"].terrainList == null:
+            Global.Editor.Toolset.Quickswitch("TerrainBrush")
+            Global.Editor.Toolset.Quickswitch("RasterPainter")
+            self.terrain_initialised = true
+        
+        self.update_terrains()
+        self.terrain_list.select(self.selected_index)
+        self.terrain_list.emit_signal("item_selected", self.selected_index)
+        
+        .show_ui()
+
+    func update_terrains():
+        if not self.terrain_initialised:
+            return
+
+        self.terrain_list.clear()
+        for i in range(len(Global.World.Level.Terrain.Textures)):
+            var terrain_name = Global.Editor.Tools["TerrainBrush"].terrainList.get_item_text(i)
+            var thumbnail = Global.Editor.Tools["TerrainBrush"].terrainList.get_item_icon(i)
+            self.terrain_list.add_item(
+                terrain_name,
+                thumbnail
+            )
+            self.terrain_list.set_item_metadata(i, Global.World.Level.Terrain.Textures[i])
+
+    func _on_item_select(idx):
+        self.stroke_line.material.set_shader_param(
+            "terrain_tex", 
+            self.terrain_list.get_item_metadata(idx)
+        )
+        self.selected_index = idx
+
+    func ui_config() -> Dictionary:
+        return {
+            "size": true,
+            "color": false,
+            "endcaps": true,
+            "opacity": true
+        }
 
 class EraserBrush extends LineBrush:
     func _init(global, brush_manager).(global, brush_manager):

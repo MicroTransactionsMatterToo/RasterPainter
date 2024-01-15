@@ -108,6 +108,7 @@ func start() -> void:
 	self.toolpanel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	Global.World.has_method("set_meta")
 	Global.World.set_meta("GlobalSingleton", Global.World.get_node("/root/Global"))
+	Global.World.set_meta("painter_script", Script)
 
 	if Global.API != null:
 		self.prefs.hide()
@@ -133,12 +134,15 @@ func on_tool_enable(tool_id) -> void:
 	self.control.layerui.visible = true
 	Global.World.UI.CursorMode = 5
 	Global.World.UI.UseHalfSnap = true
+	Global.World.UI.CursorRadius = self.control.brushmgr.size
+	self.control.toolpanelui.on_tool_enable()
 
 func on_tool_disable(tool_id) -> void:
 	logv("RasterPainter disabled")
 	self._enabled = false
 	self.control.layerui.visible = false
 	Global.World.UI.CursorMode = 1
+	
 
 func on_content_input(input):
 	if self._enabled: self.control._on_tool_input(input)
