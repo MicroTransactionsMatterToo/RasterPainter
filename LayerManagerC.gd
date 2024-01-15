@@ -54,6 +54,16 @@ class LayerManager extends Object:
         for layer in self.loaded_layers.values():
             if is_instance_valid(layer):
                 layer.queue_free()
+
+        if Global.API != null:
+            for item in Global.API.HistoryApi.history:
+                item._record.free()
+                logv("Freed %s" % item)
+            for item in Global.API.HistoryApi.redo_history:
+                item._record.free()
+                logv("Freed %s" % item)
+
+            logv("History Queues: %s, %s" % [Global.API.HistoryApi.history, Global.API.HistoryApi.redo_history])
         logv("Layers freed, freeing self")
         self.free()
 
