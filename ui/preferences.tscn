@@ -38,7 +38,7 @@ margin_right = 337.0
 margin_bottom = 19.0
 hint_tooltip = "The size all brushes will be set to on startup"
 size_flags_horizontal = 3
-text = "Default Brush Size"
+text = "Use User Layers"
 
 [node name="UseUserLayers" type="CheckBox" parent="Align/UISettings"]
 margin_left = 341.0
