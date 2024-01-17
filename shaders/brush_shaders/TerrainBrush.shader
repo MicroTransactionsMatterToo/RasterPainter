@@ -8,8 +8,7 @@ uniform sampler2D terrain_tex;
 uniform bool brush_tex_enabled = false;
 uniform sampler2D brush_tex;
 
-uniform float cutoff = 0.02;
-uniform float modifier;
+uniform mat4 pathway_transform;
 
 uniform float alpha_mult;
 
@@ -28,29 +27,13 @@ vec2 brush_uv(vec2 uv) {
 
 void vertex() {
 	world_uv = VERTEX;
+	world_uv = (pathway_transform * vec4(world_uv, 0.0, 1.0)).xy;
 	terrain_uv = texture2uv(terrain_tex, world_uv);
 }
 
 void fragment() {
 	COLOR = texture(terrain_tex, terrain_uv);
 	vec2 local_uv = UV;
-	// float shift = modifier;
-	
-	
-	
-	// if (local_uv.x > 0.5) {
-	// 	local_uv.x = 1.0 - local_uv.x;
-	// }
-	
-	// if (local_uv.x < (shift)) {
-	// 	local_uv.x = mix(
-	// 		0.0, 0.5,
-	// 		smoothstep(0.0, (shift), local_uv.x)
-	// 	)
-	// } else {
-	// 	local_uv.x = 0.5;
-	// }
-	
 	if (brush_tex_enabled) {
 		local_uv.x = 0.5;
 		COLOR.a = texture(brush_tex, local_uv).r;

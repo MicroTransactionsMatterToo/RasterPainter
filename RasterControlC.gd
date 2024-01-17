@@ -400,6 +400,9 @@ class RasterControl extends Control:
         if self.brushmgr.current_brush == null: return
 
         if self.should_paint:
+            self.viewport_cont.z_index = self.active_layer.z_index
+            self.eraser_preview.z_index = self.active_layer.z_index
+
             if !self.is_painting:
                 logv("Stroke Started at %s" % mouse_pos)
                 self.emit_signal("stroke_started", mouse_pos)

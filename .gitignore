@@ -4,3 +4,5 @@ docs/
 *.tmp
 .vscode
 *.import
+terrain_cracked*
+fragments.png*

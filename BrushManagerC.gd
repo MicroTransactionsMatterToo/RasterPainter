@@ -244,14 +244,28 @@ class Brush extends Node2D:
 # Base class for any brush that primarily uses `Line2D` for stroke drawing
 class LineBrush extends Brush:
     var Pathway = load("res://scripts/world/objects/Pathway.cs")
-    var stroke_line = Line2D.new()
+
     var render_line = Pathway.new(0.0, 0.0, 0.0, 0.0)
+
+    var stroke_line = Line2D.new()
     var stroke_length = 0.0
     var stroke_shader
+
+    var beg_cap = Sprite.new()
+    var end_cap = Sprite.new()
+    var cap_shader
+    var cap_material = ShaderMaterial.new()
+
+    var brush_texture setget set_brush_tex, get_brush_tex
+    var _brush_texture
+
+    var use_brush_tex setget set_use_brush_tex, get_use_brush_tex
+    var _use_brush_tex = false
     
     var shader_param = null
 
     var previous_point_drawn: Vector2
+
 
     var was_drawing_straight = false
     var painting_state = PaintState.FIRST_POINT
@@ -283,6 +297,12 @@ class LineBrush extends Brush:
         if !self.render_line.get_parent() == pen:
             logv("Added stroke_line to pen")
             pen.add_child(self.render_line)
+            pen.add_child(self.beg_cap)
+            pen.add_child(self.end_cap)
+
+        self.render_line.z_index = pen.z_index
+        self.beg_cap.z_index = pen.z_index
+        self.end_cap.z_index = pen.z_index
 
         # Paint state machine
         match self.painting_state:
@@ -290,6 +310,8 @@ class LineBrush extends Brush:
                 logv("Drawing first point, ignoring modifiers")
                 self.add_stroke_point(mouse_pos)
                 self.render_line.visible = true
+                self.beg_cap.visible = self.use_brush_tex
+                self.end_cap.visible = self.use_brush_tex
 
                 if Input.is_key_pressed(KEY_SHIFT): 
                     self.painting_state = PaintState.STRAIGHT_STROKE_STARTED
@@ -315,6 +337,7 @@ class LineBrush extends Brush:
                     self.painting_state = PaintState.STRAIGHT_STROKE_END
             PaintState.STRAIGHT_STROKE:
                 self.stroke_line.set_point_position(self.stroke_line.points.size() - 1, mouse_pos)
+                self.render_line.SetEditPoints(Array(self.stroke_line.points))
                 self.previous_point_drawn = mouse_pos
 
                 if Input.is_key_pressed(KEY_SHIFT):
@@ -325,21 +348,6 @@ class LineBrush extends Brush:
             PaintState.STRAIGHT_STROKE_END:
                 var debug_points = Array(self.stroke_line.points)
                 logv("on straight end, the last 4 points were: %s" % [debug_points.slice(-4, -1)])
-                # This stuff is necessary cause Line2D rendering breaks if point are too far apart
-                var straight_start = self.stroke_line.points[-2]
-                var straight_end = self.stroke_line.points[-1]
-                var straight_dist = straight_start.distance_to(straight_end)
-                var num_segments = floor(straight_dist / STROKE_THRESHOLD)
-                var increment = 1.0 / num_segments
-
-                self.stroke_line.remove_point(self.stroke_line.points.size() - 1)
-
-                for i in range(num_segments):
-                    self.stroke_line.add_point(
-                        straight_start.linear_interpolate(straight_end, increment * (i + 1))
-                    )
-                
-
                 self.stroke_line.set_point_position(self.stroke_line.points.size() - 1, mouse_pos)
                 self.previous_point_drawn = mouse_pos
 
@@ -379,6 +387,62 @@ class LineBrush extends Brush:
     func set_size(size: float) -> void:
         if size < 1.0: return
         self.render_line.width = size * 2.0
+        if self.get_brush_tex() != null:
+            logv("UPDATING SIZE")
+            var brush_tex_size = self.brush_texture.get_size().y
+            var cap_scale = (size * 2) / brush_tex_size
+            self.beg_cap.scale = Vector2(cap_scale, cap_scale)
+            self.end_cap.scale = Vector2(cap_scale, cap_scale)
+        else:
+            logv("USING DEFAULT SCALING, brush texture was %s" % self.get_brush_tex())
+            var cap_scale = self.render_line.width / 1024
+            self.beg_cap.scale = Vector2(cap_scale, cap_scale)
+            self.end_cap.scale = Vector2(cap_scale, cap_scale)
+
+    func set_use_brush_tex(val: bool):
+        self.beg_cap.visible = val
+        self.end_cap.visible = val
+        self._use_brush_tex = val
+
+    func get_use_brush_tex():
+        return self._use_brush_tex
+
+    func set_brush_tex(tex):
+        logv("SETTING BRUSH TEXTURE")
+        var brush_tex_size = tex.get_size()
+        self.set_size(self.brushmanager.size)
+        # Clip the given texture to half
+        self.beg_cap.texture = tex
+        self.beg_cap.centered = true
+        self.beg_cap.offset = Vector2(
+            -(brush_tex_size.x / 4),
+            0
+        )
+        self.beg_cap.region_rect = Rect2(
+            brush_tex_size.x / 2, 0,
+            -(brush_tex_size.x / 2),
+            brush_tex_size.y
+        )
+        self.beg_cap.region_enabled = true
+
+        
+        self.end_cap.centered = true
+        self.end_cap.texture = tex
+        self.end_cap.offset = Vector2(
+            -(brush_tex_size.x / 4),
+            0
+        )
+        self.end_cap.region_rect = Rect2(
+            0, 0,
+            brush_tex_size.x / 2,
+            brush_tex_size.y
+        )
+        self.end_cap.region_enabled = true
+
+        self._brush_texture = tex
+
+    func get_brush_tex():
+        return self._brush_texture
 
     func set_endcap(mode):
         logv("endcap_set: %s" % mode)
@@ -389,6 +453,8 @@ class LineBrush extends Brush:
     func on_stroke_end() -> void:
         self.stroke_line.clear_points()
         self.render_line.visible = false
+        self.beg_cap.visible = false
+        self.end_cap.visible = false
         self.painting_state = PaintState.FIRST_POINT
 
     # ===== BRUSH UI =====
@@ -415,35 +481,56 @@ class LineBrush extends Brush:
 
     # ===== BRUSH SPECIFIC =====
     func add_stroke_point(position: Vector2):
+        logv("ADD POINT")
         var point_distance = self.previous_point_drawn.distance_to(position)
-        # if point_distance > INTERPOLATE_THRESHOLD and self.stroke_line.points.size() != 0:
-        #     var num_interp_points = point_distance / INTERPOLATE_THRESHOLD
-        #     logv("distance too short, interpolating points: %d" % num_interp_points)
-        #     for i in range(0, num_interp_points):
-        #         var weight = (1.0 / (num_interp_points + 1)) * (i + 1)
-        #         var new_point = self.previous_point_drawn.linear_interpolate(
-        #             position,
-        #             weight
-        #         )
-        #         self.stroke_line.add_point(new_point)
-                
-            
-                
+
         self.stroke_line.add_point(position)
         self.render_line.SetEditPoints(Array(self.stroke_line.points))
+            
+        self.update_caps(position)
+        logv("FUCKER")
         self.stroke_length += point_distance
         self.previous_point_drawn = position
 
     func should_add_point(position: Vector2) -> bool:
-        if self.previous_point_drawn.distance_to(position) > STROKE_THRESHOLD:
+        logv("SHOULD ADD POINT")
+        self.render_line.SetEditPoints(Array(self.stroke_line.points))
+
+        if self.previous_point_drawn.distance_to(position) > self.STROKE_THRESHOLD:
             return true
         else:
             self.stroke_line.points[-1] = position
             self.render_line.SetEditPoints(Array(self.stroke_line.points))
+            self.update_caps(position)
             return false
 
+    func update_caps(position: Vector2):
+        if self.render_line.EditPoints[-2] == null or self.render_line.EditPoints[1] == null:
+            logv("no points resetting cap position")
+            self.beg_cap.position = position
+            self.beg_cap.rotation = 0.0
+
+            self.end_cap.position = position
+            self.end_cap.rotation = 0.0
+        else:
+            # logv("2 or more points, updating caps")
+            # logv("BEG_CAP ANG: %s, END_CAP ANG: %s" % [
+            #     self.render_line.EditPoints[1].angle_to(self.render_line.EditPoints[0]),
+            #     self.render_line.EditPoints[-2].angle_to(self.render_line.EditPoints[-1])
+            # ])
+
+            self.beg_cap.rotation = self.render_line.EditPoints[0].angle_to_point(
+                self.render_line.EditPoints[1]
+            )
+            # logv("BEG CAP SET to %s" % self.beg_cap.rotation)
+
+            self.end_cap.position = self.render_line.GlobalEditPoints[-1]
+            # # logv("END CAP POS SET to %s" % self.end_cap.position)
+            self.end_cap.rotation = self.render_line.EditPoints[-2].angle_to_point(self.render_line.EditPoints[-1])
+            logv("END CAP ROT SET to %s" % self.end_cap.rotation)
+
     func _get_stroke_threshold() -> float:
-        return self.brushmanager.size
+        return float(self.brushmanager.size / 2)
 
 ### PencilBrush
 # Brush for solid colors
@@ -573,7 +660,7 @@ class ShadowBrush extends LineBrush:
         self.render_line.joint_mode             = Line2D.LINE_JOINT_ROUND
         self.render_line.round_precision        = 20
         self.render_line.antialiased            = false
-        self.render_line.name               = "ShadowBrushLine2D"
+        self.render_line.name                   = "ShadowBrushLine2D"
 
         self.stroke_shader = ResourceLoader.load(
             Global.Root + SHADER_DIR + "ShadowBrush.shader", 
@@ -694,6 +781,7 @@ class ShadowBrush extends LineBrush:
         logv("y_offset val changed: %d" % val)
         self.render_line.material.set_shader_param("y_offset", val)
 
+
 class TerrainBrush extends LineBrush:
     var terrain_list
     var selected_index = 0
@@ -701,14 +789,9 @@ class TerrainBrush extends LineBrush:
 
     var light_list
     var selected_light = 0
-    var brush_tex_enabled = false
 
     var updating_flag = false
     var brush_enable_button
-
-    var end_cap
-    var start_cap
-
 
     var GridMenu = load("res://scripts/ui/elements/GridMenu.cs")
     
@@ -719,19 +802,15 @@ class TerrainBrush extends LineBrush:
         self.tooltip = "Terrain Brush"
 
         self.render_line.texture_mode           = Line2D.LINE_TEXTURE_STRETCH
-        self.render_line.joint_mode             = Line2D.LINE_JOINT_ROUND
-        self.render_line.end_cap_mode           = Line2D.LINE_CAP_ROUND
-        self.render_line.begin_cap_mode         = Line2D.LINE_CAP_ROUND
+        # self.render_line.joint_mode             = Line2D.LINE_JOINT_ROUND
+        # self.render_line.end_cap_mode           = Line2D.LINE_CAP_ROUND
+        # self.render_line.begin_cap_mode         = Line2D.LINE_CAP_ROUND
         self.render_line.antialiased            = false
         self.render_line.name                   = "TerrainStroke"
 
         self.render_line.default_color = Color(1, 1, 1, 1.0)
 
         self.shader_param = "alpha_mult"
-
-        # var end_cap = Sprite.new()
-        # var start_cap = Sprite.new()
-
 
         self.stroke_shader = ResourceLoader.load(
             Global.Root + SHADER_DIR + "TerrainBrush.shader", 
@@ -745,20 +824,18 @@ class TerrainBrush extends LineBrush:
             Global.World.Level.Terrain.Textures[1]
         )
 
-    func paint(pen, mouse_pos, prev_mouse_pos):
-        .paint(pen, mouse_pos, prev_mouse_pos)
+        self.cap_shader = ResourceLoader.load(
+            Global.Root + SHADER_DIR + "TerrainCapShader.shader",
+            "Shader",
+            true
+        ).duplicate(false)
         
-        var brush_tex_size = self.light_list.Selected.get_width() / 2
-        var cutoff_perc = 0.5 - (brush_tex_size / self.stroke_length)
-        logv("cutoff_perc %s" % cutoff_perc)
-        self.render_line.material.set_shader_param(
-            "modifier",
-            cutoff_perc * 2
-        )
+        self.beg_cap.material = ShaderMaterial.new()
+        self.beg_cap.material.shader = self.cap_shader
+        self.end_cap.material = ShaderMaterial.new()
+        self.end_cap.material.shader = self.cap_shader
 
-    func on_stroke_end():
-        .on_stroke_end()
-        self.stroke_length = 0
+        
 
     func brush_ui():
         if self.ui == null:
@@ -794,6 +871,21 @@ class TerrainBrush extends LineBrush:
             self.terrain_list.connect("item_selected", self, "_on_item_select")
 
         return self.ui
+
+    func paint(pen, mouse_pos, prev_mouse_pos):
+        self.render_line.material.set_shader_param(
+            "pathway_transform",
+            self.render_line.transform
+        )
+        .paint(pen, mouse_pos, prev_mouse_pos)
+        self.beg_cap.material.set_shader_param(
+            "sprite_transform",
+            self.beg_cap.transform
+        )
+        self.end_cap.material.set_shader_param(
+            "sprite_transform",
+            self.end_cap.transform
+        )
 
     func show_ui():
         logv("Showing ui, texture list: %s" % [Global.World.Level.Terrain.Textures])
@@ -836,21 +928,36 @@ class TerrainBrush extends LineBrush:
             "brush_tex",
             self.light_list.Selected
         )
+        .set_brush_tex(self.light_list.Selected)
     
     func _on_brush_toggle(pressed):
         logv("brush toggled")
-        self.brush_tex_enabled = pressed
+        self.use_brush_tex = pressed
         self.render_line.material.set_shader_param(
             "brush_tex_enabled",
             pressed
-        )
+        )        
 
     func _on_item_select(idx):
         self.render_line.material.set_shader_param(
             "terrain_tex", 
             self.terrain_list.get_item_metadata(idx)
         )
+        self.set_cap_shader_param(
+            "terrain_tex",
+            self.terrain_list.get_item_metadata(idx)
+        )
         self.selected_index = idx
+
+    func set_cap_shader_param(key, value):
+        self.beg_cap.material.set_shader_param(
+            key,
+            value
+        )
+        self.end_cap.material.set_shader_param(
+            key,
+            value
+        )
 
     func ui_config() -> Dictionary:
         return {

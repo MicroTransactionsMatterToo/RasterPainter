@@ -8,20 +8,16 @@
 [sub_resource type="ShaderMaterial" id=1]
 shader = ExtResource( 2 )
 shader_param/brush_tex_enabled = true
-shader_param/cutoff = 0.02
-shader_param/modifier = null
+shader_param/pathway_transform = Transform( 1, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0 )
 shader_param/alpha_mult = null
 shader_param/terrain_tex = ExtResource( 4 )
 shader_param/brush_tex = ExtResource( 3 )
 
 [sub_resource type="ShaderMaterial" id=2]
 shader = ExtResource( 1 )
-shader_param/brush_tex_enabled = true
-shader_param/cutoff = 0.0
-shader_param/modifier = 1.0
-shader_param/alpha_mult = null
+shader_param/sprite_transform = null
+shader_param/alpha_mult = 1.0
 shader_param/terrain_tex = ExtResource( 4 )
-shader_param/brush_tex = ExtResource( 3 )
 
 [node name="Node2D" type="Control"]
 margin_left = -43.0
@@ -31,7 +27,7 @@ margin_bottom = 14.0
 
 [node name="Line2D" type="Line2D" parent="."]
 material = SubResource( 1 )
-points = PoolVector2Array( 1, 1, 50, 50, 300, 300, 1980, 800 )
+points = PoolVector2Array( 0, 0, 82, 345, 300, 300, 1980, 800 )
 width = 100.0
 texture = ExtResource( 3 )
 texture_mode = 2
@@ -45,3 +41,12 @@ texture = ExtResource( 3 )
 offset = Vector2( -256, 0 )
 region_enabled = true
 region_rect = Rect2( 512, 0, -512, 1024 )
+
+[node name="Sprite2" type="Sprite" parent="."]
+material = SubResource( 2 )
+rotation = 1.35438
+scale = Vector2( 0.097, 0.097 )
+texture = ExtResource( 3 )
+offset = Vector2( -256, 0 )
+region_enabled = true
+region_rect = Rect2( 0, 0, 512, 1024 )
