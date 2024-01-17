@@ -410,7 +410,7 @@ class LineBrush extends Brush:
     func set_brush_tex(tex):
         logv("SETTING BRUSH TEXTURE")
         var brush_tex_size = tex.get_size()
-        self.set_size(self.brushmanager.size)
+        
         # Clip the given texture to half
         self.beg_cap.texture = tex
         self.beg_cap.centered = true
@@ -440,6 +440,7 @@ class LineBrush extends Brush:
         self.end_cap.region_enabled = true
 
         self._brush_texture = tex
+        self.set_size(self.brushmanager.size)
 
     func get_brush_tex():
         return self._brush_texture
