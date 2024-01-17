@@ -523,7 +523,7 @@ class RasterControl extends Control:
 
     func get_active_layer():
         if self._active_layer == null or not is_instance_valid(self._active_layer):
-            self._active_layer = self.layerm.get_layers_in_level(self.curr_level_id)[0]
+            self.active_layer = self.layerm.get_layers_in_level(self.curr_level_id)[0]
         return self._active_layer
 
     # ---- self.curr_level_id getter
