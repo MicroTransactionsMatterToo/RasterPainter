@@ -546,6 +546,7 @@ class PencilBrush extends LineBrush:
         self.render_line.end_cap_mode           = Line2D.LINE_CAP_ROUND
         self.render_line.round_precision        = 20
         self.render_line.antialiased            = false
+        self.render_line.gradient = null
         self.render_line.name                   = "PencilStroke"
 
         self.stroke_shader = ResourceLoader.load(
@@ -684,6 +685,7 @@ class ShadowBrush extends LineBrush:
 
             self.preview_control = self.ui.get_node("LinePreview")
             self.preview_line = self.stroke_line.duplicate()
+            self.preview_line.antialiased = false
             self.preview_line.width = 50
             var preview_center = self.preview_control.rect_size / 2
             var preview_transform = self.preview_control.get_canvas_transform()
@@ -923,12 +925,17 @@ class TerrainBrush extends LineBrush:
             )
             self.terrain_list.set_item_metadata(i, Global.World.Level.Terrain.Textures[i])
 
+    func set_color(color):
+        .set_color(color)
+        self.set_cap_shader_param("alpha_mult", color.a)
+
     func _on_brush_selected(idx):
         self.render_line.material.set_shader_param(
             "brush_tex",
             self.light_list.Selected
         )
         .set_brush_tex(self.light_list.Selected)
+        self.brush_enable_button.pressed = true
     
     func _on_brush_toggle(pressed):
         logv("brush toggled")

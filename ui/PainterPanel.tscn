@@ -15,7 +15,7 @@ shader_param/brush_tex = ExtResource( 3 )
 
 [sub_resource type="ShaderMaterial" id=2]
 shader = ExtResource( 1 )
-shader_param/sprite_transform = null
+shader_param/sprite_transform = Transform( 1, 0, 0, 2, 1, 0, 0, 0, 1, 0, 0, 0 )
 shader_param/alpha_mult = 1.0
 shader_param/terrain_tex = ExtResource( 4 )
 

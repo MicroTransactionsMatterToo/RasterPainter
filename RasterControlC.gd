@@ -199,6 +199,7 @@ class RasterControl extends Control:
         self.redo_queue.free()
         .queue_free()
 
+
     # ===== BOOTSTRAP =====
     func _bootstrap_active_layer():
         self._curr_level_id = self.layerm.get_level_id(Global.World.Level)
@@ -521,6 +522,8 @@ class RasterControl extends Control:
         logv("emit layer change")
 
     func get_active_layer():
+        if self._active_layer == null or not is_instance_valid(self._active_layer):
+            self._active_layer = self.layerm.get_layers_in_level(self.curr_level_id)[0]
         return self._active_layer
 
     # ---- self.curr_level_id getter

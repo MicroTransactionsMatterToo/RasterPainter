@@ -37,6 +37,7 @@ void fragment() {
 	if (brush_tex_enabled) {
 		local_uv.x = 0.5;
 		COLOR.a = texture(brush_tex, local_uv).r;
+		COLOR.a *= alpha_mult;
 	} else {
 		COLOR.a = alpha_mult;
 	}
