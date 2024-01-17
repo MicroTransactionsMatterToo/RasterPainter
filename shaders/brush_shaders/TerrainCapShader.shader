@@ -33,28 +33,5 @@ void vertex() {
 
 void fragment() {
 	COLOR = texture(terrain_tex, terrain_uv);
-	vec2 local_uv = UV;
-	// float shift = modifier;
-	
-	
-	
-	// if (local_uv.x > 0.5) {
-	// 	local_uv.x = 1.0 - local_uv.x;
-	// }
-	
-	// if (local_uv.x < (shift)) {
-	// 	local_uv.x = mix(
-	// 		0.0, 0.5,
-	// 		smoothstep(0.0, (shift), local_uv.x)
-	// 	)
-	// } else {
-	// 	local_uv.x = 0.5;
-	// }
-	
-	if (brush_tex_enabled) {
-		local_uv.x = 0.5;
-		COLOR.a = texture(brush_tex, local_uv).r;
-	} else {
-		COLOR.a = alpha_mult;
-	}
+	COLOR.a = texture(brush_tex, UV).r;
 }

@@ -243,7 +243,10 @@ class Brush extends Node2D:
 ### LineBrush
 # Base class for any brush that primarily uses `Line2D` for stroke drawing
 class LineBrush extends Brush:
-    var stroke_line: Line2D = Line2D.new()
+    var Pathway = load("res://scripts/world/objects/Pathway.cs")
+    var stroke_line = Line2D.new()
+    var render_line = Pathway.new(0.0, 0.0, 0.0, 0.0)
+    var stroke_length = 0.0
     var stroke_shader
     
     var shader_param = null
@@ -255,7 +258,7 @@ class LineBrush extends Brush:
 
     var debug_line2d = false
 
-    const STROKE_THRESHOLD: float = 60.0
+    var STROKE_THRESHOLD setget , _get_stroke_threshold
     const INTERPOLATE_THRESHOLD: float = 120.0
 
     enum PaintState {
@@ -272,19 +275,21 @@ class LineBrush extends Brush:
             self,
             "set_endcap"
         )
+        self.render_line.Smoothness = 1.0
         return
 
     # ===== OVERRIDES =====
     func paint(pen, mouse_pos, prev_mouse_pos) -> void:
-        if !self.stroke_line.get_parent() == pen:
+        if !self.render_line.get_parent() == pen:
             logv("Added stroke_line to pen")
-            pen.add_child(self.stroke_line)
+            pen.add_child(self.render_line)
 
         # Paint state machine
         match self.painting_state:
             PaintState.FIRST_POINT:
                 logv("Drawing first point, ignoring modifiers")
                 self.add_stroke_point(mouse_pos)
+                self.render_line.visible = true
 
                 if Input.is_key_pressed(KEY_SHIFT): 
                     self.painting_state = PaintState.STRAIGHT_STROKE_STARTED
@@ -361,7 +366,7 @@ class LineBrush extends Brush:
 
         
     func set_color(color: Color) -> void:
-        self.stroke_line.default_color = Color(
+        self.render_line.default_color = Color(
             color.r,
             color.g,
             color.b,
@@ -369,20 +374,21 @@ class LineBrush extends Brush:
         )
 
         if self.shader_param != null:
-            self.stroke_line.material.set_shader_param(self.shader_param, color.a)
+            self.render_line.material.set_shader_param(self.shader_param, color.a)
     
     func set_size(size: float) -> void:
         if size < 1.0: return
-        self.stroke_line.width = size * 2.0
+        self.render_line.width = size * 2.0
 
     func set_endcap(mode):
         logv("endcap_set: %s" % mode)
         if mode in [0, 1, 2]:
-            self.stroke_line.begin_cap_mode = mode
-            self.stroke_line.end_cap_mode = mode
+            self.render_line.begin_cap_mode = mode
+            self.render_line.end_cap_mode = mode
 
     func on_stroke_end() -> void:
         self.stroke_line.clear_points()
+        self.render_line.visible = false
         self.painting_state = PaintState.FIRST_POINT
 
     # ===== BRUSH UI =====
@@ -410,23 +416,34 @@ class LineBrush extends Brush:
     # ===== BRUSH SPECIFIC =====
     func add_stroke_point(position: Vector2):
         var point_distance = self.previous_point_drawn.distance_to(position)
-        if point_distance > INTERPOLATE_THRESHOLD and self.stroke_line.points.size() != 0:
-            var num_interp_points = point_distance / INTERPOLATE_THRESHOLD
-            logv("distance too short, interpolating points: %d" % num_interp_points)
-            for i in range(0, num_interp_points):
-                var weight = (1.0 / (num_interp_points + 1)) * (i + 1)
-                var new_point = self.previous_point_drawn.linear_interpolate(
-                    position,
-                    weight
-                )
-                self.stroke_line.add_point(new_point)
+        # if point_distance > INTERPOLATE_THRESHOLD and self.stroke_line.points.size() != 0:
+        #     var num_interp_points = point_distance / INTERPOLATE_THRESHOLD
+        #     logv("distance too short, interpolating points: %d" % num_interp_points)
+        #     for i in range(0, num_interp_points):
+        #         var weight = (1.0 / (num_interp_points + 1)) * (i + 1)
+        #         var new_point = self.previous_point_drawn.linear_interpolate(
+        #             position,
+        #             weight
+        #         )
+        #         self.stroke_line.add_point(new_point)
+                
             
                 
         self.stroke_line.add_point(position)
+        self.render_line.SetEditPoints(Array(self.stroke_line.points))
+        self.stroke_length += point_distance
         self.previous_point_drawn = position
 
     func should_add_point(position: Vector2) -> bool:
-        return self.previous_point_drawn.distance_to(position) > STROKE_THRESHOLD
+        if self.previous_point_drawn.distance_to(position) > STROKE_THRESHOLD:
+            return true
+        else:
+            self.stroke_line.points[-1] = position
+            self.render_line.SetEditPoints(Array(self.stroke_line.points))
+            return false
+
+    func _get_stroke_threshold() -> float:
+        return self.brushmanager.size
 
 ### PencilBrush
 # Brush for solid colors
@@ -436,21 +453,21 @@ class PencilBrush extends LineBrush:
         self.brush_name = "PencilBrush"
         self.tooltip = "Pencil"
 
-        self.stroke_line.texture_mode           = Line2D.LINE_TEXTURE_TILE
-        self.stroke_line.joint_mode             = Line2D.LINE_JOINT_ROUND
-        self.stroke_line.begin_cap_mode         = Line2D.LINE_CAP_ROUND
-        self.stroke_line.end_cap_mode           = Line2D.LINE_CAP_ROUND
-        self.stroke_line.round_precision        = 20
-        self.stroke_line.antialiased            = false
-        self.stroke_line.name                   = "PencilStroke"
+        self.render_line.texture_mode           = Line2D.LINE_TEXTURE_TILE
+        self.render_line.joint_mode             = Line2D.LINE_JOINT_ROUND
+        self.render_line.begin_cap_mode         = Line2D.LINE_CAP_ROUND
+        self.render_line.end_cap_mode           = Line2D.LINE_CAP_ROUND
+        self.render_line.round_precision        = 20
+        self.render_line.antialiased            = false
+        self.render_line.name                   = "PencilStroke"
 
         self.stroke_shader = ResourceLoader.load(
             Global.Root + SHADER_DIR + "PencilBrush.shader", 
             "Shader", 
             true
         ).duplicate(false)
-        self.stroke_line.material = ShaderMaterial.new()
-        self.stroke_line.material.shader = self.stroke_shader
+        self.render_line.material = ShaderMaterial.new()
+        self.render_line.material.shader = self.stroke_shader
 
         self.shader_param = "override_alpha"
 
@@ -472,24 +489,24 @@ class TextureBrush extends LineBrush:
         self.brush_name = "TextureBrush"
         self.tooltip = "Texture Brush"
 
-        self.stroke_line.texture_mode           = Line2D.LINE_TEXTURE_TILE
-        self.stroke_line.joint_mode             = Line2D.LINE_JOINT_ROUND
-        self.stroke_line.antialiased            = false
-        self.stroke_line.name                   = "TextureStroke"
+        self.render_line.texture_mode           = Line2D.LINE_TEXTURE_TILE
+        self.render_line.joint_mode             = Line2D.LINE_JOINT_ROUND
+        self.render_line.antialiased            = false
+        self.render_line.name                   = "TextureStroke"
 
         self.stroke_shader = ResourceLoader.load(
             Global.Root + SHADER_DIR + "TextureBrush.shader", 
             "Shader", 
             true
         ).duplicate(false)
-        self.stroke_line.material = ShaderMaterial.new()
-        self.stroke_line.material.shader = self.stroke_shader
+        self.render_line.material = ShaderMaterial.new()
+        self.render_line.material.shader = self.stroke_shader
 
         self.shader_param = "alpha_mult"
 
     # ===== BRUSH SPECIFIC ======
     func set_texture(texture: Texture) -> void:
-        self.stroke_line.texture = texture
+        self.render_line.texture = texture
 
     func on_texture_selected(idx):
         self.set_texture(self.path_grid_menu.Selected)
@@ -552,11 +569,11 @@ class ShadowBrush extends LineBrush:
         self.brush_name = "ShadowBrush"
         self.tooltip = "Dynamic Shadow Brush"
 
-        self.stroke_line.texture_mode           = Line2D.LINE_TEXTURE_STRETCH
-        self.stroke_line.joint_mode             = Line2D.LINE_JOINT_ROUND
-        self.stroke_line.round_precision        = 20
-        self.stroke_line.antialiased            = false
-        self.stroke_line.name               = "ShadowBrushLine2D"
+        self.render_line.texture_mode           = Line2D.LINE_TEXTURE_STRETCH
+        self.render_line.joint_mode             = Line2D.LINE_JOINT_ROUND
+        self.render_line.round_precision        = 20
+        self.render_line.antialiased            = false
+        self.render_line.name               = "ShadowBrushLine2D"
 
         self.stroke_shader = ResourceLoader.load(
             Global.Root + SHADER_DIR + "ShadowBrush.shader", 
@@ -564,8 +581,9 @@ class ShadowBrush extends LineBrush:
             true
         ).duplicate(false)
 
-        self.stroke_line.material = ShaderMaterial.new()
-        self.stroke_line.material.shader = self.stroke_shader
+        self.render_line.material = ShaderMaterial.new()
+        self.render_line.material.shader = self.stroke_shader
+        self.stroke_line.material = self.render_line.material
 
         self.shader_param = "alpha_mult"
 
@@ -639,7 +657,7 @@ class ShadowBrush extends LineBrush:
         self.preview_line.set_point_position(1, Vector2(updated_x_end, updated_y_center))
 
     func paint(pen, mouse_pos, prev_mouse_pos):
-        self.stroke_line.texture_mode           = Line2D.LINE_TEXTURE_STRETCH
+        self.render_line.texture_mode           = Line2D.LINE_TEXTURE_STRETCH
         .paint(pen, mouse_pos, prev_mouse_pos)
 
     func ui_config() -> Dictionary:
@@ -652,51 +670,67 @@ class ShadowBrush extends LineBrush:
     
     # ===== SIGNAL HANDLERS =====
     func on_stroke_end():
-        logv(self.stroke_line.points)
         .on_stroke_end()
 
     func set_color(color: Color) -> void:
         .set_color(color)
-        self.preview_line.default_color = color
+        self.render_line.default_color = color
 
     func _on_transition_in_val(val: float):
         logv("transition_in val changed %d" % val)
-        self.stroke_line.material.set_shader_param("transition_in_start", val)
-        self.stroke_line.material.set_shader_param("transition_in", val != 0.0)
+        self.render_line.material.set_shader_param("transition_in_start", val)
+        self.render_line.material.set_shader_param("transition_in", val != 0.0)
 
     func _on_transition_out_val(val: float):
         logv("transition_out val changed %d" % val)
-        self.stroke_line.material.set_shader_param("transition_out_start", val)
-        self.stroke_line.material.set_shader_param("transition_out", val != 1.0)
+        self.render_line.material.set_shader_param("transition_out_start", val)
+        self.render_line.material.set_shader_param("transition_out", val != 1.0)
 
     func _on_flip_alpha(val: bool):
         logv("invert_alpha val changed: %d" % val)
-        self.stroke_line.material.set_shader_param("invert_alpha", val)
+        self.render_line.material.set_shader_param("invert_alpha", val)
     
     func _on_y_offset_val(val: float):
         logv("y_offset val changed: %d" % val)
-        self.stroke_line.material.set_shader_param("y_offset", val)
+        self.render_line.material.set_shader_param("y_offset", val)
 
 class TerrainBrush extends LineBrush:
     var terrain_list
     var selected_index = 0
     var terrain_initialised = false
 
+    var light_list
+    var selected_light = 0
+    var brush_tex_enabled = false
+
+    var updating_flag = false
+    var brush_enable_button
+
+    var end_cap
+    var start_cap
+
+
+    var GridMenu = load("res://scripts/ui/elements/GridMenu.cs")
+    
+
     func _init(global, brush_manager).(global, brush_manager):
         self.icon = load("res://ui/icons/tools/terrain_brush.png")
         self.brush_name = "TerrainBrush"
         self.tooltip = "Terrain Brush"
 
-        self.stroke_line.texture_mode           = Line2D.LINE_TEXTURE_TILE
-        self.stroke_line.joint_mode             = Line2D.LINE_JOINT_ROUND
-        self.stroke_line.end_cap_mode           = Line2D.LINE_CAP_ROUND
-        self.stroke_line.begin_cap_mode         = Line2D.LINE_CAP_ROUND
-        self.stroke_line.antialiased            = false
-        self.stroke_line.name                   = "TerrainStroke"
+        self.render_line.texture_mode           = Line2D.LINE_TEXTURE_STRETCH
+        self.render_line.joint_mode             = Line2D.LINE_JOINT_ROUND
+        self.render_line.end_cap_mode           = Line2D.LINE_CAP_ROUND
+        self.render_line.begin_cap_mode         = Line2D.LINE_CAP_ROUND
+        self.render_line.antialiased            = false
+        self.render_line.name                   = "TerrainStroke"
 
-        self.stroke_line.default_color = Color(1, 1, 1, 1.0)
+        self.render_line.default_color = Color(1, 1, 1, 1.0)
 
         self.shader_param = "alpha_mult"
+
+        # var end_cap = Sprite.new()
+        # var start_cap = Sprite.new()
 
 
         self.stroke_shader = ResourceLoader.load(
@@ -704,18 +738,52 @@ class TerrainBrush extends LineBrush:
             "Shader", 
             true
         ).duplicate(false)
-        self.stroke_line.material = ShaderMaterial.new()
-        self.stroke_line.material.shader = self.stroke_shader
-        self.stroke_line.material.set_shader_param(
+        self.render_line.material = ShaderMaterial.new()
+        self.render_line.material.shader = self.stroke_shader
+        self.render_line.material.set_shader_param(
             "terrain_tex",
             Global.World.Level.Terrain.Textures[1]
         )
+
+    func paint(pen, mouse_pos, prev_mouse_pos):
+        .paint(pen, mouse_pos, prev_mouse_pos)
+        
+        var brush_tex_size = self.light_list.Selected.get_width() / 2
+        var cutoff_perc = 0.5 - (brush_tex_size / self.stroke_length)
+        logv("cutoff_perc %s" % cutoff_perc)
+        self.render_line.material.set_shader_param(
+            "modifier",
+            cutoff_perc * 2
+        )
+
+    func on_stroke_end():
+        .on_stroke_end()
+        self.stroke_length = 0
 
     func brush_ui():
         if self.ui == null:
             self.ui = VBoxContainer.new()
             (self.ui as VBoxContainer).size_flags_horizontal = Control.SIZE_EXPAND_FILL
             (self.ui as VBoxContainer).size_flags_vertical = Control.SIZE_EXPAND_FILL
+
+            self.brush_enable_button = Button.new()
+            self.brush_enable_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+            self.brush_enable_button.toggle_mode = true
+            self.brush_enable_button.text = "Use Brush Texture"
+            self.brush_enable_button.connect("toggled", self, "_on_brush_toggle")
+            self.ui.add_child(self.brush_enable_button)
+
+
+            self.light_list = GridMenu.new()
+            self.light_list.Load("Lights")
+            self.light_list.max_columns = 16
+            self.light_list.fixed_icon_size = Vector2(64.0, 64.0)
+            self.light_list.ShowsPreview = false
+            
+            self.light_list.size_flags_horizontal = Control.SIZE_FILL
+            self.light_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
+            self.light_list.connect("item_selected", self, "_on_brush_selected")
+            self.ui.add_child(self.light_list)
             
             self.terrain_list = ItemList.new()
             self.terrain_list.fixed_icon_size = Vector2(50, 50)
@@ -735,7 +803,8 @@ class TerrainBrush extends LineBrush:
         self.terrain_list.clear()
         
         # Janky workaround because this is the only good way to get the name of the current terrain textures
-        if Global.Editor.Tools["TerrainBrush"].terrainList == null:
+        if not self.terrain_initialised and not self.updating_flag:
+            self.updating_flag = true
             Global.Editor.Toolset.Quickswitch("TerrainBrush")
             Global.Editor.Toolset.Quickswitch("RasterPainter")
             self.terrain_initialised = true
@@ -751,7 +820,9 @@ class TerrainBrush extends LineBrush:
             return
 
         self.terrain_list.clear()
-        for i in range(len(Global.World.Level.Terrain.Textures)):
+        var texture_count = 8 if Global.World.Level.Terrain.ExpandedSlots else 4
+        logv("Terrain Texture count: %s" % texture_count)
+        for i in range(0, texture_count):
             var terrain_name = Global.Editor.Tools["TerrainBrush"].terrainList.get_item_text(i)
             var thumbnail = Global.Editor.Tools["TerrainBrush"].terrainList.get_item_icon(i)
             self.terrain_list.add_item(
@@ -760,8 +831,22 @@ class TerrainBrush extends LineBrush:
             )
             self.terrain_list.set_item_metadata(i, Global.World.Level.Terrain.Textures[i])
 
+    func _on_brush_selected(idx):
+        self.render_line.material.set_shader_param(
+            "brush_tex",
+            self.light_list.Selected
+        )
+    
+    func _on_brush_toggle(pressed):
+        logv("brush toggled")
+        self.brush_tex_enabled = pressed
+        self.render_line.material.set_shader_param(
+            "brush_tex_enabled",
+            pressed
+        )
+
     func _on_item_select(idx):
-        self.stroke_line.material.set_shader_param(
+        self.render_line.material.set_shader_param(
             "terrain_tex", 
             self.terrain_list.get_item_metadata(idx)
         )

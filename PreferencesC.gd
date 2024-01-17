@@ -71,6 +71,8 @@ class Preferences extends ScrollContainer:
         self.size_flags_horizontal = SIZE_EXPAND_FILL
         self.size_flags_vertical = SIZE_EXPAND_FILL
 
+        self._load_config()
+
         if (Global.World.WorldRect.size.x / self.get_c_val("render_scale") > 16384 or
             Global.World.WorldRect.size.y / self.get_c_val("render_scale") > 16384):
             for i in range(3, 10):
@@ -79,8 +81,6 @@ class Preferences extends ScrollContainer:
                     Global.World.WorldRect.size.y / i < 16384):
                     logv("Found one! %d" % i)
                     self.config_defaults["render_scale"] = i
-
-        self._load_config()
 
         self._setup_brush_settings()
         self._setup_export_settings()
