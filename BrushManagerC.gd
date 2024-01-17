@@ -301,6 +301,7 @@ class LineBrush extends Brush:
             pen.add_child(self.end_cap)
 
         self.render_line.z_index = pen.z_index
+        self.render_line.gradient = null
         self.beg_cap.z_index = pen.z_index
         self.end_cap.z_index = pen.z_index
 
@@ -765,6 +766,7 @@ class ShadowBrush extends LineBrush:
     func set_color(color: Color) -> void:
         .set_color(color)
         self.render_line.default_color = color
+        self.preview_line.default_color = self.render_line.default_color
 
     func _on_transition_in_val(val: float):
         logv("transition_in val changed %d" % val)
