@@ -642,7 +642,7 @@ class PencilBrush extends LineBrush:
             "size": true,
             "color": true,
             "palette": "pencilbrush_palette",
-            "endcaps": true
+            "endcaps": false
         }
 
 ### TextureBrush
