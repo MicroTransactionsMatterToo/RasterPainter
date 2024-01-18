@@ -647,6 +647,7 @@ class PencilBrush extends LineBrush:
         return {
             "size": true,
             "color": true,
+            "opacity": true,
             "palette": "pencilbrush_palette",
             "endcaps": false
         }
@@ -724,6 +725,7 @@ class TextureBrush extends LineBrush:
         return {
             "size": true,
             "color": false,
+            "opacity": true,
             "endcaps": false
         }
 
