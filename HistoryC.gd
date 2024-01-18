@@ -37,32 +37,38 @@ class HistoryManager:
         self.layerm = layerm
 
     func record_paint(layer):
+        if Global.API == null: return
         logv("record_paint for layer: %s" % [layer])
         logv("API: %s" % self.Global.API)
         var record = LayerPaintRecord.new(layer, self.scontrol)
         self.Global.API.HistoryApi.record(record)
 
     func record_layer_edit(old_key, layer):
+        if Global.API == null: return
         logv("record_layer_edit with params: old_key = %s, layer = %s" % [old_key, layer])
         var record = LayerEditRecord.new(old_key, layer, self.scontrol)
         self.Global.API.HistoryApi.record(record)
 
     func record_layer_move(move_entries):
+        if Global.API == null: return
         logv("record_layer_move with entries: %s" % [move_entries])
         var record = LayerMoveRecord.new(move_entries, self.scontrol)
         self.Global.API.HistoryApi.record(record)
 
     func record_layer_delete(layer):
+        if Global.API == null: return
         logv("record_layer_delete called with layer: %s" % [layer])
         var record = LayerDeleteRecord.new(layer, self.scontrol)
         return record
 
     func record_bulk_layer_delete(records):
+        if Global.API == null: return
         logv("record_bulk_layer_deletes called")
         var record = LayerDeleteRecords.new(records, self.scontrol)
         self.Global.API.HistoryApi.record(record)
 
     func record_layer_add(layer, params):
+        if Global.API == null: return
         logv('record_layer_add called')
         var record = LayerAddRecord.new(layer, params, self.scontrol)
         self.Global.API.HistoryApi.record(record)
