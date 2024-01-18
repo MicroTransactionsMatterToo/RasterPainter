@@ -335,8 +335,7 @@ class LineBrush extends Brush:
                 if Input.is_key_pressed(KEY_SHIFT): self.painting_state = PaintState.STRAIGHT_STROKE_STARTED
             PaintState.STRAIGHT_STROKE_STARTED:
                 logv("STRAIGHT STROKE STARTED")
-                if len(self.stroke_line.points) == 1:
-                    self.add_stroke_point(mouse_pos)
+                self.add_stroke_point(mouse_pos)
                 
                 self.stroke_line.set_point_position(self.stroke_line.points.size() - 1, mouse_pos)
                 
