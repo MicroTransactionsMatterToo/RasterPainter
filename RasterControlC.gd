@@ -405,6 +405,12 @@ class RasterControl extends Control:
             self.eraser_preview.z_index = self.active_layer.z_index + 1
 
             if !self.is_painting:
+                var master = Global.World.get_node("/root/Master") 
+                mouse_pos = master.Viewport.canvas_transform.affine_inverse() * (master.Viewport.get_mouse_position() * master.ViewportScaleInv)
+                if Global.Editor.IsSnapping:
+                    mouse_pos = Global.World.UI.GetSnappedPosition(mouse_pos)
+                self.prev_mouse_pos = null
+
                 logv("Stroke Started at %s" % mouse_pos)
                 self.emit_signal("stroke_started", mouse_pos)
                 self.prev_mouse_pos = mouse_pos
@@ -423,11 +429,13 @@ class RasterControl extends Control:
                 )
         else:
             if self.is_painting:
+                self.should_paint = false
                 logv("Stroke finished at %s" % mouse_pos)
                 self.emit_signal("stroke_finished", mouse_pos)
                 self._on_stroke_finished()
                 self.stroke_finished = true
                 self.is_painting = false
+                yield(get_tree(), "idle_frame")
 
         self.prev_mouse_pos = mouse_pos
 
@@ -463,6 +471,7 @@ class RasterControl extends Control:
             self.active_layer = level_layers[0]
 
         self.emit_signal("level_changed", self._curr_level_id)
+        self.should_paint = true
 
     # ===== RENDERING =====
     

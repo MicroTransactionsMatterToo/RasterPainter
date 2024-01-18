@@ -29,7 +29,8 @@ class Preferences extends ScrollContainer:
         "export_premultiplied": false,
         "num_undo_states": 10,
         "render_scale": 2,
-        "use_user_layers": true
+        "use_user_layers": true,
+        "disable_lib_warning": false
     }
 
     # ===== LOGGING =====
@@ -111,9 +112,9 @@ class Preferences extends ScrollContainer:
         self.config_file.close()
         Global.World.set_meta("painter_config", self)
 
-    func _save_config():
+    func _save_config(force = false):
         logv("_save_config called")
-        if not self.visible:
+        if not self.visible and not force:
             logv("UI not visible, ignoring save request")
             return
 

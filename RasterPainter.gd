@@ -106,8 +106,9 @@ func start() -> void:
 	Global.World.add_child(self.control)
 	self.toolpanel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	self.toolpanel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	Global.World.has_method("set_meta")
+
 	Global.World.set_meta("GlobalSingleton", Global.World.get_node("/root/Global"))
+	Global.World.set_meta("RasterControl", self.control)
 	Global.World.set_meta("painter_script", Script)
 
 	if Global.API != null:
@@ -126,6 +127,19 @@ func start() -> void:
 			self.prefs,
 			"_save_config"
 		)
+
+	else:
+		if not self.prefs.get_c_val("disable_lib_warning"):
+			Global.Editor.Warn(
+				"_Lib not installed", 
+				"""_Lib was not detected as installed. 
+				If you do have it installed, make sure it is enabled.
+				Undo, Redo and the preferences menu will be unavailable
+				This warning will not be shown again!
+				"""
+			)
+			self.prefs.config_dict["disable_lib_warning"] = true
+			self.prefs._save_config(true)
 
 
 func on_tool_enable(tool_id) -> void:

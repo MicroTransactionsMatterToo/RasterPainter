@@ -236,7 +236,8 @@ class Brush extends Node2D:
     func ui_config() -> Dictionary:
         return {
             "size": true,
-            "color": true
+            "color": true,
+            "endcaps": false
         }
 
 
@@ -282,7 +283,8 @@ class LineBrush extends Brush:
         PAINTING,
         STRAIGHT_STROKE_STARTED,
         STRAIGHT_STROKE,
-        STRAIGHT_STROKE_END
+        STRAIGHT_STROKE_END,
+        CLEANUP
     }
 
     func _init(global, brush_manager).(global, brush_manager):
@@ -321,6 +323,10 @@ class LineBrush extends Brush:
                 else:
                     self.painting_state = PaintState.PAINTING
             PaintState.PAINTING:
+                if not Input.is_mouse_button_pressed(BUTTON_LEFT):
+                    logv("BUTTON NOT PRESSED, SHITTING PANTS")
+                    self.painting_state = PaintState.CLEANUP
+
                 var debug_points = Array(self.stroke_line.points)
                 logv("on stroke end, the last 4 points were: %s" % [debug_points.slice(-4, -1)])
                 if self.should_add_point(mouse_pos):
@@ -356,6 +362,8 @@ class LineBrush extends Brush:
                 self.previous_point_drawn = mouse_pos
 
                 self.painting_state = PaintState.PAINTING
+            PaintState.CLEANUP:
+                return
             _:
                 self.painting_state = PaintState.PAINTING
 
@@ -451,8 +459,9 @@ class LineBrush extends Brush:
 
     func set_endcap(mode):
         logv("endcap_set: %s" % mode)
+        if self.ui_config()["endcaps"] != true:
+            return
         if mode in [0, 1, 2]:
-            self.render_line.begin_cap_mode = mode
             self.render_line.end_cap_mode = mode
 
     func on_stroke_end() -> void:
@@ -713,7 +722,7 @@ class TextureBrush extends LineBrush:
         return {
             "size": true,
             "color": false,
-            "endcaps": true
+            "endcaps": false
         }
 
 class ShadowBrush extends LineBrush:
@@ -750,7 +759,6 @@ class ShadowBrush extends LineBrush:
 
         self.render_line.material = ShaderMaterial.new()
         self.render_line.material.shader = self.stroke_shader
-        # self.stroke_line.material = self.render_line.material
 
         self.shader_param = "alpha_mult"
 
@@ -833,7 +841,7 @@ class ShadowBrush extends LineBrush:
         return {
             "size": true,
             "color": true,
-            "endcaps": true,
+            "endcaps": false,
             "opacity": true
         }
     
@@ -1041,11 +1049,12 @@ class TerrainBrush extends LineBrush:
         return {
             "size": true,
             "color": false,
-            "endcaps": true,
+            "endcaps": false,
             "opacity": true
         }
 
 class EraserBrush extends LineBrush:
+    var clear_button
     func _init(global, brush_manager).(global, brush_manager):
         var icon = ImageTexture.new()
         icon.load(Global.Root + "icons/eraser.png")
@@ -1053,16 +1062,16 @@ class EraserBrush extends LineBrush:
         self.brush_name = "EraserBrush"
         self.tooltip = "Eraser"
 
-        self.stroke_line.texture_mode           = Line2D.LINE_TEXTURE_TILE
-        self.stroke_line.joint_mode             = Line2D.LINE_JOINT_ROUND
-        self.stroke_line.end_cap_mode           = Line2D.LINE_CAP_ROUND
-        self.stroke_line.begin_cap_mode         = Line2D.LINE_CAP_ROUND
-        self.stroke_line.antialiased            = false
-        self.stroke_line.name                   = "EraserStroke"
+        self.render_line.texture_mode           = Line2D.LINE_TEXTURE_TILE
+        self.render_line.joint_mode             = Line2D.LINE_JOINT_ROUND
+        self.render_line.end_cap_mode           = Line2D.LINE_CAP_ROUND
+        self.render_line.begin_cap_mode         = Line2D.LINE_CAP_ROUND
+        self.render_line.antialiased            = false
+        self.render_line.name                   = "EraserStroke"
 
         var background_texture := ImageTexture.new()
         background_texture.load(Global.Root + "icons/preview_background.png")
-        self.stroke_line.texture = background_texture
+        self.render_line.texture = background_texture
         self.stroke_line.default_color = Color(1, 1, 1, 0.75)
 
 
@@ -1071,11 +1080,37 @@ class EraserBrush extends LineBrush:
             "Shader", 
             true
         ).duplicate(false)
-        self.stroke_line.material = ShaderMaterial.new()
-        self.stroke_line.material.shader = self.stroke_shader
+        self.render_line.material = ShaderMaterial.new()
+        self.render_line.material.shader = self.stroke_shader
 
     func paint(pen, mouse_pos, prev_mouse_pos):
         .paint(pen, mouse_pos, prev_mouse_pos)
+
+    func brush_ui():
+        if self.ui == null:
+            self.ui = VBoxContainer.new()
+            (self.ui as VBoxContainer).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+            (self.ui as VBoxContainer).size_flags_vertical = Control.SIZE_EXPAND_FILL
+            
+            self.clear_button = Button.new()
+            self.clear_button.text = "Clear Current Layer"
+            self.clear_button.connect("pressed", self, "_on_clear_pressed")
+            
+            self.ui.add_child(self.clear_button)
+
+        return self.ui
+
+    func _on_clear_pressed():
+        logv("Clear pressed")
+        var scontrol = Global.World.get_meta("RasterControl")
+        var clear_image = scontrol.active_layer.texture.get_data()
+        logv("Got layer texture: %s" % clear_image)
+        clear_image.fill(Color(0.0, 0.0, 0.0, 0.0))
+        logv("Filled layer with nil")
+        scontrol.active_layer.texture.set_data(clear_image)
+        scontrol.active_layer.texture = scontrol.active_layer.texture
+        logv("Wrote back")
+
 
     func set_color(color):
         pass
@@ -1084,6 +1119,6 @@ class EraserBrush extends LineBrush:
         return {
             "size": true,
             "color": false,
-            "endcaps": true,
+            "endcaps": false,
             "opacity": false
         }
