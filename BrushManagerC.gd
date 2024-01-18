@@ -304,10 +304,7 @@ class LineBrush extends Brush:
             pen.add_child(self.beg_cap)
             pen.add_child(self.end_cap)
 
-        self.render_line.z_index = pen.z_index
         self.render_line.gradient = null
-        self.beg_cap.z_index = pen.z_index
-        self.end_cap.z_index = pen.z_index
 
         # Paint state machine
         match self.painting_state:
@@ -358,6 +355,7 @@ class LineBrush extends Brush:
                 var debug_points = Array(self.stroke_line.points)
                 logv("on straight end, the last 4 points were: %s" % [debug_points.slice(-4, -1)])
                 self.stroke_line.set_point_position(self.stroke_line.points.size() - 1, mouse_pos)
+                self.add_stroke_point(mouse_pos)
                 self.previous_point_drawn = mouse_pos
 
                 self.painting_state = PaintState.PAINTING
@@ -369,11 +367,11 @@ class LineBrush extends Brush:
         if self.debug_line2d:
             self.stroke_line.antialiased = true
             logv("drawing debug widgets for line2d")
-            for index in range(self.stroke_line.points.size()):
-                var curr_point = self.stroke_line.points[index]
+            for index in range(self.render_line.GlobalEditPoints.size()):
+                var curr_point = self.render_line.GlobalEditPoints[index]
                 pen.draw_circle(curr_point, 15, Color.red)
-                if self.stroke_line.points[index + 1] != null:
-                    var next_point = self.stroke_line.points[index + 1]
+                if self.render_line.GlobalEditPoints[index + 1] != null:
+                    var next_point = self.render_line.GlobalEditPoints[index + 1]
                     var line_dir = curr_point.direction_to(next_point)
                     var line_color = Color(line_dir.x, line_dir.y, 0.0, 1.0)
                     pen.draw_line(
@@ -528,12 +526,17 @@ class LineBrush extends Brush:
             self.end_cap.position = position
             self.end_cap.rotation = 0.0
         else:
-            self.beg_cap.rotation = self.render_line.EditPoints[0].angle_to_point(
-                self.render_line.EditPoints[1]
-            )
+            self.beg_cap.position = self.render_line.GlobalEditPoints[0].round()
+            self.beg_cap.rotation = self.render_line.GlobalEditPoints[1].direction_to(
+                self.render_line.GlobalEditPoints[0]
+            ).angle()
 
-            self.end_cap.position = self.render_line.GlobalEditPoints[-1]
-            self.end_cap.rotation = self.render_line.EditPoints[-2].angle_to_point(self.render_line.EditPoints[-1])
+
+                
+            self.end_cap.position = self.render_line.GlobalEditPoints[-1].round()
+            self.end_cap.rotation = self.render_line.EditPoints[-1].direction_to(
+                self.render_line.EditPoints[-2]
+            ).angle()
             logv("END CAP ROT SET to %s" % self.end_cap.rotation)
 
     func set_cap_shader_param(key, value):
