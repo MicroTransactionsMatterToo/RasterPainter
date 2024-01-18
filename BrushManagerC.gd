@@ -341,6 +341,7 @@ class LineBrush extends Brush:
             PaintState.STRAIGHT_STROKE:
                 self.stroke_line.set_point_position(self.stroke_line.points.size() - 1, mouse_pos)
                 self.render_line.SetEditPoints(Array(self.stroke_line.points))
+                self.update_caps(mouse_pos)
                 self.previous_point_drawn = mouse_pos
 
                 if Input.is_key_pressed(KEY_SHIFT):
@@ -458,7 +459,9 @@ class LineBrush extends Brush:
         self.stroke_line.clear_points()
         self.render_line.visible = false
         self.beg_cap.visible = false
+        self.beg_cap.position = Vector2(-100, -100)
         self.end_cap.visible = false
+        self.end_cap.position = Vector2(-100, -100)
         self.painting_state = PaintState.FIRST_POINT
 
     # ===== BRUSH UI =====
@@ -517,19 +520,11 @@ class LineBrush extends Brush:
             self.end_cap.position = position
             self.end_cap.rotation = 0.0
         else:
-            # logv("2 or more points, updating caps")
-            # logv("BEG_CAP ANG: %s, END_CAP ANG: %s" % [
-            #     self.render_line.EditPoints[1].angle_to(self.render_line.EditPoints[0]),
-            #     self.render_line.EditPoints[-2].angle_to(self.render_line.EditPoints[-1])
-            # ])
-
             self.beg_cap.rotation = self.render_line.EditPoints[0].angle_to_point(
                 self.render_line.EditPoints[1]
             )
-            # logv("BEG CAP SET to %s" % self.beg_cap.rotation)
 
             self.end_cap.position = self.render_line.GlobalEditPoints[-1]
-            # # logv("END CAP POS SET to %s" % self.end_cap.position)
             self.end_cap.rotation = self.render_line.EditPoints[-2].angle_to_point(self.render_line.EditPoints[-1])
             logv("END CAP ROT SET to %s" % self.end_cap.rotation)
 
