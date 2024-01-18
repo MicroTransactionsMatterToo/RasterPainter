@@ -13,7 +13,7 @@ size_flags_vertical = 3
 
 [node name="BrushControls" type="VBoxContainer" parent="."]
 margin_right = 443.0
-margin_bottom = 176.0
+margin_bottom = 152.0
 size_flags_horizontal = 3
 size_flags_vertical = 2
 
@@ -25,7 +25,7 @@ size_flags_vertical = 3
 [node name="BrushSettings" type="VBoxContainer" parent="BrushControls"]
 margin_top = 4.0
 margin_right = 443.0
-margin_bottom = 176.0
+margin_bottom = 152.0
 
 [node name="BSizeC" type="VBoxContainer" parent="BrushControls/BrushSettings"]
 margin_right = 443.0
@@ -144,34 +144,23 @@ toggle_mode = true
 group = SubResource( 1 )
 text = "Round"
 
-[node name="BBrushC" type="VBoxContainer" parent="BrushControls/BrushSettings"]
-margin_top = 152.0
-margin_right = 443.0
-margin_bottom = 172.0
-
-[node name="BBrushEnable" type="Button" parent="BrushControls/BrushSettings/BBrushC"]
-margin_right = 443.0
-margin_bottom = 20.0
-hint_tooltip = "Toggles the use of the selected brush when drawing"
-text = "Enable Brush"
-
 [node name="HSeparator" type="HSeparator" parent="."]
-margin_top = 180.0
+margin_top = 156.0
 margin_right = 443.0
-margin_bottom = 184.0
+margin_bottom = 160.0
 
 [node name="BrushUI" type="VBoxContainer" parent="."]
-margin_top = 188.0
+margin_top = 164.0
 margin_right = 443.0
-margin_bottom = 664.0
+margin_bottom = 660.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 size_flags_stretch_ratio = 5.0
 
 [node name="HSeparator2" type="HSeparator" parent="."]
-margin_top = 668.0
+margin_top = 664.0
 margin_right = 443.0
-margin_bottom = 672.0
+margin_bottom = 668.0
 
 [node name="LayerControls" type="VBoxContainer" parent="."]
 margin_top = 752.0

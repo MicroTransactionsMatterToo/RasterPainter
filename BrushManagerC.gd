@@ -736,6 +736,12 @@ class ShadowBrush extends LineBrush:
         self.render_line.antialiased            = false
         self.render_line.name                   = "ShadowBrushLine2D"
 
+        self.stroke_line.texture_mode           = Line2D.LINE_TEXTURE_STRETCH
+        self.stroke_line.joint_mode             = Line2D.LINE_JOINT_ROUND
+        self.stroke_line.round_precision        = 20
+        self.stroke_line.antialiased            = false
+        
+
         self.stroke_shader = ResourceLoader.load(
             Global.Root + SHADER_DIR + "ShadowBrush.shader", 
             "Shader", 
@@ -744,7 +750,7 @@ class ShadowBrush extends LineBrush:
 
         self.render_line.material = ShaderMaterial.new()
         self.render_line.material.shader = self.stroke_shader
-        self.stroke_line.material = self.render_line.material
+        # self.stroke_line.material = self.render_line.material
 
         self.shader_param = "alpha_mult"
 
@@ -758,6 +764,7 @@ class ShadowBrush extends LineBrush:
 
             self.preview_control = self.ui.get_node("LinePreview")
             self.preview_line = self.stroke_line.duplicate()
+            self.preview_line.material = self.render_line.material
             self.preview_line.antialiased = false
             self.preview_line.width = 50
             var preview_center = self.preview_control.rect_size / 2
