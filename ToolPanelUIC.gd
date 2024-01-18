@@ -15,10 +15,13 @@ class RasterToolpanel extends VBoxContainer:
     var brushmgr
 
     var palette_control
+    var opacity_slider: HSlider
+    var size_slider: HSlider
 
+    
     var brush_buttons := ButtonGroup.new()
-
-    var ColorPalette
+    
+    var ColorPalette = load("res://scripts/ui/elements/ColorPalette.cs")
 
     enum HistoryOperation {
         UNDO,
@@ -60,8 +63,6 @@ class RasterToolpanel extends VBoxContainer:
 
         self.name = "RasterToolPanel"
 
-        ColorPalette = load("res://scripts/ui/elements/ColorPalette.cs")
-
         logv("Loading UI template")
         self.template = ResourceLoader.load(Global.Root + "ui/toolpanel.tscn", "", true)
         var instance = template.instance()
@@ -95,21 +96,24 @@ class RasterToolpanel extends VBoxContainer:
         logv("color_changed connected")
 
         $"BrushControls/BrushSettings/BColorC".add_child(self.palette_control)
-        $"BrushControls/BrushSettings/BSizeC/BSize/HSlider".connect(
+
+        self.size_slider = $"BrushControls/BrushSettings/BSizeC/BSize/HSlider"
+        self.size_slider.connect(
             "value_changed",
             self,
             "on_size_changed"
         )
-        $"BrushControls/BrushSettings/BSizeC/BSize/HSlider".share(
+        self.size_slider.share(
             $"BrushControls/BrushSettings/BSizeC/BSize/SpinBox"
         )
 
-        $"BrushControls/BrushSettings/BOpacityC/BOpacity/HSlider".connect(
+        self.opacity_slider = $"BrushControls/BrushSettings/BOpacityC/BOpacity/HSlider"
+        self.opacity_slider.connect(
             "value_changed",
             self,
             "on_opacity_changed"
         )
-        $"BrushControls/BrushSettings/BOpacityC/BOpacity/HSlider".share(
+        self.opacity_slider.share(
             $"BrushControls/BrushSettings/BOpacityC/BOpacity/SpinBox"
         )
         logv("ColorPalette added to UI")
@@ -126,7 +130,7 @@ class RasterToolpanel extends VBoxContainer:
 
         self.populate_brushes()
         logv("Brushes populated")
-        ($"BrushControls/BrushSettings/BSizeC/BSize/HSlider" as HSlider).value = self.brushmgr.size
+        self.size_slider.value = self.brushmgr.size
         self.palette_control.Color = self.brushmgr.color
 
 

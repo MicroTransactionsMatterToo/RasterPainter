@@ -272,6 +272,8 @@ class LineBrush extends Brush:
 
     var debug_line2d = false
 
+    var GridMenu = load("res://scripts/ui/elements/GridMenu.cs")
+
     var STROKE_THRESHOLD setget , _get_stroke_threshold
     const INTERPOLATE_THRESHOLD: float = 120.0
 
@@ -531,12 +533,25 @@ class LineBrush extends Brush:
             self.end_cap.rotation = self.render_line.EditPoints[-2].angle_to_point(self.render_line.EditPoints[-1])
             logv("END CAP ROT SET to %s" % self.end_cap.rotation)
 
+    func set_cap_shader_param(key, value):
+        self.beg_cap.material.set_shader_param(
+            key,
+            value
+        )
+        self.end_cap.material.set_shader_param(
+            key,
+            value
+        )
+
     func _get_stroke_threshold() -> float:
         return float(self.brushmanager.size / 2)
 
 ### PencilBrush
 # Brush for solid colors
 class PencilBrush extends LineBrush:
+    var light_list
+    var brush_enable_button
+
     func _init(global, brush_manager).(global, brush_manager):
         self.icon = load("res://ui/icons/tools/path_tool.png")
         self.brush_name = "PencilBrush"
@@ -550,6 +565,7 @@ class PencilBrush extends LineBrush:
         self.render_line.antialiased            = false
         self.render_line.gradient = null
         self.render_line.name                   = "PencilStroke"
+        logv("GOT TO SHADER LOADING")
 
         self.stroke_shader = ResourceLoader.load(
             Global.Root + SHADER_DIR + "PencilBrush.shader", 
@@ -559,7 +575,67 @@ class PencilBrush extends LineBrush:
         self.render_line.material = ShaderMaterial.new()
         self.render_line.material.shader = self.stroke_shader
 
+        self.cap_shader = ResourceLoader.load(
+            Global.Root + SHADER_DIR + "PencilEndcapShader.shader",
+            "Shader",
+            true
+        )
+
+        self.cap_material.shader = self.cap_shader
+        self.beg_cap.material = self.cap_material
+        self.end_cap.material = self.cap_material
+
         self.shader_param = "override_alpha"
+
+    func brush_ui():
+        if self.ui == null:
+            self.ui = VBoxContainer.new()
+            (self.ui as VBoxContainer).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+            (self.ui as VBoxContainer).size_flags_vertical = Control.SIZE_EXPAND_FILL
+
+            self.brush_enable_button = Button.new()
+            self.brush_enable_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+            self.brush_enable_button.toggle_mode = true
+            self.brush_enable_button.text = "Use Brush Texture"
+            self.brush_enable_button.connect("toggled", self, "_on_brush_toggle")
+            self.ui.add_child(self.brush_enable_button)
+
+
+            self.light_list = GridMenu.new()
+            self.light_list.Load("Lights")
+            self.light_list.max_columns = 16
+            self.light_list.fixed_icon_size = Vector2(64.0, 64.0)
+            self.light_list.ShowsPreview = false
+            
+            self.light_list.size_flags_horizontal = Control.SIZE_FILL
+            self.light_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
+            self.light_list.connect("item_selected", self, "_on_brush_selected")
+            self.ui.add_child(self.light_list)
+
+        return self.ui
+    
+    func set_color(color):
+        .set_color(color)
+        self.set_cap_shader_param(
+            "brush_color",
+            color
+        )
+
+    func _on_brush_selected(idx):
+        self.render_line.material.set_shader_param(
+            "brush_tex",
+            self.light_list.Selected
+        )
+        .set_brush_tex(self.light_list.Selected)
+        self.brush_enable_button.pressed = true
+    
+    func _on_brush_toggle(pressed):
+        logv("brush toggled")
+        self.use_brush_tex = pressed
+        self.render_line.material.set_shader_param(
+            "brush_tex_enabled",
+            pressed
+        )
 
     func ui_config() -> Dictionary:
         return {
@@ -797,8 +873,6 @@ class TerrainBrush extends LineBrush:
 
     var updating_flag = false
     var brush_enable_button
-
-    var GridMenu = load("res://scripts/ui/elements/GridMenu.cs")
     
 
     func _init(global, brush_manager).(global, brush_manager):
@@ -946,7 +1020,7 @@ class TerrainBrush extends LineBrush:
         self.render_line.material.set_shader_param(
             "brush_tex_enabled",
             pressed
-        )        
+        )
 
     func _on_item_select(idx):
         self.render_line.material.set_shader_param(
@@ -959,15 +1033,7 @@ class TerrainBrush extends LineBrush:
         )
         self.selected_index = idx
 
-    func set_cap_shader_param(key, value):
-        self.beg_cap.material.set_shader_param(
-            key,
-            value
-        )
-        self.end_cap.material.set_shader_param(
-            key,
-            value
-        )
+
 
     func ui_config() -> Dictionary:
         return {
