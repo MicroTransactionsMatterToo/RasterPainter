@@ -43,19 +43,23 @@ margin_bottom = 42.0
 
 [node name="HSlider" type="HSlider" parent="BrushControls/BrushSettings/BSizeC/BSize"]
 margin_top = 4.0
-margin_right = 365.0
+margin_right = 349.0
 margin_bottom = 20.0
 size_flags_horizontal = 3
 size_flags_vertical = 4
 min_value = 1.0
-max_value = 400.0
+max_value = 800.0
 value = 300.0
 allow_greater = true
 
 [node name="SpinBox" type="SpinBox" parent="BrushControls/BrushSettings/BSizeC/BSize"]
-margin_left = 369.0
+margin_left = 353.0
 margin_right = 443.0
 margin_bottom = 24.0
+rect_min_size = Vector2( 90, 0 )
+max_value = 2000.0
+rounded = true
+allow_lesser = true
 
 [node name="BColorC" type="VBoxContainer" parent="BrushControls/BrushSettings"]
 margin_top = 46.0

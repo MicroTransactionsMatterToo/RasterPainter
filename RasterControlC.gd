@@ -30,6 +30,7 @@ class RasterControl extends Control:
     var layerui: PanelContainer
     var toolpanel
     var toolpanelui
+    var tooltip_ui
 
     # +++++ World Tree Items +++++
 
@@ -186,6 +187,8 @@ class RasterControl extends Control:
         self._bootstrap_blending()
         self._bootstrap_eraser()
 
+        self._bootstrap_tooltip_ui()
+
         self.history_manager = HistoryManager.new(self.Global, self, self.layerm)
     
     func _exit_tree():
@@ -201,6 +204,29 @@ class RasterControl extends Control:
 
 
     # ===== BOOTSTRAP =====
+    func _bootstrap_tooltip_ui():
+        self.tooltip_ui = ResourceLoader.load(
+            Global.Root + "ui/InfobarTooltip.tscn",
+            "",
+            true
+        ).instance()
+
+        var font = DynamicFont.new()
+        font.font_data = load("res://ui/fonts/noto_sans.ttf")
+        font.size = 13
+        self.tooltip_ui.get_node("Straight/SHIFT").add_font_override("font", font)
+
+        var other_font = DynamicFont.new()
+        other_font.font_data = load("res://ui/fonts/default_font.ttf")
+        other_font.size = 12
+        self.tooltip_ui.get_node("Straight/Hold").add_font_override("font", other_font)
+        self.tooltip_ui.get_node("BrushSize/Scroll").texture = load("res://ui/icons/shortcuts/mouse_wheel.png")
+        self.tooltip_ui.get_node("BrushSize/Scroll").rect_size = Vector2(16, 24)
+
+        Global.Editor.get_node("VPartition/Infobar/Align/Tooltips").add_child(self.tooltip_ui)
+        self.tooltip_ui.visible = false
+
+
     func _bootstrap_active_layer():
         self._curr_level_id = self.layerm.get_level_id(Global.World.Level)
         logv("bootstraped _curr_level_id")
@@ -387,6 +413,12 @@ class RasterControl extends Control:
                 [BUTTON_LEFT, false]:
                     self.should_paint = false
                     self.prev_mouse_pos = null
+                    self.pen.update()
+                [BUTTON_WHEEL_UP, true]:
+                    self.toolpanelui.size_slider.value += 10
+                    self.pen.update()
+                [BUTTON_WHEEL_DOWN, true]:
+                    self.toolpanelui.size_slider.value -= 10
                     self.pen.update()
                 _:
                     self.should_paint = false

@@ -150,12 +150,14 @@ func on_tool_enable(tool_id) -> void:
 	Global.World.UI.UseHalfSnap = true
 	Global.World.UI.CursorRadius = self.control.brushmgr.size
 	self.control.toolpanelui.on_tool_enable()
+	self.control.tooltip_ui.visible = true
 
 func on_tool_disable(tool_id) -> void:
 	logv("RasterPainter disabled")
 	self._enabled = false
 	self.control.layerui.visible = false
 	Global.World.UI.CursorMode = 1
+	self.control.tooltip_ui.visible = false
 	
 
 func on_content_input(input):

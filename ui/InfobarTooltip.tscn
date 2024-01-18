@@ -1,0 +1,78 @@
+[gd_scene load_steps=2 format=2]
+
+[sub_resource type="StyleBoxFlat" id=2]
+draw_center = false
+border_width_left = 1
+border_width_top = 1
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color( 0.6, 0.6, 0.6, 1 )
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+anti_aliasing = false
+
+[node name="RasterPainter" type="HBoxContainer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_bottom = -568.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="BrushSize" type="HBoxContainer" parent="."]
+margin_right = 87.0
+margin_bottom = 32.0
+
+[node name="Scroll" type="TextureRect" parent="BrushSize"]
+modulate = Color( 0.6, 0.6, 0.6, 1 )
+margin_top = 4.0
+margin_right = 16.0
+margin_bottom = 28.0
+rect_min_size = Vector2( 16, 24 )
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Label" type="Label" parent="BrushSize"]
+margin_left = 20.0
+margin_top = 9.0
+margin_right = 87.0
+margin_bottom = 23.0
+custom_colors/font_color = Color( 0.666667, 0.666667, 0.666667, 1 )
+text = "Brush Size"
+
+[node name="Space" type="Control" parent="."]
+margin_left = 91.0
+margin_right = 155.0
+margin_bottom = 32.0
+rect_min_size = Vector2( 64, 0 )
+size_flags_horizontal = 0
+
+[node name="Straight" type="HBoxContainer" parent="."]
+margin_left = 159.0
+margin_right = 324.0
+margin_bottom = 32.0
+
+[node name="Hold" type="Label" parent="Straight"]
+margin_top = 9.0
+margin_right = 30.0
+margin_bottom = 23.0
+custom_colors/font_color = Color( 0.6, 0.6, 0.6, 1 )
+text = "Hold"
+
+[node name="SHIFT" type="Label" parent="Straight"]
+margin_left = 34.0
+margin_top = 7.0
+margin_right = 82.0
+margin_bottom = 25.0
+custom_colors/font_color = Color( 0.6, 0.6, 0.6, 1 )
+custom_styles/normal = SubResource( 2 )
+text = " SHIFT "
+
+[node name="Straight Line" type="Label" parent="Straight"]
+margin_left = 86.0
+margin_top = 9.0
+margin_right = 165.0
+margin_bottom = 23.0
+custom_colors/font_color = Color( 0.666667, 0.666667, 0.666667, 1 )
+text = "Straight Line"
