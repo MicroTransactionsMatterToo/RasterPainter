@@ -26,6 +26,7 @@ margin_right = -43.0
 margin_bottom = 14.0
 
 [node name="Line2D" type="Line2D" parent="."]
+visible = false
 material = SubResource( 1 )
 points = PoolVector2Array( 0, 0, 82, 345, 300, 300, 1980, 800 )
 width = 100.0
@@ -33,6 +34,7 @@ default_color = Color( 0.4, 0.501961, 1, 1 )
 texture_mode = 2
 
 [node name="Sprite" type="Sprite" parent="."]
+visible = false
 material = SubResource( 2 )
 position = Vector2( 1980, 800 )
 rotation = 0.289725
@@ -43,6 +45,7 @@ region_enabled = true
 region_rect = Rect2( 512, 0, -512, 1024 )
 
 [node name="Sprite2" type="Sprite" parent="."]
+visible = false
 material = SubResource( 2 )
 rotation = 1.35438
 scale = Vector2( 0.097, 0.097 )
@@ -50,3 +53,5 @@ texture = ExtResource( 3 )
 offset = Vector2( -256, 0 )
 region_enabled = true
 region_rect = Rect2( 0, 0, 512, 1024 )
+
+[node name="Sprite3" type="Sprite" parent="."]

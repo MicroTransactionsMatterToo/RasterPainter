@@ -106,7 +106,7 @@ class RasterLayer extends Sprite:
     
     ### create_new
     # Creates an entirely new, empty RasterLayer with the given parameters
-    func create_new(level_id, z_index, layer_name, skip_texture = false):
+    func create_new(level_id, z_index, layer_name, uuid = null, skip_texture = false):
         logv("Creating new RasterLayer @ Level: %s, Z: %s, name: %s" % [
             level_id, 
             z_index, 
@@ -120,7 +120,10 @@ class RasterLayer extends Sprite:
         .set_z_index(z_index)
         self._layer_name = layer_name
 
-        self._uuid = "%x" % (200000 + (randi() % 100000))
+        if uuid == null:
+            self._uuid = "%x" % (200000 + (randi() % 100000))
+        else:
+            self._uuid = uuid
 
         if !skip_texture:
             # Create a new texture
@@ -239,10 +242,12 @@ class RasterLayer extends Sprite:
 
         self.emit_signal("layer_modified", self)
 
+
     # ---- self.uuid get
 
     func get_uuid() -> String:
         return self._uuid
+
 
     # ---- self.embedded_key get
     func get_embedded_key() -> String:
@@ -253,6 +258,9 @@ class RasterLayer extends Sprite:
             "name": self.layer_name,
             "uuid": self.uuid
         })
+
+    func force_update_tex():
+        Global.World.EmbeddedTextures[self.embedded_key] = self.texture
 
     #
     func decode_key(key):

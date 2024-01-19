@@ -121,6 +121,7 @@ class LayerPaintRecord:
             "base_texture",
             self.scontrol.active_layer.texture
         )
+        layer.force_update_tex()
 
         self.texture = new_texture
         
@@ -427,10 +428,11 @@ class LayerAddRecord:
         new_layer.create_new(
             layer_params["level_id"],
             layer_params["z_index"],
-            layer_params["name"]
+            layer_params["name"],
+            self.added_uuid
         )
 
-        new_layer._uuid = added_uuid
+        new_layer.set_z_index(new_layer.z_index)
         self.scontrol.layerm.add_layer(new_layer)
         self.scontrol.set_active_layer(new_layer)
 
