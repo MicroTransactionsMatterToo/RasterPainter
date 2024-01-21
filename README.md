@@ -43,6 +43,8 @@ This mod can be quite heavy on RAM, especially at lower render scales, so be awa
   A: Not all light textures are suitable for use as brushes, particularly those that have a lot of empty space.
 - Q: I can't undo or redo strokes!
   A: Full Redo and Undo functionality, along with the configuration menu, require _Lib to be installed to function
+- Q: I've run into a crash or bug!
+  A: If you're running into crashes or other bugs, please file an issue on the Github repository.
 
 #### Donations
 If this mod has been useful to you, feel free to drop me 5 bucks on my Ko-Fi. It's much appreciated
