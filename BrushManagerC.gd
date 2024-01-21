@@ -995,6 +995,9 @@ class TerrainBrush extends LineBrush:
             self.terrain_initialised = true
         
         self.update_terrains()
+        if self.selected_index > self.terrain_list.get_item_count():
+            self.selected_index = 0
+        
         self.terrain_list.select(self.selected_index)
         self.terrain_list.emit_signal("item_selected", self.selected_index)
         
