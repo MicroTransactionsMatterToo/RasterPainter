@@ -1006,10 +1006,12 @@ class TerrainBrush extends LineBrush:
 
         self.terrain_list.clear()
         var texture_count = 8 if Global.World.Level.Terrain.ExpandedSlots else 4
+        Global.Editor.Tools["TerrainBrush"].ExpandSlots(Global.World.Level.Terrain.ExpandedSlots)
         logv("Terrain Texture count: %s" % texture_count)
-        for i in range(0, texture_count):
+        for i in range(0, Global.Editor.Tools["TerrainBrush"].terrainList.get_item_count()):
             var terrain_name = Global.Editor.Tools["TerrainBrush"].terrainList.get_item_text(i)
             var thumbnail = Global.Editor.Tools["TerrainBrush"].terrainList.get_item_icon(i)
+            logv("Got %s for %s" % [terrain_name, i])
             self.terrain_list.add_item(
                 terrain_name,
                 thumbnail
