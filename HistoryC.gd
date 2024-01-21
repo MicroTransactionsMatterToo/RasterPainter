@@ -73,11 +73,12 @@ class HistoryManager:
         var record = LayerAddRecord.new(layer, params, self.scontrol)
         self.Global.API.HistoryApi.record(record)
     
-
+class RasterRecord:
+    var MAGIC = "RRCRD"
 
 ## LayerPaintRecord
 # Class that stores a brush stroke or modification to the contents of a RasterLayer
-class LayerPaintRecord:
+class LayerPaintRecord extends RasterRecord:
     var texture
     var uuid
     var scontrol
@@ -140,7 +141,7 @@ class LayerPaintRecord:
     func record_type() -> String:
         return "LayerPaintRecord"
 
-class LayerEditRecord:
+class LayerEditRecord extends RasterRecord:
     var scontrol
 
     var uuid
@@ -196,7 +197,7 @@ class LayerEditRecord:
     func record_type():
         return "LayerEditRecord"
 
-class LayerMoveRecord:
+class LayerMoveRecord extends RasterRecord:
     ### move_entries
     # Array of objects structured as such
     # [
@@ -257,7 +258,7 @@ class LayerMoveRecord:
         return true
 
 
-class LayerDeleteRecords:
+class LayerDeleteRecords extends RasterRecord:
     var records
     var scontrol
 
@@ -309,7 +310,7 @@ class LayerDeleteRecords:
     func max_count() -> int: return 10
 
 
-class LayerDeleteRecord:
+class LayerDeleteRecord extends RasterRecord:
     var Global
 
     var texture
@@ -393,7 +394,7 @@ class LayerDeleteRecord:
     func record_type() -> String:
         return "LayerPaintRecord"
 
-class LayerAddRecord:
+class LayerAddRecord extends RasterRecord:
     var Global
 
     var added_uuid

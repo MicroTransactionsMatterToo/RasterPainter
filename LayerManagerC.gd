@@ -57,11 +57,13 @@ class LayerManager extends Object:
 
         if Global.API != null:
             for item in Global.API.HistoryApi.history:
-                item._record.free()
-                logv("Freed %s" % item)
+                if item._record.MAGIC == "RRCRD":
+                    item._record.free()
+                    logv("Freed %s" % item)
             for item in Global.API.HistoryApi.redo_history:
-                item._record.free()
-                logv("Freed %s" % item)
+                if item._record.MAGIC == "RRCRD":
+                    item._record.free()
+                    logv("Freed %s" % item)
 
             logv("History Queues: %s, %s" % [Global.API.HistoryApi.history, Global.API.HistoryApi.redo_history])
         logv("Layers freed, freeing self")
