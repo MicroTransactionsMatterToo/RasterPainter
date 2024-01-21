@@ -1,7 +1,7 @@
 # RasterPainter
 
 <p align="center">
-	<img src="banner_logo.svg" height="200" alt="RasterPainter banner logo">
+	<img src="res/banner_logo.svg" height="200" alt="RasterPainter banner logo">
 </p>
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/K3K5TC1GG)
