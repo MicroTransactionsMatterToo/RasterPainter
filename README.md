@@ -17,7 +17,7 @@ RasterPainter is a mod for Dungeondraft that implements basic raster graphics ca
 - Full Undo and Redo Support (Requires [_Lib](https://cartographyassets.com/assets/31828/_lib/))
 - Draw and blend terrain seamlessly
 - Layer opacity and tinting
-- Layers persist even if map is loaded without the mod
+- Layers persist even if map is loaded without the mod (they won't be visible though)
 
 ### Installation
 Download the zip of the repo from [here](https://codeload.github.com/MicroTransactionsMatterToo/RasterPainter/zip/refs/heads/main) or using the green Code button, and unzip it into your mod directory
@@ -41,6 +41,8 @@ This mod can be quite heavy on RAM, especially at lower render scales, so be awa
   A: Due to engine limitations, raster layers cannot have a resolution greater than 16384 x 16384. To avoid a confusing crash, RasterPainter will automatically reduce the render scale until the raster layer will fit into this limitation
 - Q: I tried using a custom assets as a brush, but the stroke is broken
   A: Not all light textures are suitable for use as brushes, particularly those that have a lot of empty space.
+- Q: I can't undo or redo strokes!
+  A: Full Redo and Undo functionality, along with the configuration menu, require _Lib to be installed to function
 
 #### Donations
 If this mod has been useful to you, feel free to drop me 5 bucks on my Ko-Fi. It's much appreciated
