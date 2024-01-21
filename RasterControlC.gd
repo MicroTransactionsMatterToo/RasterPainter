@@ -453,6 +453,10 @@ class RasterControl extends Control:
                     mouse_pos,
                     self.prev_mouse_pos if self.prev_mouse_pos != null else mouse_pos
                 )
+                self.blending_rectangle.material.set_shader_param(
+                    "enable_erase",
+                    true
+                )
             else:    
                 self.brushmgr.current_brush.paint(
                     self.pen,
@@ -525,6 +529,11 @@ class RasterControl extends Control:
 
         var layer_image = self.result_texture.get_data()
         layer_image.fix_alpha_edges()
+
+        self.blending_rectangle.material.set_shader_param(
+            "enable_erase",
+            false
+        )
 
         self.active_layer.texture.set_data(layer_image)
         if not Global.World.EmbeddedTextures.has(self.active_layer.embedded_key):

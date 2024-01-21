@@ -5,6 +5,9 @@ uniform sampler2D stroke_texture;
 uniform sampler2D base_texture;
 uniform sampler2D erase_mask;
 
+uniform bool enable_erase = false;
+
+
 void fragment() {
 	vec4 output_color;
 	vec4 stroke_color = texture(stroke_texture, UV);
@@ -42,7 +45,7 @@ void fragment() {
 		COLOR = base_color;
 	}
 	
-	if (erase) {
-		COLOR.a = 0.0f;
+	if (erase && enable_erase) {
+		COLOR.a -= texture(erase_mask, UV).a;
 	}
 }
