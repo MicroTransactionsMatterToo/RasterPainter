@@ -83,6 +83,14 @@ class Preferences extends ScrollContainer:
                     logv("Found one! %d" % i)
                     self.config_defaults["render_scale"] = i
 
+            Global.Editor.Warn(
+                "Map Size Warning",
+                """Render scale has been reduced to %s due to map size. 
+                To avoid this, don't use map sizes greater than around 100""" % [
+                    self.config_defaults["render_scale"]
+                ]
+            )
+
         self._setup_brush_settings()
         self._setup_export_settings()
         self._setup_memory_settings()

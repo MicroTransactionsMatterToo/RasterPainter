@@ -128,6 +128,9 @@ class LayerPaintRecord extends RasterRecord:
         
         return true
 
+    func dropped(type):
+        self.texture = null
+
     func redo() -> bool:
         return self.undo()
 
@@ -390,6 +393,9 @@ class LayerDeleteRecord extends RasterRecord:
         return true
 
     func max_count() -> int: return 10
+
+    func dropped(type):
+        self.texture = null
 
     func record_type() -> String:
         return "LayerPaintRecord"
