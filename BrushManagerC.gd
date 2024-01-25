@@ -465,9 +465,9 @@ class LineBrush extends Brush:
         self.stroke_line.clear_points()
         self.render_line.visible = false
         self.beg_cap.visible = false
-        self.beg_cap.position = Vector2(-100, -100)
+        self.beg_cap.position = Vector2(-10000, -10000)
         self.end_cap.visible = false
-        self.end_cap.position = Vector2(-100, -100)
+        self.end_cap.position = Vector2(-10000, -10000)
         self.painting_state = PaintState.FIRST_POINT
 
     # ===== BRUSH UI =====

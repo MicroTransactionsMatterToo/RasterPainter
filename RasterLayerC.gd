@@ -17,6 +17,7 @@ class RasterLayer extends Sprite:
 
     var embedded_key: String setget , get_embedded_key
 
+
     var change_count = 0
 
     var Global
@@ -70,6 +71,7 @@ class RasterLayer extends Sprite:
         self.centered = false
         self.scale = Vector2(RENDER_SCALE, RENDER_SCALE)
         self.rect_scale = Vector2(RENDER_SCALE, RENDER_SCALE)
+        self.z_as_relative = true
 
     func _process(delta):
         if self.change_count > 0:
@@ -227,6 +229,7 @@ class RasterLayer extends Sprite:
 
         self.emit_signal("z_index_change", old_z, value, self)
         self.emit_signal("layer_modified", self)
+
 
     # ---- self.modulate set/get
     func set_modulate(color: Color):

@@ -65,6 +65,10 @@ class RasterControl extends Control:
     var erase_mode := false
 
     var prev_mouse_pos
+
+    var pre_export_cont_z
+    var pre_export_act_z
+    var pre_export_level_cont_z
     
 
     # +++++ Rendering Resources +++++
@@ -401,6 +405,29 @@ class RasterControl extends Control:
         if Global.Header.data == null:
             if self.layerm.get_level_id(Global.World.Level) != self.curr_level_id:
                 self._on_level_change()
+        
+        if Global.World.SourceLevel != null:
+            if Global.World.SourceLevel.visible and self.pre_export_act_z == null:
+                logv("SourceLevel visible and current level is not, export window must be open")
+                logv("Setting layer Z to %s" % Global.World.SourceLevel.z_index)
+                self.pre_export_cont_z = self.viewport_cont.z_index
+                self.viewport_cont.z_index = Global.World.SourceLevel.z_index
+
+                self.pre_export_act_z = self.active_layer.z_index
+                self.active_layer.z_index = Global.World.SourceLevel.z_index + self.active_layer.z_index
+
+                self.pre_export_level_cont_z = self.level_layer_cont.z_index
+                self.level_layer_cont.z_index = Global.World.SourceLevel.z_index
+        else:
+            if self.pre_export_act_z != null:
+                self.viewport_cont.z_index = self.pre_export_cont_z
+                self.active_layer.z_index = self.pre_export_act_z
+                self.level_layer_cont.z_index = self.pre_export_level_cont_z
+                
+                self.pre_export_act_z = null
+                self.pre_export_cont_z = null
+                self.pre_export_level_cont_z = null
+
 
         self.viewport_render.update()
 
